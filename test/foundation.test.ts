@@ -38,12 +38,12 @@ test("package metadata exposes package, CLI, protocol, storage, scope, catalog, 
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports the completed Phase 1.9 integration boundary", () => {
+test("foundation surface reports Phase 2.1 optimistic concurrency", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.9");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.1");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "1.9",
+    phase: "2.1",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -52,5 +52,6 @@ test("foundation surface reports the completed Phase 1.9 integration boundary", 
     queryOperationsAvailable: true,
     relationOperationsAvailable: true,
     transactionOperationsAvailable: true,
+    optimisticConcurrencyAvailable: true,
   });
 });
