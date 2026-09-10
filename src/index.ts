@@ -12,7 +12,7 @@ export * from "./provenance/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.2" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.3" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -27,12 +27,15 @@ export interface FoundationStatus {
   readonly transactionOperationsAvailable: true;
   readonly optimisticConcurrencyAvailable: true;
   readonly idempotentMutationsAvailable: true;
+  readonly provenanceAvailable: true;
+  readonly mutationEventsAvailable: true;
+  readonly mutationReceiptsAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, and durable idempotent mutations exist through Phase 2.2.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, and provenance queries exist through Phase 2.3.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -48,5 +51,8 @@ export function getFoundationStatus(): FoundationStatus {
     transactionOperationsAvailable: true,
     optimisticConcurrencyAvailable: true,
     idempotentMutationsAvailable: true,
+    provenanceAvailable: true,
+    mutationEventsAvailable: true,
+    mutationReceiptsAvailable: true,
   };
 }
