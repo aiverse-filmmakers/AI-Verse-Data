@@ -176,6 +176,29 @@ Those requirements conflict with the canonical Build Map, which assigns events a
 
 This correction does not remove those requirements from the product. It prevents Task 9 from silently implementing Phase 2 work early and keeps the canonical task ownership consistent.
 
+### Phase 2.1 concurrency evidence
+
+Task 10 / 41 adds real competing-writer proof, not only sequential stale-version assertions.
+
+The suite includes:
+
+- two independent storage connections reading the same version and attempting compare-and-swap writes;
+- four separate Node processes released against one record with the same `expectedVersion`;
+- competing bounded transactions updating one canonical record;
+- a stale soft delete after another writer advances the record.
+
+Required result:
+
+```text
+one stale-version winner
+all other stale writers rejected
+no lost update
+no stale delete
+final canonical version advances exactly once
+```
+
+Implementation run `34521416868` passed 110 / 110 tests on Node 22 and Node 24.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
