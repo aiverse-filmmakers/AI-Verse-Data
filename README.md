@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 4 / 41  
-**Latest completed:** Task 4 / 41, Phase 1.4 - Scope and database identity  
-**Next task:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas  
+**Completed implementation tasks:** 5 / 41  
+**Latest completed:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas  
+**Next task:** Task 6 / 41, Phase 1.6 - Record CRUD  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -50,9 +50,19 @@ Scope and database identity
   -> conflicting workspace/kind rejection
   -> child-symlink escape rejection
   -> no Dashboard systemId in canonical identity
+
+Task 5 / 41 - COMPLETE
+Data Spaces and entity schemas
+  -> persistent Data Space catalog
+  -> fixed engine-owned SQLite schema catalog
+  -> immutable entity schema versions
+  -> deterministic SHA-256 schema digests
+  -> field/default validation
+  -> safe additive schema updates
+  -> migration-required destructive changes
 ```
 
-No Data Spaces, entity-schema persistence, records, CRUD, query execution, relations, OS installation, or sibling-layer adapters are implemented yet. They remain later tasks in the canonical Build Map.
+Data Spaces and entity schemas are now implemented. Record CRUD, query execution, relations, OS installation, and sibling-layer adapters remain later tasks. They remain later tasks in the canonical Build Map.
 
 ## Public package surfaces
 
@@ -61,6 +71,7 @@ No Data Spaces, entity-schema persistence, records, CRUD, query execution, relat
 @ai-verse/data/protocol
 @ai-verse/data/storage
 @ai-verse/data/scope
+@ai-verse/data/catalog
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -113,16 +124,26 @@ The database persists only `bindingVersion`, `scope kind`, and `workspaceId`. It
 
 See [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md).
 
+## Data Spaces and entity schemas
+
+Phase 1.5 adds the first semantic structured-data catalog above storage. One workspace database can now hold multiple logical Data Spaces such as `crm`, `production`, or `content`.
+
+Entity definitions are stored as validated structured JSON inside fixed engine-owned SQLite tables, never as arbitrary SQL generated from a model. Every entity schema starts at version 1, accepted updates create immutable new versions, and each version receives a deterministic SHA-256 digest verified when read.
+
+Safe direct updates currently include adding compatible fields and changing entity name/description. Removing, replacing, or renaming fields returns `SCHEMA_MIGRATION_REQUIRED` until the dedicated migration framework exists.
+
+See [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md).
+
 ### Latest verification
 
-Task 4 implementation CI run: `34511358818`
+Task 5 implementation CI run: `34513039706`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-37 tests
-37 passed
+53 tests
+53 passed
 0 failed
 ```
 
@@ -225,6 +246,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/PROTOCOL-V0.1.md`](docs/PROTOCOL-V0.1.md) - public protocol design
 - [`docs/STORAGE-V0.1.md`](docs/STORAGE-V0.1.md) - implemented SQLite driver/storage format
 - [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md) - trusted-root and persistent scope-binding contract
+- [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md) - implemented Data Space and entity-schema catalog
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
@@ -235,4 +257,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas.**
+**Next: Task 6 / 41, Phase 1.6 - Record CRUD.**
