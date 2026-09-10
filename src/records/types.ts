@@ -1,25 +1,10 @@
 import type {
   DataActor,
+  DataRecord,
   JsonObject,
 } from "../protocol/index.js";
 
-export interface RecordActorRef extends DataActor {}
-
-export interface DataRecordSnapshot {
-  readonly spaceId: string;
-  readonly entity: string;
-  readonly recordId: string;
-  readonly schemaVersion: number;
-  readonly version: number;
-  readonly data: JsonObject;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-  readonly createdBy: RecordActorRef;
-  readonly updatedBy: RecordActorRef;
-  readonly deletedAt: string | null;
-  readonly deletedReason: string | null;
-  readonly deletedBy: RecordActorRef | null;
-}
+export type DataRecordSnapshot = DataRecord;
 
 export interface RecordCreateInput {
   readonly spaceId: string;
