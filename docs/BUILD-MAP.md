@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
-**Updated:** 2026-09-10  
+**Updated:** 2026-09-11  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 12 / 41 tasks complete  
-**Next:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits
+**Implementation progress:** 13 / 41 tasks complete  
+**Next:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    33%  (3/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    44%  (4/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **12 / 41 tasks complete**.
+Overall implementation: **13 / 41 tasks complete**.
 
 ---
 
@@ -256,7 +256,7 @@ Failures:            0
 
 Detailed contract: `docs/RECORD-CRUD-V0.1.md`.
 
-At the Phase 1.6 boundary, Tasks 10, 11, and 12 were still responsible for race-safe concurrency, persistent idempotency, and events/receipts. Tasks 10 and 11 have since completed concurrency and idempotency; Task 12 still owns events/receipts.
+At the Phase 1.6 boundary, Tasks 10, 11, and 12 were still responsible for race-safe concurrency, persistent idempotency, and events/receipts. Those responsibilities have since been completed in Phase 2.1 through 2.3.
 
 No general query/aggregate engine, relation enforcement, or multi-record transaction execution was introduced.
 
@@ -525,11 +525,64 @@ No Task 13 bulk-operation, preview, or dry-run behavior was introduced.
 
 ## Task 13 / 41 - Phase 2.4 Bulk-operation safety and limits
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Bounded bulk operations, dry-run/preview, hard size/count ceilings.
+Implemented:
+
+- public `@ai-verse/data/bulk` package surface;
+- `data.bulk.preview` and `data.bulk.execute` protocol operations;
+- shared protocol validation using the existing record-mutation shapes;
+- hard maximum 50 operations per bulk request;
+- hard maximum 256 KiB bulk payload;
+- exact rollback-only preview through the real bounded transaction engine;
+- preview reuse of schema, relation, expectedVersion, idempotency, event, and receipt semantics;
+- no committed preview records;
+- no committed preview relation rows;
+- no committed preview idempotency entries;
+- no committed preview events or receipts;
+- no durable event-sequence advancement during preview;
+- no exposure of temporary preview-generated create IDs;
+- deterministic SHA-256 preview digest;
+- preview digest bound to trusted actor, exact ordered operations, deterministic state summary, and atomicity policy;
+- mandatory `expectedPreviewDigest` before commit;
+- commit-time re-preview/current-state validation;
+- explicit `BULK_PREVIEW_STALE` rejection;
+- all-or-nothing commit only;
+- no best-effort/continue-on-error mode;
+- durable outer bulk idempotency;
+- deterministic internal transaction idempotency key;
+- nested/outer/internal idempotency-key separation;
+- bulk replay verified against underlying transaction idempotency result;
+- bulk replay transaction receipt verified against durable provenance;
+- normal nested record + final transaction provenance reused instead of duplicate synthetic bulk events;
+- safe existing transaction `clientRef` behavior preserved in preview and commit;
+- stable bulk-specific error codes;
+- no new canonical storage table.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34535289214
+Commit:              48cc437647fdf76e21b51b310eb6567f4a843d1f
+Node 22:             PASS
+Node 24:             PASS
+Tests:               153 / 153 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.  
+Continuation state: `docs/CONTINUATION-HANDOFF.md`.
+
+No Task 14 backup/export/import behavior was introduced.
+
+**Task 2.4 gate: PASSED.**
 
 ## Task 14 / 41 - Phase 2.5 Backup/export/import foundation
+
+**Status:** NEXT
+
 Consistent backup, manifests/digests/receipts, verified portable export/import where appropriate.
 
 ## Task 15 / 41 - Phase 2.6 Internal migration framework
@@ -661,6 +714,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 13 / 41: Phase 2.4 - Bulk-operation safety and limits.**
+**Task 14 / 41: Phase 2.5 - Backup/export/import foundation.**
 
-Do not begin Task 14 / 41 until Task 13 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 15 / 41 until Task 14 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
