@@ -10,6 +10,7 @@ export const AI_VERSE_DATA_MIN_SQLITE_VERSION = "3.37.0" as const;
 export const AI_VERSE_DATA_SCOPE_BINDING_VERSION = 1 as const;
 
 export type StorageOpenMode = "create-or-open" | "open-existing";
+export type StorageTransactionMode = "deferred" | "immediate";
 export type StorageScopeKind = "standalone" | "workspace";
 
 export interface StorageDatabaseBinding {
@@ -56,7 +57,10 @@ export interface DataStorageDatabase {
   recordStorage(): DataRecordStorage;
   queryStorage(): DataQueryStorage;
   relationStorage(): DataRelationStorage;
-  transaction<T>(operation: () => T): T;
+  transaction<T>(
+    operation: () => T,
+    mode?: StorageTransactionMode,
+  ): T;
   close(): void;
 }
 
