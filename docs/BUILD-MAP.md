@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 4 / 41 tasks complete  
-**Next:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas
+**Implementation progress:** 5 / 41 tasks complete  
+**Next:** Task 6 / 41, Phase 1.6 - Record CRUD
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    44%  (4/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    56%  (5/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **4 / 41 tasks complete**.
+Overall implementation: **5 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 4 / 9 tasks complete
+**Progress:** 5 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -182,15 +182,45 @@ No Data Space/schema/record semantics were introduced.
 
 ## Task 5 / 41 - Phase 1.5 Data Spaces and entity schemas
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Create/list/get Data Spaces and entity schemas, field validation, schema versions/digests, safe additive schema updates.
+Implemented:
 
-Acceptance: invalid schemas fail atomically; destructive unsupported changes return migration-required.
+- public `@ai-verse/data/catalog` surface;
+- storage-neutral `DataCatalogStorage` contract;
+- SQLite `_data_spaces`, `_entities`, and `_entity_schema_versions` STRICT tables;
+- Data Space create/list/get with duplicate protection;
+- entity schema create/list/get;
+- immutable historical schema versions;
+- deterministic SHA-256 schema digests over canonical JSON;
+- digest verification when stored schemas are read;
+- type-aware field default validation;
+- safe additive schema updates;
+- optimistic `expectedSchemaVersion` checks;
+- explicit historical-version lookup errors;
+- `SCHEMA_MIGRATION_REQUIRED` for unsupported destructive changes;
+- atomic schema creation/update transactions;
+- no arbitrary SQL table generation from entity definitions.
+
+Verification:
+
+```text
+GitHub Actions run: 34513039706
+Node 22:             PASS
+Node 24:             PASS
+Tests:               53 / 53 PASS
+Failures:            0
+```
+
+Detailed contract: `docs/CATALOG-AND-SCHEMAS-V0.1.md`.
+
+No record storage/CRUD was introduced.
+
+**Task 1.5 gate: PASSED.**
 
 ## Task 6 / 41 - Phase 1.6 Record CRUD
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 Create/get/list/update/soft-delete, schema validation, defaults, stable record IDs/timestamps, initial actor attribution.
 
@@ -370,6 +400,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 5 / 41: Phase 1.5 - Data Spaces and entity schemas.**
+**Task 6 / 41: Phase 1.6 - Record CRUD.**
 
-Do not begin Task 6 / 41 until Task 5 is implemented, tested, committed, and reported complete.
+Do not begin Task 7 / 41 until Task 6 is implemented, tested, committed, and reported complete.
