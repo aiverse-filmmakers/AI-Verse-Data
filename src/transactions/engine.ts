@@ -1,4 +1,5 @@
 import { DataCatalog } from "../catalog/index.js";
+import { DataIdempotency } from "../idempotency/index.js";
 import {
   DATA_PROTOCOL_LIMITS,
   DataProtocolValidationError,
@@ -10,6 +11,7 @@ import {
   validateTransactionExecutePayload,
 } from "../protocol/index.js";
 import { DataRecords } from "../records/index.js";
+import { validateRecordActor } from "../records/validation.js";
 import type { DataStorageDatabase } from "../storage/index.js";
 import { DataTransactionError } from "./errors.js";
 import type {
@@ -75,10 +77,12 @@ function resolveData(
 export class DataTransactions implements DataTransactionsApi {
   private readonly records: DataRecords;
   private readonly catalog: DataCatalog;
+  private readonly idempotency: DataIdempotency;
 
   constructor(private readonly database: DataStorageDatabase) {
     this.records = new DataRecords(database);
     this.catalog = new DataCatalog(database);
+    this.idempotency = new DataIdempotency(database);
   }
 
   execute(input: DataTransactionExecuteInput): DataTransactionResult {
@@ -104,7 +108,20 @@ export class DataTransactions implements DataTransactionsApi {
       );
     }
 
+    const actor = validateRecordActor(input.actor);
+    const idempotencyRequest = {
+      operations: payload.operations,
+    };
+
     return this.database.transaction(() => {
+      const prepared = this.idempotency.prepare<DataTransactionResult>(
+        payload.idempotencyKey,
+        "data.transaction.execute",
+        actor,
+        idempotencyRequest,
+      );
+      if (prepared.kind === "replay") return prepared.value;
+
       const clientRefs = new Map<string, string>();
       const results: DataTransactionOperationResult[] = [];
 
@@ -126,8 +143,10 @@ export class DataTransactions implements DataTransactionsApi {
           const record = this.records.create({
             spaceId: create.spaceId,
             entity: create.entity,
+            idempotencyKey: create.idempotencyKey,
             data,
-            actor: input.actor,
+            actor,
+            ...(create.clientRef === undefined ? {} : { clientRef: create.clientRef }),
           });
 
           if (create.clientRef !== undefined) {
@@ -147,8 +166,9 @@ export class DataTransactions implements DataTransactionsApi {
             entity: update.entity,
             recordId: update.recordId,
             expectedVersion: update.expectedVersion,
+            idempotencyKey: update.idempotencyKey,
             patch,
-            actor: input.actor,
+            actor,
           });
           results.push({ index, operation: item.operation, record });
           continue;
@@ -159,16 +179,23 @@ export class DataTransactions implements DataTransactionsApi {
           entity: item.payload.entity,
           recordId: item.payload.recordId,
           expectedVersion: item.payload.expectedVersion,
-          actor: input.actor,
+          idempotencyKey: item.payload.idempotencyKey,
+          actor,
           ...(item.payload.reason === undefined ? {} : { reason: item.payload.reason }),
         });
         results.push({ index, operation: item.operation, record });
       }
 
-      return {
+      const result: DataTransactionResult = {
         operations: results,
         clientRefs: Object.fromEntries(clientRefs),
       };
+      return this.idempotency.complete(
+        payload.idempotencyKey,
+        "data.transaction.execute",
+        prepared.requestFingerprint,
+        result,
+      );
     }, "immediate");
   }
 }
