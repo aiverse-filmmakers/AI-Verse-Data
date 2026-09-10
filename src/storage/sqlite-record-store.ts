@@ -197,7 +197,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
     return rows.map(mapRecord);
   }
 
-  updateRecord(record: StoredRecord): boolean {
+  updateRecord(record: StoredRecord, expectedVersion: number): boolean {
     const result = this.database
       .prepare(
         `UPDATE _records
@@ -210,6 +210,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
          WHERE space_id = ?
            AND entity_id = ?
            AND record_id = ?
+           AND record_version = ?
            AND deleted_at IS NULL`,
       )
       .run(
@@ -222,11 +223,12 @@ export class SqliteRecordStorage implements DataRecordStorage {
         record.spaceId,
         record.entity,
         record.recordId,
+        expectedVersion,
       );
     return result.changes === 1;
   }
 
-  softDeleteRecord(record: StoredRecord): boolean {
+  softDeleteRecord(record: StoredRecord, expectedVersion: number): boolean {
     const result = this.database
       .prepare(
         `UPDATE _records
@@ -241,6 +243,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
          WHERE space_id = ?
            AND entity_id = ?
            AND record_id = ?
+           AND record_version = ?
            AND deleted_at IS NULL`,
       )
       .run(
@@ -255,6 +258,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
         record.spaceId,
         record.entity,
         record.recordId,
+        expectedVersion,
       );
     return result.changes === 1;
   }
