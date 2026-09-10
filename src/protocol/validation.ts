@@ -28,6 +28,7 @@ import type {
   QueryOrder,
   SchemaChange,
   SchemaUpdatePayload,
+  TransactionExecutePayload,
 } from "./types.js";
 
 const SLUG_RE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
