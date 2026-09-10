@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes package, CLI, protocol, and storage subpaths", () => {
+test("package metadata exposes package, CLI, protocol, storage, and scope subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -30,17 +30,19 @@ test("package metadata exposes package, CLI, protocol, and storage subpaths", ()
   assert.match(packageJson.version, /^0\.1\.0-alpha\.0$/);
   assert.ok("./protocol" in packageJson.exports);
   assert.ok("./storage" in packageJson.exports);
+  assert.ok("./scope" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports storage bootstrap without claiming CRUD", () => {
+test("foundation surface reports scope support without claiming CRUD", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.3");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.4");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "1.3",
+    phase: "1.4",
     protocolAvailable: true,
     storageAvailable: true,
+    scopeAvailable: true,
     dataOperationsAvailable: false,
   });
 });
