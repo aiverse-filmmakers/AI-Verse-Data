@@ -31,4 +31,9 @@ export interface DataRelationStorage {
     entity: string,
     recordId: string,
   ): readonly StoredRecordRelation[];
+  listInboundRelations(
+    spaceId: string,
+    entity: string,
+    recordId: string,
+  ): readonly StoredRecordRelation[];
 }
