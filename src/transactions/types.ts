@@ -3,10 +3,12 @@ import type {
   DataRecord,
   TransactionExecutePayload,
 } from "../protocol/index.js";
+import type { DataMutationReceipt } from "../provenance/index.js";
 
 export interface DataTransactionExecuteInput {
   readonly actor: DataActor;
   readonly payload: TransactionExecutePayload;
+  readonly requestId?: string;
 }
 
 export interface DataTransactionOperationResult {
@@ -23,6 +25,12 @@ export interface DataTransactionResult {
   readonly clientRefs: Readonly<Record<string, string>>;
 }
 
+export interface DataTransactionWithReceipt {
+  readonly result: DataTransactionResult;
+  readonly receipt: DataMutationReceipt;
+}
+
 export interface DataTransactionsApi {
   execute(input: DataTransactionExecuteInput): DataTransactionResult;
+  executeWithReceipt(input: DataTransactionExecuteInput): DataTransactionWithReceipt;
 }
