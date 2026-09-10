@@ -154,6 +154,7 @@ Phase 1 is complete. Phase 2.1 through 2.3 now add race-safe optimistic concurre
 @ai-verse/data/query
 @ai-verse/data/transactions
 @ai-verse/data/idempotency
+@ai-verse/data/provenance
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -288,18 +289,20 @@ See [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-
 
 ### Latest verification
 
-Task 11 idempotency CI run: `34523382398`
+Task 12 behavioral CI run: `34526163488`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-125 tests
-125 passed
+141 tests
+141 passed
 0 failed
+0 skipped
+0 cancelled
 ```
 
-The suite now additionally proves deterministic request fingerprinting, exact record/transaction replay, conflict rejection, reopen persistence, failed-write key rollback, replay-result tamper detection, and real separate-process duplicate/conflicting-delivery behavior.
+The suite now additionally proves immutable event/receipt storage, actor/request/workspace provenance, bounded event cursors, receipt-to-event integrity, transaction provenance linkage, rollback atomicity, idempotent replay without duplicate audit facts, and protection against laundering previously committed nested mutations into a fresh transaction.
 
 ## Why Data is separate from Memory
 
@@ -406,6 +409,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
 - [`docs/BUILD-MAP.md`](docs/BUILD-MAP.md) - canonical 41-task implementation ledger
+- [`docs/CONTINUATION-HANDOFF.md`](docs/CONTINUATION-HANDOFF.md) - exact resume point for a new chat/session
 - [`docs/PHASE-1-STATUS.md`](docs/PHASE-1-STATUS.md) - Phase 1 implementation evidence
 - [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md) - final Phase 1 integration gate and evidence
 - [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md) - implemented race-safe record concurrency contract
