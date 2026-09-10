@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 1 Core Data Engine complete  
-**Completed implementation tasks:** 9 / 41  
-**Latest completed:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate  
-**Next task:** Task 10 / 41, Phase 2.1 - Optimistic concurrency  
+**Status:** Phase 2 Reliability + Agent Safety in progress  
+**Completed implementation tasks:** 10 / 41  
+**Latest completed:** Task 10 / 41, Phase 2.1 - Optimistic concurrency  
+**Next task:** Task 11 / 41, Phase 2.2 - Idempotent mutations  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -102,6 +102,16 @@ Phase 1 integration gate
   -> two-workspace isolation proof
   -> unsupported newer format fail-closed proof
   -> 106-test full Phase 1 gate
+
+Task 10 / 41 - COMPLETE
+Optimistic concurrency
+  -> atomic expectedVersion SQL predicate
+  -> one stale-version winner only
+  -> RECORD_VERSION_CONFLICT with current version
+  -> short immediate write transactions
+  -> separate-process race tests
+  -> transaction race tests
+  -> stale delete protection
 ```
 
 Phase 1 is complete. Data Spaces, entity schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions have passed the full integration gate. Phase 2 now hardens concurrency, retry safety, events, receipts, backup, migrations, and recovery.
@@ -187,7 +197,7 @@ Records live in one fixed engine-owned `_records` STRICT table rather than arbit
 
 Create applies validated schema defaults. Get/list hide deleted records unless explicitly requested. Update validates the existing payload against its historical schema, then validates the merged result against the current schema. Soft delete preserves the canonical row and deletion attribution.
 
-Basic `expectedVersion` checks are implemented now. Race-safe atomic optimistic concurrency under competing writers remains Task 10 / 41. Persistent idempotency, events, and receipts remain Tasks 11 and 12.
+Phase 2.1 now enforces `expectedVersion` atomically at the canonical SQLite write. Real separate-process races prove one stale-version writer can commit and the others receive `RECORD_VERSION_CONFLICT`. Persistent idempotency, events, and receipts remain Tasks 11 and 12.
 
 See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
@@ -219,20 +229,28 @@ During this audit, the testing plan was corrected so mutation events and durable
 
 See [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md).
 
+## Optimistic concurrency
+
+Phase 2.1 turns record versions into a true compare-and-swap boundary. Update and soft-delete statements require the caller's `expectedVersion` directly in SQLite, and record/bounded-transaction writes use short immediate write intent so WAL snapshot races cannot become lost updates.
+
+The test suite includes independent SQLite connections and separate Node processes racing on the same canonical record. Exactly one writer advances version N to N+1; stale writers fail with `RECORD_VERSION_CONFLICT`.
+
+See [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md).
+
 ### Latest verification
 
-Phase 1 integration CI run: `34520521012`
+Task 10 concurrency CI run: `34521416868`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-106 tests
-106 passed
+110 tests
+110 passed
 0 failed
 ```
 
-The suite now proves the complete Phase 1 acceptance story across trusted scope, SQLite, catalog, schemas, CRUD, queries, aggregates, references, transactions, close/reopen recovery, two-workspace isolation, and unsupported-format fail-closed behavior.
+The suite now additionally proves storage-level compare-and-swap behavior, real separate-process stale-writer races, transaction-level races, and stale soft-delete rejection without lost updates.
 
 ## Why Data is separate from Memory
 
@@ -341,9 +359,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/BUILD-MAP.md`](docs/BUILD-MAP.md) - canonical 41-task implementation ledger
 - [`docs/PHASE-1-STATUS.md`](docs/PHASE-1-STATUS.md) - Phase 1 implementation evidence
 - [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md) - final Phase 1 integration gate and evidence
+- [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md) - implemented race-safe record concurrency contract
+- [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 10 / 41, Phase 2.1 - Optimistic concurrency.**
+**Next: Task 11 / 41, Phase 2.2 - Idempotent mutations.**
