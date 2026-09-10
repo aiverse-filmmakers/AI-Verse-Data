@@ -8,6 +8,7 @@ import { SqliteRecordStorage } from "./sqlite-record-store.js";
 import { SqliteQueryStorage } from "./sqlite-query-store.js";
 import { SqliteRelationStorage } from "./sqlite-relation-store.js";
 import { SqliteIdempotencyStorage } from "./sqlite-idempotency-store.js";
+import { SqliteProvenanceStorage } from "./sqlite-provenance-store.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
@@ -520,6 +521,11 @@ class SqliteStorageDatabase implements DataStorageDatabase {
   idempotencyStorage(): SqliteIdempotencyStorage {
     this.assertOpen();
     return new SqliteIdempotencyStorage(this.database);
+  }
+
+  provenanceStorage(): SqliteProvenanceStorage {
+    this.assertOpen();
+    return new SqliteProvenanceStorage(this.database);
   }
 
   transaction<T>(
