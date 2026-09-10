@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -68,7 +68,7 @@ CREATE TABLE _aiverse_meta (
 ) STRICT, WITHOUT ROWID;
 ```
 
-Required keys in format version 1:
+Required core keys in format version 1:
 
 ```text
 format
@@ -77,7 +77,15 @@ created_at
 driver
 ```
 
-The table is deliberately small. Data Space/schema/record tables are not introduced until their own build tasks.
+Phase 1.4 adds optional scope-binding keys:
+
+```text
+binding_version
+scope_kind
+workspace_id
+```
+
+An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space/schema/record tables are still deferred to their own build tasks.
 
 ## Open modes
 
@@ -163,7 +171,21 @@ These diagnostics are intended for later `doctor`, installation, and health surf
 
 Closing a storage handle is idempotent. Once closed, metadata, diagnostics, and integrity operations fail explicitly rather than reopening the database behind the caller's back.
 
-## What Phase 1.3 deliberately does not implement
+## Phase 1.4 scope extension
+
+The storage driver now accepts an optional host-supplied `expectedBinding`. Scoped opens use it to persist or validate:
+
+```text
+binding version 1
+scope kind: standalone | workspace
+workspaceId
+```
+
+A conflicting binding returns `DATABASE_SCOPE_CONFLICT`. The driver never silently rebinds a database. Absolute trusted-root paths and Dashboard `systemId` values are not persisted as database identity.
+
+For the full path and scope contract, see `docs/SCOPE-AND-IDENTITY-V0.1.md`.
+
+## What storage still deliberately does not implement
 
 No Data Space tables.  
 No entity schema persistence.  
@@ -171,7 +193,7 @@ No records.
 No CRUD.  
 No queries.  
 No relations.  
-No workspace binding.  
+No AI-Verse OS manifest/workspace validation.  
 No OS extension registration.  
 No Memory/Brain/Bot/Dashboard/App integration.
 
@@ -186,4 +208,6 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 5. Runtime SQLite capability is checked before initialization.
 6. Integrity checks report; they do not repair.
 7. No database path appears in normal public Data protocol requests.
-8. Workspace/database binding remains deferred to Phase 1.4 rather than being improvised in the storage layer.
+8. Scope binding is persisted only when a trusted host supplies the expected binding.
+9. A database cannot be silently rebound to a different workspace or scope kind.
+10. Raw root paths and Dashboard `systemId` values are not canonical database identity.
