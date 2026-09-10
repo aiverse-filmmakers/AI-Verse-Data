@@ -1,6 +1,6 @@
 # AI-Verse Data Record CRUD v0.1
 
-**Status:** Implemented in Phase 1.6; reference integrity extended in Phase 1.8; race-safe optimistic concurrency extended in Phase 2.1; durable idempotency extended in Phase 2.2  
+**Status:** Implemented in Phase 1.6; reference integrity extended in Phase 1.8; race-safe optimistic concurrency extended in Phase 2.1; durable idempotency extended in Phase 2.2; mutation provenance extended in Phase 2.3  
 **Date:** 2026-09-10
 
 This document defines the first implemented canonical record layer for AI-Verse Data.
@@ -388,6 +388,24 @@ Failed mutations do not reserve keys.
 
 Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
 
+## 15.3 Phase 2.3 provenance extension
+
+Every fresh successful record create/update/soft-delete now appends one immutable event and one durable receipt inside the same write transaction as the record, relation-index, and idempotency changes.
+
+Existing mutation methods continue returning record snapshots. Explicit receipt-returning variants are available:
+
+```text
+createWithReceipt
+updateWithReceipt
+softDeleteWithReceipt
+```
+
+A matching idempotent replay returns the original record snapshot and the original durable receipt without creating another event or receipt.
+
+Record event metadata includes request/transaction identity where applicable, trusted database scope/workspace identity, idempotency key, record target, before/after versions, trusted actor, commit time, and small structured details. It does not copy the full record payload.
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
 ## 16. Failure atomicity
 
 Validation happens before record creation/update persistence.
@@ -422,7 +440,6 @@ These conditions return `DATABASE_CORRUPT` from the record layer rather than pre
 
 Phase 1.6 does not implement:
 
-- mutation events;
 - mutation receipts;
 - bulk operations;
 - backup/export/import;
@@ -443,4 +460,4 @@ Those remain separate tasks in the canonical Build Map.
 7. Deleted records remain canonical until an explicit future purge contract exists.
 8. Actor attribution is stored with record state.
 9. Record and schema versions remain distinct.
-10. Reference integrity, bounded transactions, race-safe optimistic concurrency, and durable idempotency are implemented; events and receipts remain later tasks.
+10. Reference integrity, bounded transactions, race-safe optimistic concurrency, durable idempotency, mutation events, and durable receipts are implemented through Phase 2.3.
