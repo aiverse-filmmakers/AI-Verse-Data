@@ -24,6 +24,13 @@ import { DataTransactions } from "../src/transactions/index.js";
 
 const actor = { kind: "human", id: "phase1-gate" } as const;
 
+let idempotencySequence = 0;
+function nextIdempotencyKey(): string {
+  idempotencySequence += 1;
+  return `legacy-test:${idempotencySequence}`;
+}
+
+
 function assertRecordError(
   error: unknown,
   code: DataRecordError["code"],
@@ -112,6 +119,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
     assert.equal(catalog.getSchema("crm", "deals").schemaVersion, 1);
 
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Acme" },
@@ -119,6 +127,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
     });
 
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: {
@@ -146,6 +155,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: deal.recordId,
@@ -157,6 +167,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
     );
 
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: deal.recordId,
@@ -238,6 +249,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
     assert.equal(transactionDeal.data.company, transaction.clientRefs["company-2"]);
 
     const deleted = records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: deal.recordId,
@@ -402,12 +414,14 @@ test("Phase 1 workspace databases remain physically and logically isolated", () 
     });
 
     const recordA = recordsA.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "notes",
       data: { text: "A only" },
       actor,
     });
     const recordB = recordsB.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "notes",
       data: { text: "B only" },
