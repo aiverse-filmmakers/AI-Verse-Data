@@ -278,3 +278,19 @@ export function validateExpectedRecordVersion(version: number): number {
   }
   return version;
 }
+
+
+export function validateRecordIdempotencyKey(key: string): string {
+  if (
+    typeof key !== "string" ||
+    key.length < 1 ||
+    key.length > DATA_PROTOCOL_LIMITS.maxIdempotencyKeyLength ||
+    key.includes("\u0000")
+  ) {
+    throw new DataRecordError(
+      "FIELD_INVALID",
+      `Idempotency key must contain 1..${DATA_PROTOCOL_LIMITS.maxIdempotencyKeyLength} characters and no NUL.`,
+    );
+  }
+  return key;
+}
