@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-10  
-**Status:** Phase 1 complete; Phase 2 next  
-**Implementation progress:** 9 / 41 tasks complete  
-**Next:** Task 10 / 41, Phase 2.1 - Optimistic concurrency
+**Status:** Phase 2 in progress  
+**Implementation progress:** 10 / 41 tasks complete  
+**Next:** Task 11 / 41, Phase 2.2 - Idempotent mutations
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [NEXT]            0%
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    11%  (1/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **9 / 41 tasks complete**.
+Overall implementation: **10 / 41 tasks complete**.
 
 ---
 
@@ -389,11 +389,46 @@ Detailed acceptance evidence: `docs/PHASE-1-ACCEPTANCE.md`.
 
 ## Task 10 / 41 - Phase 2.1 Optimistic concurrency
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Record versions, `expectedVersion`, conflict errors, race tests.
+Implemented:
+
+- atomic `expectedVersion` comparison at the canonical record write;
+- `DataRecordStorage.updateRecord(record, expectedVersion)`;
+- `DataRecordStorage.softDeleteRecord(record, expectedVersion)`;
+- SQLite `record_version = expectedVersion` write predicates;
+- short immediate write transactions for record create/update/delete;
+- immediate outer write intent for bounded multi-record transactions;
+- stable `RECORD_VERSION_CONFLICT` behavior with current-version details;
+- no automatic stale-patch merge/rebase;
+- storage-level compare-and-swap tests across independent connections;
+- real separate-process update races;
+- competing bounded-transaction races;
+- stale soft-delete rejection after an intervening write.
+
+Verification:
+
+```text
+GitHub Actions run: 34521416868
+Node 22:             PASS
+Node 24:             PASS
+Tests:               110 / 110 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+No persistent idempotency/request-fingerprint/replay behavior was introduced.
+
+**Task 2.1 gate: PASSED.**
 
 ## Task 11 / 41 - Phase 2.2 Idempotent mutations
+
+**Status:** NEXT
+
 Persistent idempotency keys, canonical request fingerprints, replay semantics, conflict rejection.
 
 ## Task 12 / 41 - Phase 2.3 Events, receipts, provenance
@@ -534,6 +569,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 10 / 41: Phase 2.1 - Optimistic concurrency.**
+**Task 11 / 41: Phase 2.2 - Idempotent mutations.**
 
-Do not begin Task 11 / 41 until Task 10 is implemented, verified, committed, and reported complete.
+Do not begin Task 12 / 41 until Task 11 is implemented, verified, committed, and reported complete.
