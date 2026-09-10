@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency implemented
+**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency and Phase 2.2 durable idempotency implemented
 
 ## 1. Architectural position
 
@@ -245,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog, `_records`, and `_record_relations` portions of this model are now implemented. Event/idempotency/migration tables remain later implementation tasks.
+The catalog, `_records`, `_record_relations`, and `_idempotency` portions of this model are now implemented. Event and migration tables remain later implementation tasks.
 
 ## 7. Record representation
 
@@ -457,6 +457,18 @@ Update and soft-delete SQL statements match the caller's validated `expectedVers
 The engine does not create record locks, silently merge stale patches, or automatically retry semantic conflicts.
 
 Detailed contract: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
+
+## 13.2 Implemented durable idempotency
+
+Phase 2.2 adds one workspace-database-global idempotency namespace for record mutations and bounded transactions.
+
+A committed key is bound to operation, trusted actor, canonical request fingerprint version 1, and the original committed result. Equivalent JSON object key order produces the same SHA-256 fingerprint; semantic differences produce a conflict.
+
+The idempotency lookup, fresh canonical mutation, relation changes, and saved replay result share one short write transaction. Failed mutations leave no durable reservation. Matching retries return the original committed result before current record/version checks.
+
+Committed v0.1 entries do not automatically expire.
+
+Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
 
 ## 14.1 Implemented relation integrity
 
