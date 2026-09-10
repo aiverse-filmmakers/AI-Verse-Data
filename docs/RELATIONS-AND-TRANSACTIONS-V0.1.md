@@ -259,17 +259,7 @@ Mutation receipts are not claimed yet. Durable receipts land in Task 12 / 41.
 
 The protocol already requires transaction and record-mutation idempotency keys.
 
-Phase 1.8 validates those fields structurally, but does not persist or replay idempotency results.
-
-Persistent idempotency remains Task 11 / 41.
-
-Therefore:
-
-```text
-accepted idempotencyKey
-!=
-implemented idempotent replay
-```
+Phase 2.2 now persistently enforces those keys. The outer transaction key stores the complete successful transaction result, while each nested record mutation also persists its own key. Matching outer-key retries return the original transaction result without rerunning nested operations, and failed transactions roll back both nested and outer idempotency entries.
 
 ## 16. Optimistic concurrency boundary
 
