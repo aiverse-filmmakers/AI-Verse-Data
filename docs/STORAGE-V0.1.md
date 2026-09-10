@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -243,9 +243,24 @@ The relation index is changed in the same SQLite transaction as canonical record
 
 Detailed semantics: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
 
-## What storage still deliberately does not implement
+## Phase 2.1 optimistic concurrency extension
 
-No relations.  
+`DataRecordStorage.updateRecord` and `softDeleteRecord` now require the caller's validated `expectedVersion`.
+
+SQLite includes that version in the canonical write predicate. A stale row produces zero changed rows rather than overwriting a newer canonical version.
+
+The generic storage transaction boundary now accepts:
+
+```text
+deferred
+immediate
+```
+
+Record mutations and bounded multi-record write transactions use `immediate` mode so SQLite establishes write intent before mutation reads. This avoids WAL snapshot-upgrade races while retaining `expectedVersion` as the canonical compare-and-swap condition.
+
+Detailed semantics: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
+
+## What storage still deliberately does not implement
 
 No idempotency/event/receipt persistence.  
 No AI-Verse OS manifest/workspace validation.  
@@ -281,3 +296,7 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 19. Declared reference relationships are indexed in one fixed engine-owned `_record_relations` table.
 20. Relation-index writes and their canonical record mutation share one transaction boundary.
 21. Multi-record transactions use the storage abstraction rather than exposing SQLite transaction handles.
+
+22. Mutable record writes require an atomic expected-version predicate.
+23. Record and bounded transaction mutation paths may request immediate write intent through the storage abstraction.
+24. SQLite writer serialization does not replace caller-visible optimistic version checks.
