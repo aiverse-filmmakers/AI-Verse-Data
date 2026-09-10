@@ -371,6 +371,13 @@ export class SqliteProvenanceStorage implements DataProvenanceStorage {
     return rows.map(mapEvent);
   }
 
+  getEvent(eventId: string): StoredDataEvent | null {
+    const row = this.database
+      .prepare(`${EVENT_SELECT} WHERE event_id = ?`)
+      .get(eventId) as EventRow | undefined;
+    return row === undefined ? null : mapEvent(row);
+  }
+
   getReceipt(receiptId: string): StoredMutationReceipt | null {
     const row = this.database
       .prepare(`${RECEIPT_SELECT} WHERE receipt_id = ?`)
