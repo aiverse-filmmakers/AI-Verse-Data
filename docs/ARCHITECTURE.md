@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 in progress; scope, schema catalog, record CRUD, queries, and aggregates implemented
+**Implementation:** Phase 1 in progress; scope, schema catalog, record CRUD, queries, aggregates, relations, and bounded transactions implemented
 
 ## 1. Architectural position
 
@@ -231,7 +231,7 @@ Illustrative responsibilities:
 
 ### `_record_relations`
 
-A normalized relation index for declared reference fields where useful. The canonical relation declaration still originates in validated record/schema semantics.
+A normalized relation index for declared reference fields. The canonical relation declaration originates in validated schema/record semantics; the index supports target existence, inbound-reference checks, and atomic relation maintenance.
 
 ### `_events`
 
@@ -245,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog and `_records` portions of this model are now implemented. Event/idempotency/migration tables remain later implementation tasks.
+The catalog, `_records`, and `_record_relations` portions of this model are now implemented. Event/idempotency/migration tables remain later implementation tasks.
 
 ## 7. Record representation
 
@@ -442,9 +442,21 @@ create deal linked to company
 
 Either all commit or none commit.
 
+Phase 1.8 implements this boundary for up to 50 record create/update/delete operations. Nested mutations reuse the normal record engine, so schema and reference rules are not bypassed. A later declared reference field may resolve an earlier transaction-local `clientRef` to its generated canonical record ID.
+
 Cross-workspace transactions are not supported in v0.1.
 
 Future storage drivers must preserve equivalent atomicity within their supported transaction boundary.
+
+## 14.1 Implemented relation integrity
+
+Phase 1.8 enforces declared reference targets on ordinary CRUD and transaction operations.
+
+A reference target must exist, be active, and match the schema-declared Data Space/entity. Reference fields may target another Data Space only inside the same workspace database.
+
+Canonical record mutations and normalized relation-index changes share the same storage transaction. Active inbound references block target soft deletion, preventing dangling canonical relationships.
+
+Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
 
 ## 15. Delete semantics
 
