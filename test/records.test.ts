@@ -233,6 +233,13 @@ test("first-release field types and constraints are enforced on records", () => 
       );
     }
 
+    const company = records.create({
+      spaceId: "crm",
+      entity: "companies",
+      data: { name: "Company 1" },
+      actor: human,
+    });
+
     const valid = records.create({
       spaceId: "crm",
       entity: "deals",
@@ -244,7 +251,7 @@ test("first-release field types and constraints are enforced on records", () => 
         due: "2026-09-10",
         contactedAt: "2026-09-10T12:00:00Z",
         stage: "proposal",
-        company: "company_1",
+        company: company.recordId,
         metadata: { source: "manual" },
       },
       actor: human,
