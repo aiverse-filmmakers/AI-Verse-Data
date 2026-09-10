@@ -78,7 +78,7 @@ Events, receipts, provenance
 
 The acceptance plan was corrected rather than implementing Phase 2 work early.
 
-Those requirements remain mandatory for Phase 2 and the final release.
+At the Phase 1 closeout those requirements remained mandatory for Phase 2 and the final release. They have since been implemented and verified in Task 12 / Phase 2.3; this section remains as historical evidence of the earlier phase-boundary correction.
 
 ## Final verification
 
