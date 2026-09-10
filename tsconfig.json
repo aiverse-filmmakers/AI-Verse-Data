@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
-    "rootDir": ".",
+    "rootDir": ".,
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
@@ -19,6 +19,8 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": false,
     "types": ["node"]
   },
