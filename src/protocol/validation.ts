@@ -13,6 +13,7 @@ import {
 } from "./constants.js";
 import type {
   AggregateMetric,
+  AggregatePayload,
   DataErrorCode,
   DataOperation,
   DataRequestEnvelope,
@@ -23,6 +24,7 @@ import type {
   JsonObject,
   JsonValue,
   QueryFilter,
+  QueryPayload,
   QueryOrder,
   SchemaChange,
   SchemaUpdatePayload,
