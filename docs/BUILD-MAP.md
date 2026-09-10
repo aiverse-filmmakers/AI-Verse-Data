@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 6 / 41 tasks complete  
-**Next:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine
+**Implementation progress:** 7 / 41 tasks complete  
+**Next:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    67%  (6/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    78%  (7/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **6 / 41 tasks complete**.
+Overall implementation: **7 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 6 / 9 tasks complete
+**Progress:** 7 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -264,15 +264,48 @@ No general query/aggregate engine, relation enforcement, or multi-record transac
 
 ## Task 7 / 41 - Phase 1.7 Safe query + aggregate engine
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Bounded query AST execution, filters, sorting, cursor pagination, field selection, count/sum/min/max/avg, parameterized compilation.
+Implemented:
 
-Acceptance: no SQL-injection path, invalid field/type/operator combinations fail, server ceilings override callers.
+- public `@ai-verse/data/query` surface;
+- storage-neutral `DataQueryStorage` plan contract;
+- parameterized SQLite query compiler;
+- bounded structured filter AST execution;
+- `and`, `or`, and `not` groups;
+- `eq`, `neq`, `lt`, `lte`, `gt`, `gte`, `in`, `not_in`, `contains`, `starts_with`, `is_null`, and `is_not_null`;
+- schema-aware field/operator/value compatibility checks;
+- declared-field-only filtering/sorting/aggregates;
+- bounded multi-key sorting with stable record-ID tie break;
+- field selection/projection after canonical hydration;
+- opaque cursor pagination with query fingerprints;
+- maximum cursor offset ceiling;
+- deleted-row visibility controls;
+- count/sum/min/max/avg aggregates;
+- aggregate type and alias validation;
+- wildcard escaping for LIKE-backed string operations;
+- SQL-looking values retained as bound parameters;
+- shared historical-schema record hydration for query results.
+
+Verification:
+
+```text
+GitHub Actions run: 34516259373
+Node 22:             PASS
+Node 24:             PASS
+Tests:               90 / 90 PASS
+Failures:            0
+```
+
+Detailed contract: `docs/QUERY-AND-AGGREGATES-V0.1.md`.
+
+No relation traversal, relation validation, or multi-record transaction execution was introduced.
+
+**Task 1.7 gate: PASSED.**
 
 ## Task 8 / 41 - Phase 1.8 Relations + bounded transactions
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 Declared references, relation validation/indexing, atomic multi-record transactions, bounded operation counts, safe intra-transaction references if retained.
 
@@ -436,6 +469,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 7 / 41: Phase 1.7 - Safe query + aggregate engine.**
+**Task 8 / 41: Phase 1.8 - Relations + bounded transactions.**
 
-Do not begin Task 8 / 41 until Task 7 is implemented, tested, committed, and reported complete.
+Do not begin Task 9 / 41 until Task 8 is implemented, tested, committed, and reported complete.
