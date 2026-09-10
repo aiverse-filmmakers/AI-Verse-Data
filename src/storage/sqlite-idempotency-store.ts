@@ -27,6 +27,21 @@ function mapEntry(row: IdempotencyRow): StoredIdempotencyEntry {
     );
   }
 
+  if (
+    row.idempotency_key.length < 1 ||
+    row.idempotency_key.length > 256 ||
+    row.idempotency_key.includes("\u0000") ||
+    row.operation.length < 1 ||
+    !/^[0-9a-f]{64}$/.test(row.request_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(row.result_digest) ||
+    Number.isNaN(Date.parse(row.created_at))
+  ) {
+    throw new DataStorageError(
+      "DATABASE_CORRUPT",
+      "Stored idempotency metadata is invalid.",
+    );
+  }
+
   return {
     idempotencyKey: row.idempotency_key,
     operation: row.operation,
