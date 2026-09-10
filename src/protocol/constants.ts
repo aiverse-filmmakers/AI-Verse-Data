@@ -4,7 +4,7 @@ export const DATA_OPERATIONS = [
   "data.space.list", "data.space.get", "data.space.create",
   "data.schema.list", "data.schema.get", "data.schema.create", "data.schema.update",
   "data.record.create", "data.record.get", "data.record.list", "data.record.update", "data.record.delete",
-  "data.query", "data.aggregate", "data.transaction.execute", "data.events.list", "data.doctor", "data.status",
+  "data.query", "data.aggregate", "data.bulk.preview", "data.bulk.execute", "data.transaction.execute", "data.events.list", "data.doctor", "data.status",
 ] as const;
 
 export const ACTOR_KINDS = ["human", "bot", "worker", "app", "automation", "system", "import", "connection"] as const;
@@ -20,7 +20,7 @@ export const DATA_ERROR_CODES = [
   "DATA_NOT_INSTALLED", "DATA_DISABLED", "WORKSPACE_NOT_FOUND", "WORKSPACE_INACTIVE", "WORKSPACE_ID_MISMATCH",
   "DATA_SPACE_NOT_FOUND", "DATA_SPACE_ALREADY_EXISTS", "ENTITY_NOT_FOUND", "ENTITY_ALREADY_EXISTS", "SCHEMA_INVALID", "SCHEMA_VERSION_NOT_FOUND", "SCHEMA_VERSION_CONFLICT",
   "SCHEMA_MIGRATION_REQUIRED", "RECORD_NOT_FOUND", "RECORD_VERSION_CONFLICT", "FIELD_UNKNOWN", "FIELD_INVALID",
-  "REFERENCE_INVALID", "QUERY_INVALID", "QUERY_LIMIT_EXCEEDED", "RECEIPT_NOT_FOUND", "PERMISSION_DENIED", "APPROVAL_REQUIRED",
+  "REFERENCE_INVALID", "QUERY_INVALID", "QUERY_LIMIT_EXCEEDED", "BULK_INVALID", "BULK_LIMIT_EXCEEDED", "BULK_PREVIEW_STALE", "RECEIPT_NOT_FOUND", "PERMISSION_DENIED", "APPROVAL_REQUIRED",
   "IDEMPOTENCY_CONFLICT", "TRANSACTION_INVALID", "DATABASE_UNAVAILABLE", "DATABASE_CORRUPT", "DATABASE_MIGRATION_REQUIRED",
   "DATABASE_VERSION_UNSUPPORTED", "PATH_UNSAFE", "INTERNAL_ERROR",
 ] as const;
@@ -40,6 +40,8 @@ export const DATA_PROTOCOL_LIMITS = Object.freeze({
   maxSelectFields: 128,
   maxAggregateMetrics: 16,
   maxTransactionOperations: 50,
+  maxBulkOperations: 50,
+  maxBulkBytes: 256 * 1024,
   maxEventPageSize: 200,
   defaultEventPageSize: 100,
   maxAttachmentMetadataBytes: 32 * 1024,
