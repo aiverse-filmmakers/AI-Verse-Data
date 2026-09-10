@@ -164,3 +164,30 @@ test("closed database handles reject further operations", () => {
     );
   });
 });
+
+
+test("partial stored scope binding is treated as database corruption", () => {
+  withTempDatabase((databasePath) => {
+    const driver = new SqliteStorageDriver();
+    const created = driver.open({
+      location: databasePath,
+      expectedBinding: {
+        bindingVersion: 1,
+        kind: "workspace",
+        workspaceId: "alpha",
+      },
+    });
+    created.close();
+
+    const raw = new Database(databasePath);
+    raw
+      .prepare("DELETE FROM _aiverse_meta WHERE key = 'workspace_id'")
+      .run();
+    raw.close();
+
+    assert.throws(
+      () => driver.open({ location: databasePath, mode: "open-existing" }),
+      (error) => assertStorageError(error, "DATABASE_CORRUPT"),
+    );
+  });
+});
