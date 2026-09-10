@@ -1,3 +1,5 @@
+import type { DataCatalogStorage } from "./catalog-store.js";
+
 export const AI_VERSE_DATA_SQLITE_FORMAT = "ai-verse-data/sqlite" as const;
 export const AI_VERSE_DATA_DATABASE_FORMAT_VERSION = 1 as const;
 export const AI_VERSE_DATA_SQLITE_APPLICATION_ID = 0x41495644 as const;
@@ -47,6 +49,7 @@ export interface DataStorageDatabase {
   metadata(): StorageDatabaseMetadata;
   diagnostics(): StorageDiagnostics;
   integrityCheck(): IntegrityCheckResult;
+  catalogStorage(): DataCatalogStorage;
   close(): void;
 }
 
