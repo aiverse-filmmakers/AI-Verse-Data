@@ -139,16 +139,24 @@ Real separate-process race tests prove that multiple writers released against ve
 
 Agent and automation writes can be retried due to uncertain transport outcomes.
 
-An idempotency key is bound to a canonical request fingerprint.
+Phase 2.2 implements durable idempotency for record create/update/delete and bounded transactions. A workspace-database-global key is bound to a versioned canonical SHA-256 request fingerprint containing operation, trusted actor, and semantic request.
 
 Rules:
 
-- same key + same fingerprint after successful commit -> return same result/receipt;
+- same key + same fingerprint after successful commit -> return the original committed result without re-execution;
 - same key + different fingerprint -> `IDEMPOTENCY_CONFLICT`;
-- in-progress/uncertain states must not be converted into duplicate execution without recovery semantics;
-- idempotency records belong to Data's canonical mutation-control history and follow a defined retention policy.
+- fresh mutation + replay-control entry commit atomically;
+- failed mutations do not reserve their key;
+- concurrent duplicate delivery executes once and replays thereafter;
+- concurrent same-key/different-request delivery commits one request and rejects the other;
+- persisted replay results are digest-verified before use;
+- v0.1 committed entries do not automatically expire, because silent expiry can turn a delayed retry into duplicate execution.
 
-Idempotency does not allow bypassing current authorization or version checks on a genuinely new operation.
+There is no durable exposed `in_progress` row in v0.1. SQLite's short write transaction provides the local uncertainty boundary.
+
+Idempotency does not grant authorization. Native host integrations must authorize the caller before exposing a mutation or replay result.
+
+Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
 
 ## 10. Transaction safety
 
