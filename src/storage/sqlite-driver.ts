@@ -6,6 +6,7 @@ import { DataStorageError, isDataStorageError } from "./errors.js";
 import { SqliteCatalogStorage } from "./sqlite-catalog-store.js";
 import { SqliteRecordStorage } from "./sqlite-record-store.js";
 import { SqliteQueryStorage } from "./sqlite-query-store.js";
+import { SqliteRelationStorage } from "./sqlite-relation-store.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
@@ -507,6 +508,16 @@ class SqliteStorageDatabase implements DataStorageDatabase {
   queryStorage(): SqliteQueryStorage {
     this.assertOpen();
     return new SqliteQueryStorage(this.database);
+  }
+
+  relationStorage(): SqliteRelationStorage {
+    this.assertOpen();
+    return new SqliteRelationStorage(this.database);
+  }
+
+  transaction<T>(operation: () => T): T {
+    this.assertOpen();
+    return this.database.transaction(operation)();
   }
 
   close(): void {
