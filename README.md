@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 10 / 41  
-**Latest completed:** Task 10 / 41, Phase 2.1 - Optimistic concurrency  
-**Next task:** Task 11 / 41, Phase 2.2 - Idempotent mutations  
+**Completed implementation tasks:** 11 / 41  
+**Latest completed:** Task 11 / 41, Phase 2.2 - Idempotent mutations  
+**Next task:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -112,9 +112,21 @@ Optimistic concurrency
   -> separate-process race tests
   -> transaction race tests
   -> stale delete protection
+
+Task 11 / 41 - COMPLETE
+Idempotent mutations
+  -> durable _idempotency store
+  -> canonical SHA-256 request fingerprints
+  -> operation + trusted actor binding
+  -> exact original-result replay
+  -> IDEMPOTENCY_CONFLICT on changed reuse
+  -> record + transaction retry safety
+  -> failed-write rollback/no ghost key
+  -> close/reopen replay persistence
+  -> duplicate-delivery process races
 ```
 
-Phase 1 is complete. Data Spaces, entity schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions have passed the full integration gate. Phase 2 now hardens concurrency, retry safety, events, receipts, backup, migrations, and recovery.
+Phase 1 is complete. Phase 2.1 and 2.2 now add race-safe optimistic concurrency and durable idempotent mutation replay. Events, receipts, provenance, backup, migrations, and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -127,6 +139,7 @@ Phase 1 is complete. Data Spaces, entity schemas, record CRUD, safe queries, agg
 @ai-verse/data/records
 @ai-verse/data/query
 @ai-verse/data/transactions
+@ai-verse/data/idempotency
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -197,7 +210,7 @@ Records live in one fixed engine-owned `_records` STRICT table rather than arbit
 
 Create applies validated schema defaults. Get/list hide deleted records unless explicitly requested. Update validates the existing payload against its historical schema, then validates the merged result against the current schema. Soft delete preserves the canonical row and deletion attribution.
 
-Phase 2.1 now enforces `expectedVersion` atomically at the canonical SQLite write. Real separate-process races prove one stale-version writer can commit and the others receive `RECORD_VERSION_CONFLICT`. Persistent idempotency, events, and receipts remain Tasks 11 and 12.
+Phase 2.1 now enforces `expectedVersion` atomically at the canonical SQLite write. Real separate-process races prove one stale-version writer can commit and the others receive `RECORD_VERSION_CONFLICT`. Durable idempotency is implemented in Task 11. Events and receipts remain Task 12.
 
 See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
@@ -217,7 +230,7 @@ Phase 1.8 enforces declared reference fields against real active target records 
 
 `@ai-verse/data/transactions` executes up to 50 create/update/delete operations atomically inside one workspace database. A later operation may reference a record created earlier in the same transaction using an explicit `clientRef` marker on a declared reference field. Any failed operation rolls back the whole transaction.
 
-Persistent idempotency, race-hardening, mutation events, and durable receipts remain Phase 2 tasks.
+Race-hardening and durable idempotency are implemented in Phase 2.1 and 2.2. Mutation events and durable receipts remain Task 12.
 
 See [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-V0.1.md).
 
@@ -237,20 +250,30 @@ The test suite includes independent SQLite connections and separate Node process
 
 See [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md).
 
+## Idempotent mutations
+
+Phase 2.2 makes record create/update/delete and bounded transactions safe to retry after uncertain delivery. Each successful workspace-database-global key is bound to a deterministic SHA-256 fingerprint of operation, trusted actor, and semantic request, plus the original committed result.
+
+A matching retry returns the original result without executing again. Reusing the same key for a different request returns `IDEMPOTENCY_CONFLICT`. Failed mutations leave no ghost key, replay survives close/reopen, and persisted replay results are digest-verified before use.
+
+Separate-process tests prove concurrent duplicate delivery creates one canonical record and replays one shared result. A same-key/different-payload race produces one commit and one conflict.
+
+See [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md).
+
 ### Latest verification
 
-Task 10 concurrency CI run: `34521416868`
+Task 11 idempotency CI run: `34523382398`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-110 tests
-110 passed
+125 tests
+125 passed
 0 failed
 ```
 
-The suite now additionally proves storage-level compare-and-swap behavior, real separate-process stale-writer races, transaction-level races, and stale soft-delete rejection without lost updates.
+The suite now additionally proves deterministic request fingerprinting, exact record/transaction replay, conflict rejection, reopen persistence, failed-write key rollback, replay-result tamper detection, and real separate-process duplicate/conflicting-delivery behavior.
 
 ## Why Data is separate from Memory
 
@@ -360,10 +383,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/PHASE-1-STATUS.md`](docs/PHASE-1-STATUS.md) - Phase 1 implementation evidence
 - [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md) - final Phase 1 integration gate and evidence
 - [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md) - implemented race-safe record concurrency contract
+- [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md) - implemented durable mutation retry/replay contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 11 / 41, Phase 2.2 - Idempotent mutations.**
+**Next: Task 12 / 41, Phase 2.3 - Events, receipts, provenance.**
