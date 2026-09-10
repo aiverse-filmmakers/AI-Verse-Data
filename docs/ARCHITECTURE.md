@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 in progress; scope, schema catalog, record CRUD, queries, aggregates, relations, and bounded transactions implemented
+**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency implemented
 
 ## 1. Architectural position
 
@@ -447,6 +447,16 @@ Phase 1.8 implements this boundary for up to 50 record create/update/delete oper
 Cross-workspace transactions are not supported in v0.1.
 
 Future storage drivers must preserve equivalent atomicity within their supported transaction boundary.
+
+## 13.1 Implemented optimistic concurrency
+
+Phase 2.1 makes record versions a true canonical compare-and-swap boundary.
+
+Update and soft-delete SQL statements match the caller's validated `expectedVersion` directly. Record mutations and outer bounded write transactions request short immediate write intent from the storage driver, preventing WAL read-snapshot upgrade races while still requiring optimistic version agreement.
+
+The engine does not create record locks, silently merge stale patches, or automatically retry semantic conflicts.
+
+Detailed contract: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
 
 ## 14.1 Implemented relation integrity
 
