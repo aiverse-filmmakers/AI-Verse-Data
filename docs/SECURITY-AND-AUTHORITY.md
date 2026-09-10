@@ -125,11 +125,15 @@ Every mutable record has a version.
 
 Update/delete requests carry `expectedVersion`.
 
+Phase 2.1 enforces the decisive comparison at the canonical storage write. SQLite update/delete statements include the expected record version in the `WHERE` predicate, and record mutation paths use short immediate write transactions so competing local writers cannot both advance the same version.
+
 A mutation succeeds only when the stored version matches the caller's expected version.
 
-Conflict response must expose enough information for the caller to re-read and decide, but it must not silently merge incompatible edits.
+Conflict response exposes `expectedVersion` and the observed `currentVersion` when available so the caller can re-read and decide. The engine does not silently merge incompatible edits.
 
 Automated retry after a version conflict is not universally safe. The caller must re-evaluate the operation against current state.
+
+Real separate-process race tests prove that multiple writers released against version N produce exactly one N -> N+1 commit and stale conflicts for the losers.
 
 ## 9. Idempotency safety
 
