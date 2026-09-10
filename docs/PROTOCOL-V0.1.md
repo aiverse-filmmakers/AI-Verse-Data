@@ -225,7 +225,7 @@ Phase 1.6 direct record execution:
 - rejects unknown fields unless the schema explicitly allows them;
 - persists the canonical record with schema version, timestamps, and actor attribution.
 
-The public transport and direct record mutation surfaces require `idempotencyKey`. Phase 2.2 persistently binds each successful key to a canonical request fingerprint and original committed result. A matching retry replays that result without mutating again; different reuse returns `IDEMPOTENCY_CONFLICT`. Mutation events and durable receipts remain Task 12 / 41.
+The public transport and direct record mutation surfaces require `idempotencyKey`. Phase 2.2 persistently binds each successful key to a canonical request fingerprint and original committed result. A matching retry replays that result without mutating again; different reuse returns `IDEMPOTENCY_CONFLICT`. Phase 2.3 now commits an immutable event and durable receipt with each successful mutation and emits no duplicate audit fact on replay.
 
 ### `data.record.get`
 
@@ -708,7 +708,7 @@ SQLite maintains the normalized `_record_relations` index. Record and relation-i
 
 The transaction-local `clientRef` mechanism is deliberately narrow. A record created earlier in the same transaction may expose a unique alias. Later create/update data may use `{ "$ref": "alias" }` only in a schema-declared reference field. The alias is replaced with the canonical generated record ID before normal record validation.
 
-Protocol idempotency keys are structurally accepted but persistent replay semantics remain Task 11 / 41. Race-safe optimistic concurrency is implemented in Task 10 / 41. Mutation events and durable receipts remain Task 12 / 41.
+Persistent idempotency replay is implemented in Task 11 / Phase 2.2. Race-safe optimistic concurrency is implemented in Task 10 / Phase 2.1. Mutation events, durable receipts, and transaction provenance are implemented in Task 12 / Phase 2.3.
 
 
 ## 28. Phase 2.2 idempotency implementation note
@@ -733,7 +733,7 @@ Different reuse of the same key returns `IDEMPOTENCY_CONFLICT`. Failed mutations
 
 For bounded transactions, the outer key protects the entire transaction result while nested mutation keys are also persisted. All canonical data effects plus nested/outer idempotency entries share the same SQLite transaction and roll back together.
 
-Committed v0.1 idempotency entries do not automatically expire. Mutation events and durable receipts remain Task 12 / 41.
+Committed v0.1 idempotency entries do not automatically expire. Phase 2.3 composes those entries atomically with immutable events and durable receipts.
 
 Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
 
