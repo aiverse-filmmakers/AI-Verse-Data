@@ -38,6 +38,12 @@ const workerPath = fileURLToPath(
   new URL("./concurrency-worker.js", import.meta.url),
 );
 
+let idempotencySequence = 0;
+function nextIdempotencyKey(): string {
+  idempotencySequence += 1;
+  return `legacy-test:${idempotencySequence}`;
+}
+
 function createRaceDatabase(): {
   readonly directory: string;
   readonly databasePath: string;
@@ -65,6 +71,7 @@ function createRaceDatabase(): {
       },
     });
     const record = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "race",
       entity: "counters",
       data: { name: "shared", value: 0 },
