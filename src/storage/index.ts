@@ -1,3 +1,4 @@
+export * from "./provenance-store.js";
 export * from "./idempotency-store.js";
 export * from "./relation-store.js";
 export * from "./query-store.js";
