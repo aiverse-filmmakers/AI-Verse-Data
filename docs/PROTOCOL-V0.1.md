@@ -1,11 +1,11 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Pre-implementation protocol specification  
+**Status:** Protocol foundation implemented; catalog/schema semantics implemented through Phase 1.5  
 **Date:** 2026-09-10
 
 ## 1. Purpose
 
-This document defines the initial public operation model for AI-Verse Data before implementation begins.
+This document defines the initial public operation model for AI-Verse Data. Protocol envelopes and validators are implemented, while operation execution is landing phase by phase.
 
 The protocol is intentionally higher-level than SQL. It describes structured operations that can be used by a CLI, Bots, Apps, Dashboard, Skills, Automations, and future remote/server drivers.
 
@@ -542,7 +542,9 @@ WORKSPACE_ID_MISMATCH
 DATA_SPACE_NOT_FOUND
 DATA_SPACE_ALREADY_EXISTS
 ENTITY_NOT_FOUND
+ENTITY_ALREADY_EXISTS
 SCHEMA_INVALID
+SCHEMA_VERSION_NOT_FOUND
 SCHEMA_VERSION_CONFLICT
 SCHEMA_MIGRATION_REQUIRED
 RECORD_NOT_FOUND
@@ -625,3 +627,12 @@ The first implementation should choose the smallest reliable transport while kee
 8. Successful mutations return receipts and append events.
 9. Error codes are machine-readable.
 10. Protocol version, database format version, engine version, and entity schema version remain distinct.
+
+
+## 24. Phase 1.5 implementation note
+
+Data Space and entity-schema execution is now implemented through `DataCatalog`. Schema definitions are persisted as validated structured JSON in a fixed internal catalog, with immutable versions and deterministic SHA-256 digests.
+
+Direct safe updates currently execute `add_field`, `set_name`, and `set_description`. The protocol also recognizes `remove_field`, `replace_field`, and `rename_field`, but these return `SCHEMA_MIGRATION_REQUIRED` until the user-schema migration framework exists.
+
+Field defaults are validated against their declared type and constraints before schema persistence. Record operations described above remain protocol contracts only until Phase 1.6 and later tasks implement them.
