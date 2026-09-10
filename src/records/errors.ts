@@ -1,5 +1,6 @@
 export type DataRecordErrorCode =
   | "RECORD_NOT_FOUND"
+  | "RECORD_VERSION_CONFLICT"
   | "FIELD_UNKNOWN"
   | "FIELD_INVALID"
   | "DATABASE_CORRUPT"
