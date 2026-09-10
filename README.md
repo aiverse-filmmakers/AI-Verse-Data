@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 3 / 41  
-**Latest completed:** Task 3 / 41, Phase 1.3 - Storage-driver contract + SQLite bootstrap  
-**Next task:** Task 4 / 41, Phase 1.4 - Scope and database identity  
+**Completed implementation tasks:** 4 / 41  
+**Latest completed:** Task 4 / 41, Phase 1.4 - Scope and database identity  
+**Next task:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -40,6 +40,16 @@ Storage-driver contract + SQLite bootstrap
   -> STRICT internal metadata
   -> integrity checking
   -> fail-closed format validation
+
+Task 4 / 41 - COMPLETE
+Scope and database identity
+  -> trusted-root abstraction
+  -> standalone + native-ready workspace scopes
+  -> safe derived database paths
+  -> persistent scope binding
+  -> conflicting workspace/kind rejection
+  -> child-symlink escape rejection
+  -> no Dashboard systemId in canonical identity
 ```
 
 No Data Spaces, entity-schema persistence, records, CRUD, query execution, relations, OS installation, or sibling-layer adapters are implemented yet. They remain later tasks in the canonical Build Map.
@@ -50,6 +60,7 @@ No Data Spaces, entity-schema persistence, records, CRUD, query execution, relat
 @ai-verse/data
 @ai-verse/data/protocol
 @ai-verse/data/storage
+@ai-verse/data/scope
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -82,20 +93,40 @@ Most importantly, an unrelated SQLite file is never silently converted into AI-V
 
 See [`docs/STORAGE-V0.1.md`](docs/STORAGE-V0.1.md).
 
-### Task 3 verification
+## Scope and database identity
 
-Final implementation CI run: `34509888259`
+Phase 1.4 adds a host-side trusted-root boundary. Normal scoped opens derive the database path from the trusted root plus workspace identity rather than accepting a client-supplied SQLite path.
+
+Native-ready workspace scope resolves to:
+
+```text
+<trusted-root>/workspaces/<workspaceId>/data/ai-verse-data.sqlite
+```
+
+Standalone scope resolves to:
+
+```text
+<trusted-root>/.ai-verse-data/data.sqlite
+```
+
+The database persists only `bindingVersion`, `scope kind`, and `workspaceId`. It does **not** store Dashboard `systemId` or arbitrary absolute root paths. A conflicting reopen fails with `DATABASE_SCOPE_CONFLICT`, and an older unbound AI-Verse Data database may be bound only once.
+
+See [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md).
+
+### Latest verification
+
+Task 4 implementation CI run: `34511358818`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-25 tests
-25 passed
+37 tests
+37 passed
 0 failed
 ```
 
-The storage tests prove real database creation/reopen, metadata persistence, WAL, foreign keys, STRICT metadata, integrity checking, missing-database handling, unrelated-database rejection, unsupported-format rejection, identity mismatch rejection, and closed-handle safety.
+The suite now also proves trusted-root canonicalization, standalone/native-ready path derivation, cross-platform-safe workspace filesystem IDs, child-symlink escape rejection, durable scope binding, one-time binding of older unbound Data databases, conflicting workspace/kind rejection, partial-binding corruption detection, and physical separation across different trusted roots.
 
 ## Why Data is separate from Memory
 
@@ -161,7 +192,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. **Task 4 / 41** is where trusted workspace/database binding and safe path identity are implemented. The SQLite driver deliberately does not improvise that responsibility early.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding and safe path identity are now implemented. Phase 3 later adds actual AI-Verse OS manifest/workspace validation and initialization lifecycle.
 
 ## Technology direction
 
@@ -193,6 +224,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/INSTALLATION-AND-LIFECYCLE.md`](docs/INSTALLATION-AND-LIFECYCLE.md) - install/update/uninstall rules
 - [`docs/PROTOCOL-V0.1.md`](docs/PROTOCOL-V0.1.md) - public protocol design
 - [`docs/STORAGE-V0.1.md`](docs/STORAGE-V0.1.md) - implemented SQLite driver/storage format
+- [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md) - trusted-root and persistent scope-binding contract
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
@@ -203,4 +235,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 4 / 41, Phase 1.4 - Scope and database identity.**
+**Next: Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas.**
