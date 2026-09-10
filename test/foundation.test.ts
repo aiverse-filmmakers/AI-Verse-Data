@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes package, CLI, protocol, storage, scope, catalog, records, and query subpaths", () => {
+test("package metadata exposes package, CLI, protocol, storage, scope, catalog, records, query, and transactions subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -34,20 +34,23 @@ test("package metadata exposes package, CLI, protocol, storage, scope, catalog, 
   assert.ok("./catalog" in packageJson.exports);
   assert.ok("./records" in packageJson.exports);
   assert.ok("./query" in packageJson.exports);
+  assert.ok("./transactions" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports safe query execution through Phase 1.7", () => {
+test("foundation surface reports relations and transactions through Phase 1.8", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.7");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.8");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "1.7",
+    phase: "1.8",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
     catalogAvailable: true,
     recordOperationsAvailable: true,
     queryOperationsAvailable: true,
+    relationOperationsAvailable: true,
+    transactionOperationsAvailable: true,
   });
 });
