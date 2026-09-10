@@ -450,6 +450,28 @@ Phase 2.2 does not implement:
 
 Events, receipts, and provenance are implemented in Task 12 / Phase 2.3.
 
+## 22.2 Phase 2.4 bulk idempotency extension
+
+Phase 2.4 adds an outer bulk idempotency binding for `data.bulk.execute`.
+
+The bulk key binds:
+
+```text
+trusted actor
+expected preview digest
+exact ordered mutation operations
+```
+
+A deterministic internal transaction key gives the underlying `data.transaction.execute` its normal transaction-level retry identity, while nested record mutations retain their own keys.
+
+The bulk key, derived transaction key, and nested mutation keys must remain distinct. Nested keys must also be unique.
+
+A matching bulk replay is verified against both the underlying transaction idempotency result and the durable transaction receipt before the stored bulk result is returned.
+
+Preview itself commits no idempotency rows because its exact transaction simulation is intentionally rolled back.
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## 23. Non-negotiable invariants
 
 1. Successful retries do not duplicate canonical mutations.
