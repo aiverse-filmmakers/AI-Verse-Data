@@ -3,10 +3,11 @@
 export * from "./protocol/index.js";
 export * from "./storage/index.js";
 export * from "./scope/index.js";
+export * from "./catalog/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.4" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.5" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -14,13 +15,14 @@ export interface FoundationStatus {
   readonly protocolAvailable: true;
   readonly storageAvailable: true;
   readonly scopeAvailable: true;
-  readonly dataOperationsAvailable: false;
+  readonly catalogAvailable: true;
+  readonly recordOperationsAvailable: false;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
- * Protocol validation, SQLite storage, and trusted workspace scoping exist, but
- * Data Spaces, schemas, records, queries, and CRUD are intentionally later tasks.
+ * Protocol validation, SQLite storage, trusted scoping, Data Spaces, and entity
+ * schemas exist. Record CRUD, queries, relations, and transactions remain later.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -29,6 +31,7 @@ export function getFoundationStatus(): FoundationStatus {
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
-    dataOperationsAvailable: false,
+    catalogAvailable: true,
+    recordOperationsAvailable: false,
   };
 }
