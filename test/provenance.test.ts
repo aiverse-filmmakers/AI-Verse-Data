@@ -501,6 +501,130 @@ test("transaction idempotent replay does not mint new child or outer audit facts
   }
 });
 
+test("fresh transaction cannot adopt a previously committed nested idempotency key", () => {
+  const fixture = openFixture();
+  try {
+    const existing = fixture.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "items",
+      idempotencyKey: "prov:adoption:existing",
+      requestId: "req_existing_mutation",
+      data: { name: "Existing" },
+      actor: human,
+    });
+
+    assert.throws(
+      () =>
+        fixture.transactions.execute({
+          actor: human,
+          requestId: "req_new_transaction",
+          payload: {
+            idempotencyKey: "prov:adoption:outer",
+            operations: [
+              {
+                operation: "data.record.create",
+                payload: {
+                  spaceId: "crm",
+                  entity: "items",
+                  idempotencyKey: "prov:adoption:existing",
+                  data: { name: "Existing" },
+                },
+              },
+            ],
+          },
+        }),
+      /outside this fresh transaction/,
+    );
+
+    const records = fixture.records.list({
+      spaceId: "crm",
+      entity: "items",
+    });
+    assert.equal(records.length, 1);
+    assert.equal(records[0]!.recordId, existing.record.recordId);
+
+    const events = fixture.provenance.listEvents().items;
+    assert.equal(events.length, 1);
+    assert.equal(events[0]!.eventId, existing.receipt.eventId);
+
+    assert.throws(
+      () =>
+        fixture.provenance.getReceiptByIdempotencyKey({
+          idempotencyKey: "prov:adoption:outer",
+        }),
+      (error) => assertProvenanceError(error, "RECEIPT_NOT_FOUND"),
+    );
+  } finally {
+    cleanup(fixture);
+  }
+});
+
+test("transaction rejects duplicate nested keys and outer-key reuse before mutation", () => {
+  const fixture = openFixture();
+  try {
+    assert.throws(
+      () =>
+        fixture.transactions.execute({
+          actor: human,
+          payload: {
+            idempotencyKey: "prov:duplicate:outer",
+            operations: [
+              {
+                operation: "data.record.create",
+                payload: {
+                  spaceId: "crm",
+                  entity: "items",
+                  idempotencyKey: "prov:duplicate:key",
+                  data: { name: "One" },
+                },
+              },
+              {
+                operation: "data.record.create",
+                payload: {
+                  spaceId: "crm",
+                  entity: "items",
+                  idempotencyKey: "prov:duplicate:key",
+                  data: { name: "Two" },
+                },
+              },
+            ],
+          },
+        }),
+      /Duplicate nested idempotency key/,
+    );
+
+    assert.throws(
+      () =>
+        fixture.transactions.execute({
+          actor: human,
+          payload: {
+            idempotencyKey: "prov:same:key",
+            operations: [
+              {
+                operation: "data.record.create",
+                payload: {
+                  spaceId: "crm",
+                  entity: "items",
+                  idempotencyKey: "prov:same:key",
+                  data: { name: "Same" },
+                },
+              },
+            ],
+          },
+        }),
+      /outer idempotency key must differ/,
+    );
+
+    assert.equal(
+      fixture.records.list({ spaceId: "crm", entity: "items" }).length,
+      0,
+    );
+    assert.equal(fixture.provenance.listEvents().items.length, 0);
+  } finally {
+    cleanup(fixture);
+  }
+});
+
 test("failed direct mutation leaves no event or receipt", () => {
   const fixture = openFixture();
   try {
