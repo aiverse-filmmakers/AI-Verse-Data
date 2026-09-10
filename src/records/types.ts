@@ -9,8 +9,10 @@ export type DataRecordSnapshot = DataRecord;
 export interface RecordCreateInput {
   readonly spaceId: string;
   readonly entity: string;
+  readonly idempotencyKey: string;
   readonly data: JsonObject;
   readonly actor: DataActor;
+  readonly clientRef?: string;
 }
 
 export interface RecordGetInput {
@@ -32,6 +34,7 @@ export interface RecordUpdateInput {
   readonly entity: string;
   readonly recordId: string;
   readonly expectedVersion: number;
+  readonly idempotencyKey: string;
   readonly patch: JsonObject;
   readonly actor: DataActor;
 }
@@ -41,6 +44,7 @@ export interface RecordDeleteInput {
   readonly entity: string;
   readonly recordId: string;
   readonly expectedVersion: number;
+  readonly idempotencyKey: string;
   readonly actor: DataActor;
   readonly reason?: string;
 }
