@@ -705,7 +705,7 @@ Data Space and entity-schema execution is now implemented through `DataCatalog`.
 
 Direct safe updates currently execute `add_field`, `set_name`, and `set_description`. The protocol also recognizes `remove_field`, `replace_field`, and `rename_field`, but these return `SCHEMA_MIGRATION_REQUIRED` until the user-schema migration framework exists.
 
-Field defaults are validated against their declared type and constraints before schema persistence. Direct schema-aware record CRUD, relation enforcement, race-safe optimistic concurrency, persistent idempotency, mutation events, durable receipts, and provenance queries are now implemented. Full transport dispatch and later bulk/backup/migration capabilities remain future tasks.
+Field defaults are validated against their declared type and constraints before schema persistence. Direct schema-aware record CRUD, relation enforcement, race-safe optimistic concurrency, persistent idempotency, mutation events, durable receipts, provenance queries, and bounded bulk preview/execute are now implemented. Full transport dispatch plus backup and migration capabilities remain future tasks.
 
 
 ## 25. Phase 1.6 implementation note
