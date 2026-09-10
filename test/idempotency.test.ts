@@ -108,8 +108,9 @@ function assertRecordError(
 function spawnDuplicateWorker(
   databasePath: string,
   idempotencyKey: string,
+  value = 42,
 ): SpawnedWorker {
-  const child = fork(workerPath, [databasePath, idempotencyKey], {
+  const child = fork(workerPath, [databasePath, idempotencyKey, String(value)], {
     stdio: ["ignore", "ignore", "pipe", "ipc"],
   });
 
@@ -761,6 +762,47 @@ test("concurrent duplicate delivery across separate processes creates one record
       .idempotencyStorage()
       .get("concurrent:create:same-delivery");
     assert.ok(stored !== null);
+  } finally {
+    fixture.database.close();
+    rmSync(fixture.directory, { recursive: true, force: true });
+  }
+});
+
+test("concurrent same-key different-payload delivery commits one request and rejects the other", async () => {
+  const fixture = openFixture();
+  try {
+    const workers = [
+      spawnDuplicateWorker(
+        fixture.databasePath,
+        "concurrent:create:conflicting-delivery",
+        100,
+      ),
+      spawnDuplicateWorker(
+        fixture.databasePath,
+        "concurrent:create:conflicting-delivery",
+        200,
+      ),
+    ];
+    const results = await releaseWorkers(workers);
+
+    const successes = results.filter((result) => result.ok);
+    const conflicts = results.filter(
+      (result) => !result.ok && result.code === "IDEMPOTENCY_CONFLICT",
+    );
+    assert.equal(successes.length, 1);
+    assert.equal(conflicts.length, 1);
+
+    const rows = fixture.records.list({
+      spaceId: "delivery",
+      entity: "items",
+    });
+    assert.equal(rows.length, 1);
+    assert.ok(rows[0]!.data.value === 100 || rows[0]!.data.value === 200);
+    assert.ok(
+      fixture.database
+        .idempotencyStorage()
+        .get("concurrent:create:conflicting-delivery") !== null,
+    );
   } finally {
     fixture.database.close();
     rmSync(fixture.directory, { recursive: true, force: true });
