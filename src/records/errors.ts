@@ -3,6 +3,7 @@ export type DataRecordErrorCode =
   | "RECORD_VERSION_CONFLICT"
   | "FIELD_UNKNOWN"
   | "FIELD_INVALID"
+  | "REFERENCE_INVALID"
   | "DATABASE_CORRUPT"
   | "INTERNAL_ERROR";
 
