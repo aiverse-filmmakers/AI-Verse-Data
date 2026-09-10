@@ -682,11 +682,97 @@ function validateSchemaChange(input: unknown, path: string): SchemaChange {
       0,
       DATA_PROTOCOL_LIMITS.maxDescriptionLength,
     );
+  } else if (op === "remove_field") {
+    keysOnly(value, ["op", "field"], path);
+    fieldName(value.field, `${path}.field`);
+  } else if (op === "replace_field") {
+    keysOnly(value, ["op", "field", "definition"], path);
+    fieldName(value.field, `${path}.field`);
+    validateFieldDefinition(value.definition, `${path}.definition`);
+  } else if (op === "rename_field") {
+    keysOnly(value, ["op", "field", "newField"], path);
+    fieldName(value.field, `${path}.field`);
+    fieldName(value.newField, `${path}.newField`);
   } else {
     fail(`${path}.op`, "unsupported schema change");
   }
 
   return input as SchemaChange;
+}
+
+export function validateDataSpaceDefinition(
+  input: unknown,
+  path = "$space",
+): DataSpaceDefinition {
+  const value = object(input, path);
+  keysOnly(value, ["spaceId", "name", "description", "authority"], path);
+  slug(value.spaceId, `${path}.spaceId`);
+  string(value.name, `${path}.name`, 1, 256);
+  if (value.description !== undefined) {
+    string(
+      value.description,
+      `${path}.description`,
+      0,
+      DATA_PROTOCOL_LIMITS.maxDescriptionLength,
+    );
+  }
+  oneOf(value.authority, DATA_AUTHORITY_CLASSES, `${path}.authority`);
+  return input as DataSpaceDefinition;
+}
+
+export function validateEntitySchemaDefinition(
+  input: unknown,
+  path = "$schema",
+): EntitySchemaDefinition {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    ["spaceId", "entity", "name", "description", "fields", "allowUnknownFields"],
+    path,
+  );
+  requireSpaceEntity(value, path);
+  string(value.name, `${path}.name`, 1, 256);
+  if (value.description !== undefined) {
+    string(
+      value.description,
+      `${path}.description`,
+      0,
+      DATA_PROTOCOL_LIMITS.maxDescriptionLength,
+    );
+  }
+  validateFields(value.fields, `${path}.fields`);
+  if (value.allowUnknownFields !== undefined) {
+    boolean(value.allowUnknownFields, `${path}.allowUnknownFields`);
+  }
+  return input as EntitySchemaDefinition;
+}
+
+export function validateSchemaUpdatePayload(
+  input: unknown,
+  path = "$schemaUpdate",
+): SchemaUpdatePayload {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    ["spaceId", "entity", "expectedSchemaVersion", "changes"],
+    path,
+  );
+  requireSpaceEntity(value, path);
+  positiveInt(value.expectedSchemaVersion, `${path}.expectedSchemaVersion`);
+  if (
+    !Array.isArray(value.changes) ||
+    value.changes.length < 1 ||
+    value.changes.length > DATA_PROTOCOL_LIMITS.maxSchemaFields
+  ) {
+    fail(
+      `${path}.changes`,
+      `must contain 1..${DATA_PROTOCOL_LIMITS.maxSchemaFields} changes`,
+    );
+  }
+  value.changes.forEach((item, index) =>
+    validateSchemaChange(item, `${path}.changes[${index}]`),
+  );
+  return input as SchemaUpdatePayload;
 }
 
 function validatePayload(operation: DataOperation, input: unknown): void {
@@ -706,18 +792,7 @@ function validatePayload(operation: DataOperation, input: unknown): void {
       return;
 
     case "data.space.create":
-      keysOnly(value, ["spaceId", "name", "description", "authority"], path);
-      slug(value.spaceId, `${path}.spaceId`);
-      string(value.name, `${path}.name`, 1, 256);
-      if (value.description !== undefined) {
-        string(
-          value.description,
-          `${path}.description`,
-          0,
-          DATA_PROTOCOL_LIMITS.maxDescriptionLength,
-        );
-      }
-      oneOf(value.authority, DATA_AUTHORITY_CLASSES, `${path}.authority`);
+      validateDataSpaceDefinition(value, path);
       return;
 
     case "data.schema.list":
@@ -734,48 +809,11 @@ function validatePayload(operation: DataOperation, input: unknown): void {
       return;
 
     case "data.schema.create":
-      keysOnly(
-        value,
-        ["spaceId", "entity", "name", "description", "fields", "allowUnknownFields"],
-        path,
-      );
-      requireSpaceEntity(value, path);
-      string(value.name, `${path}.name`, 1, 256);
-      if (value.description !== undefined) {
-        string(
-          value.description,
-          `${path}.description`,
-          0,
-          DATA_PROTOCOL_LIMITS.maxDescriptionLength,
-        );
-      }
-      validateFields(value.fields, `${path}.fields`);
-      if (value.allowUnknownFields !== undefined) {
-        boolean(value.allowUnknownFields, `${path}.allowUnknownFields`);
-      }
+      validateEntitySchemaDefinition(value, path);
       return;
 
     case "data.schema.update":
-      keysOnly(
-        value,
-        ["spaceId", "entity", "expectedSchemaVersion", "changes"],
-        path,
-      );
-      requireSpaceEntity(value, path);
-      positiveInt(value.expectedSchemaVersion, `${path}.expectedSchemaVersion`);
-      if (
-        !Array.isArray(value.changes) ||
-        value.changes.length < 1 ||
-        value.changes.length > DATA_PROTOCOL_LIMITS.maxSchemaFields
-      ) {
-        fail(
-          `${path}.changes`,
-          `must contain 1..${DATA_PROTOCOL_LIMITS.maxSchemaFields} changes`,
-        );
-      }
-      value.changes.forEach((item, index) =>
-        validateSchemaChange(item, `${path}.changes[${index}]`),
-      );
+      validateSchemaUpdatePayload(value, path);
       return;
 
     case "data.record.create":
