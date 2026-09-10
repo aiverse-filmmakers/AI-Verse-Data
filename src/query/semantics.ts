@@ -71,11 +71,7 @@ function validateScalarValue(
       if (typeof value !== "boolean") invalidType(field, "boolean");
       return;
     case "date":
-      if (
-        typeof value !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-        Number.isNaN(Date.parse(value + "T00:00:00Z"))
-      ) {
+      if (typeof value !== "string" || !isValidIsoDate(value)) {
         invalidType(field, "YYYY-MM-DD date");
       }
       return;
