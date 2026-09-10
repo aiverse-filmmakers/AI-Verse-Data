@@ -6,11 +6,13 @@ import { DataStorageError, isDataStorageError } from "./errors.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
+  AI_VERSE_DATA_SCOPE_BINDING_VERSION,
   AI_VERSE_DATA_SQLITE_APPLICATION_ID,
   AI_VERSE_DATA_SQLITE_FORMAT,
   type DataStorageDatabase,
   type DataStorageDriver,
   type IntegrityCheckResult,
+  type StorageDatabaseBinding,
   type StorageDatabaseMetadata,
   type StorageDiagnostics,
   type StorageOpenOptions,
@@ -18,6 +20,11 @@ import {
 
 const META_TABLE = "_aiverse_meta";
 const SQLITE_DRIVER_NAME = "sqlite" as const;
+const BINDING_KEYS = [
+  "binding_version",
+  "scope_kind",
+  "workspace_id",
+] as const;
 
 interface SqliteVersionRow {
   readonly version: string;
@@ -120,7 +127,79 @@ function applicationTables(database: Database.Database): readonly string[] {
   return rows.map((row) => row.name);
 }
 
-function bootstrap(database: Database.Database): void {
+function validateBindingValue(
+  binding: StorageDatabaseBinding,
+  source: "expected" | "stored",
+): void {
+  const invalid = (message: string): never => {
+    throw new DataStorageError(
+      source === "stored" ? "DATABASE_CORRUPT" : "DATABASE_SCOPE_CONFLICT",
+      message,
+    );
+  };
+
+  if (binding.bindingVersion !== AI_VERSE_DATA_SCOPE_BINDING_VERSION) {
+    invalid(
+      source === "stored"
+        ? "AI-Verse Data scope binding version is unsupported."
+        : "Requested scope binding version is unsupported.",
+    );
+  }
+  if (binding.kind !== "standalone" && binding.kind !== "workspace") {
+    invalid(
+      source === "stored"
+        ? "AI-Verse Data scope binding kind is invalid."
+        : "Requested scope binding kind is invalid.",
+    );
+  }
+  if (
+    binding.workspaceId.length < 1 ||
+    binding.workspaceId.length > 128 ||
+    binding.workspaceId === "." ||
+    binding.workspaceId === ".." ||
+    binding.workspaceId.includes("/") ||
+    binding.workspaceId.includes("\\") ||
+    binding.workspaceId.includes("\u0000")
+  ) {
+    invalid(
+      source === "stored"
+        ? "AI-Verse Data workspace binding is invalid."
+        : "Requested workspace binding is invalid.",
+    );
+  }
+}
+
+function bindingEquals(
+  left: StorageDatabaseBinding,
+  right: StorageDatabaseBinding,
+): boolean {
+  return (
+    left.bindingVersion === right.bindingVersion &&
+    left.kind === right.kind &&
+    left.workspaceId === right.workspaceId
+  );
+}
+
+function insertBinding(
+  database: Database.Database,
+  binding: StorageDatabaseBinding,
+): void {
+  validateBindingValue(binding, "expected");
+  const insert = database.prepare(
+    `INSERT INTO ${META_TABLE} (key, value) VALUES (?, ?)`,
+  );
+  const write = database.transaction(() => {
+    insert.run("binding_version", String(binding.bindingVersion));
+    insert.run("scope_kind", binding.kind);
+    insert.run("workspace_id", binding.workspaceId);
+  });
+  write();
+}
+
+function bootstrap(
+  database: Database.Database,
+  binding?: StorageDatabaseBinding,
+): void {
   const createdAt = new Date().toISOString();
   const create = database.transaction(() => {
     database.exec(`
@@ -141,6 +220,13 @@ function bootstrap(database: Database.Database): void {
     insert.run("created_at", createdAt);
     insert.run("driver", SQLITE_DRIVER_NAME);
 
+    if (binding !== undefined) {
+      validateBindingValue(binding, "expected");
+      insert.run("binding_version", String(binding.bindingVersion));
+      insert.run("scope_kind", binding.kind);
+      insert.run("workspace_id", binding.workspaceId);
+    }
+
     database.pragma(
       `application_id = ${AI_VERSE_DATA_SQLITE_APPLICATION_ID}`,
     );
@@ -149,6 +235,44 @@ function bootstrap(database: Database.Database): void {
     );
   });
   create();
+}
+
+function parseStoredBinding(
+  values: ReadonlyMap<string, string>,
+): StorageDatabaseBinding | null {
+  const present = BINDING_KEYS.filter((key) => values.has(key));
+  if (present.length === 0) return null;
+  if (present.length !== BINDING_KEYS.length) {
+    throw new DataStorageError(
+      "DATABASE_CORRUPT",
+      "AI-Verse Data scope binding metadata is incomplete.",
+    );
+  }
+
+  const bindingVersionText = values.get("binding_version");
+  const kind = values.get("scope_kind");
+  const workspaceId = values.get("workspace_id");
+
+  const bindingVersion = Number.parseInt(bindingVersionText ?? "", 10);
+  if (
+    bindingVersionText === undefined ||
+    kind === undefined ||
+    workspaceId === undefined ||
+    !Number.isSafeInteger(bindingVersion)
+  ) {
+    throw new DataStorageError(
+      "DATABASE_CORRUPT",
+      "AI-Verse Data scope binding metadata is invalid.",
+    );
+  }
+
+  const binding = {
+    bindingVersion,
+    kind,
+    workspaceId,
+  } as StorageDatabaseBinding;
+  validateBindingValue(binding, "stored");
+  return binding;
 }
 
 function readMetadata(database: Database.Database): StorageDatabaseMetadata {
@@ -232,13 +356,38 @@ function readMetadata(database: Database.Database): StorageDatabaseMetadata {
     formatVersion,
     createdAt,
     driver: SQLITE_DRIVER_NAME,
+    binding: parseStoredBinding(values),
   };
+}
+
+function ensureExpectedBinding(
+  database: Database.Database,
+  metadata: StorageDatabaseMetadata,
+  expectedBinding: StorageDatabaseBinding | undefined,
+): StorageDatabaseMetadata {
+  if (expectedBinding === undefined) return metadata;
+  validateBindingValue(expectedBinding, "expected");
+
+  if (metadata.binding === null) {
+    insertBinding(database, expectedBinding);
+    return readMetadata(database);
+  }
+
+  if (!bindingEquals(metadata.binding, expectedBinding)) {
+    throw new DataStorageError(
+      "DATABASE_SCOPE_CONFLICT",
+      `Database is bound to ${metadata.binding.kind} workspace '${metadata.binding.workspaceId}', not ${expectedBinding.kind} workspace '${expectedBinding.workspaceId}'.`,
+    );
+  }
+
+  return metadata;
 }
 
 function validateOrBootstrap(
   database: Database.Database,
   existedBeforeOpen: boolean,
   mode: "create-or-open" | "open-existing",
+  expectedBinding?: StorageDatabaseBinding,
 ): StorageDatabaseMetadata {
   const metaExists = hasMetaTable(database);
 
@@ -261,10 +410,11 @@ function validateOrBootstrap(
       );
     }
 
-    bootstrap(database);
+    bootstrap(database, expectedBinding);
   }
 
-  return readMetadata(database);
+  const metadata = readMetadata(database);
+  return ensureExpectedBinding(database, metadata, expectedBinding);
 }
 
 function configureConnection(database: Database.Database): void {
@@ -300,7 +450,13 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 
   metadata(): StorageDatabaseMetadata {
     this.assertOpen();
-    return { ...this.storedMetadata };
+    return {
+      ...this.storedMetadata,
+      binding:
+        this.storedMetadata.binding === null
+          ? null
+          : { ...this.storedMetadata.binding },
+    };
   }
 
   diagnostics(): StorageDiagnostics {
@@ -390,6 +546,7 @@ export class SqliteStorageDriver implements DataStorageDriver {
         database,
         existedBeforeOpen,
         mode,
+        options.expectedBinding,
       );
       configureConnection(database);
       return new SqliteStorageDatabase(database, metadata);
