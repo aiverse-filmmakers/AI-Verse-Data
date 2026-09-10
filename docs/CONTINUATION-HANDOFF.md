@@ -1,6 +1,6 @@
 # AI-Verse Data Continuation Handoff
 
-**Updated:** 2026-09-10  
+**Updated:** 2026-09-11  
 **Repository:** `aiverse-filmmakers/AI-Verse-Data`  
 **Branch:** `main`  
 **Purpose:** Fast, canonical resume point for a new chat or coding session.
@@ -10,81 +10,89 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  3 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  4 / 9
 
-Overall implementation: 12 / 41 tasks complete
+Overall implementation: 13 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 12 / 41 - Phase 2.3: Events, receipts, provenance**
+**Task 13 / 41 - Phase 2.4: Bulk-operation safety and limits**
 
 Behavioral implementation verification:
 
 ```text
-Commit: 911c5d51d605bd6234f35dc351eef76c68ac61e6
-GitHub Actions run: 34526163488
+Commit: 48cc437647fdf76e21b51b310eb6567f4a843d1f
+GitHub Actions run: 34535289214
 Node 22: PASS
 Node 24: PASS
-Tests: 141 / 141 PASS
+Tests: 153 / 153 PASS
 Failures: 0
 Skipped: 0
 Cancelled: 0
 ```
 
-Implemented through Task 12:
+Task 12 final documentation-closeout head was independently verified before Task 13 began:
+
+```text
+Task 12 closeout head: 23327f4bde448776fcb1562eb28eb992e8eb6637
+GitHub Actions run: 34534379610
+Node 22: PASS
+Node 24: PASS
+```
+
+Implemented through Task 13:
 
 - protocol and validation foundation;
-- SQLite storage driver;
-- trusted scope/database identity;
-- Data Spaces and versioned entity schemas;
-- schema-aware record CRUD;
-- safe queries and aggregates;
-- declared relation integrity;
-- bounded atomic transactions;
+- SQLite storage driver and trusted workspace identity;
+- Data Spaces, schemas, CRUD, query/aggregate, relations, bounded transactions;
 - race-safe optimistic concurrency;
-- durable mutation idempotency;
-- deterministic SHA-256 request fingerprints;
-- exact committed-result replay;
-- conflicting-key rejection;
-- immutable record/transaction events;
-- durable mutation receipts;
+- durable mutation idempotency and exact replay;
+- immutable mutation events and durable receipts;
 - actor/request/transaction/workspace provenance;
-- SHA-256 provenance integrity checks;
-- receipt-to-event linkage verification;
+- SHA-256 provenance integrity and receipt/event linkage checks;
 - bounded opaque event queries;
-- transaction provenance-laundering protection.
+- transaction provenance-laundering protection;
+- `@ai-verse/data/bulk`;
+- `data.bulk.preview` and `data.bulk.execute`;
+- exact rollback-only bulk preview;
+- no durable preview records/relations/idempotency/events/receipts/event-sequence changes;
+- hard 50-operation and 256 KiB bulk ceilings;
+- actor/operation/state-bound preview digests;
+- mandatory preview-digest match before commit;
+- all-or-nothing bulk commit;
+- bulk replay verification against underlying transaction idempotency + provenance.
 
 Documentation/log closeout commits occur after the behavioral verification above. A new session should trust the task status and NEXT section in this file, then verify the current repository HEAD CI before making new changes.
 
 ## NEXT
 
-**Task 13 / 41 - Phase 2.4: Bulk-operation safety and limits**
+**Task 14 / 41 - Phase 2.5: Backup/export/import foundation**
 
-Task 13 scope from the canonical Build Map:
+Task 14 scope from the canonical Build Map:
 
 ```text
-Bounded bulk operations
-Dry-run / preview
-Hard size/count ceilings
+Consistent backup
+Manifest + digest + receipt metadata
+Verified portable export/import where appropriate
 ```
 
-Do not start Task 14 until Task 13 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
+Do not start Task 15 until Task 14 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 13 architectural laws
+## Task 14 architectural laws
 
 The implementation must preserve:
 
-1. Bulk operations remain bounded by hard engine ceilings.
-2. Preview/dry-run must not mutate canonical Data, provenance, idempotency state, or relations.
-3. Actual bulk mutations must reuse existing schema, relation, optimistic-concurrency, idempotency, event, and receipt guarantees rather than bypassing them.
-4. Partial success semantics must be explicit. Do not silently mix atomic and best-effort behavior.
-5. Normal APIs still do not accept raw SQL or canonical database paths.
-6. Workspace isolation remains technically enforced.
-7. Data events remain audit facts, not automatic Memory.
-8. Data must not write sibling repo state.
-9. Task 13 must not implement Task 14 backup/export/import behavior early.
-10. SQLite remains an implementation driver, not the public semantic contract.
+1. Backup/export must never mutate or weaken canonical workspace Data.
+2. A backup must represent a consistent committed database state, never a torn copy.
+3. Manifests/digests/receipts must make corruption or file mismatch visible.
+4. Import/restore must fail closed on incompatible format, binding, integrity, or digest mismatch.
+5. Existing canonical Data must never be silently overwritten by restore/import.
+6. Backup artifacts are portable evidence/copies, not a second editable source of truth.
+7. Restore/import must preserve workspace ownership and scope rules.
+8. No raw SQL or canonical DB paths are exposed through normal agent/App APIs.
+9. Task 14 must not implement Task 15 internal migration behavior early.
+10. No sibling repo modifications are permitted without separate explicit approval.
 
 ## Canonical documents to read before continuing
 
@@ -96,9 +104,10 @@ Read these first in a new session:
 4. `docs/ARCHITECTURE.md`
 5. `docs/PROTOCOL-V0.1.md`
 6. `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`
-7. `docs/IDEMPOTENCY-V0.1.md`
-8. `docs/SECURITY-AND-AUTHORITY.md`
-9. `docs/TESTING-AND-ACCEPTANCE.md`
+7. `docs/BULK-OPERATIONS-V0.1.md`
+8. `docs/IDEMPOTENCY-V0.1.md`
+9. `docs/SECURITY-AND-AUTHORITY.md`
+10. `docs/TESTING-AND-ACCEPTANCE.md`
 
 Then inspect the current implementation relevant to the next task.
 
