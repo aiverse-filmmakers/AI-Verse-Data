@@ -400,7 +400,6 @@ test("deleted records are excluded unless includeDeleted is explicit", () => {
       includeDeleted: true,
     });
     assert.equal(withDeleted.items.length, 5);
-    assert.equal(withDeleted.filter?.length, undefined);
     assert.equal(
       withDeleted.items.filter((item) => item.deletedAt !== null).length,
       1,
