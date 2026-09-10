@@ -15,6 +15,13 @@ import {
 
 const actor = { kind: "human", id: "operator" } as const;
 
+let idempotencySequence = 0;
+function nextIdempotencyKey(): string {
+  idempotencySequence += 1;
+  return `legacy-test:${idempotencySequence}`;
+}
+
+
 function withData(
   run: (
     catalog: DataCatalog,
@@ -89,12 +96,14 @@ test("direct create persists a normalized relation index for a valid reference",
   withData((catalog, records, _transactions, database) => {
     bootstrap(catalog);
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Acme" },
       actor,
     });
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Launch", company: company.recordId },
@@ -129,6 +138,7 @@ test("direct create rejects missing references without leaving a record", () => 
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           data: { title: "Broken", company: "rec_missing" },
@@ -148,18 +158,21 @@ test("updating a reference atomically replaces the relation index", () => {
   withData((catalog, records, _transactions, database) => {
     bootstrap(catalog);
     const first = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "First" },
       actor,
     });
     const second = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Second" },
       actor,
     });
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Deal", company: first.recordId },
@@ -167,6 +180,7 @@ test("updating a reference atomically replaces the relation index", () => {
     });
 
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: deal.recordId,
@@ -190,12 +204,14 @@ test("invalid reference update rolls back both record and relation state", () =>
   withData((catalog, records, _transactions, database) => {
     bootstrap(catalog);
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Acme" },
       actor,
     });
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Deal", company: company.recordId },
@@ -205,6 +221,7 @@ test("invalid reference update rolls back both record and relation state", () =>
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: deal.recordId,
@@ -237,12 +254,14 @@ test("soft delete blocks referenced targets and deleting the source releases the
   withData((catalog, records) => {
     bootstrap(catalog);
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Acme" },
       actor,
     });
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Deal", company: company.recordId },
@@ -252,6 +271,7 @@ test("soft delete blocks referenced targets and deleting the source releases the
     assert.throws(
       () =>
         records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "companies",
           recordId: company.recordId,
@@ -262,6 +282,7 @@ test("soft delete blocks referenced targets and deleting the source releases the
     );
 
     records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: deal.recordId,
@@ -270,6 +291,7 @@ test("soft delete blocks referenced targets and deleting the source releases the
     });
 
     const deletedCompany = records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       recordId: company.recordId,
@@ -314,12 +336,14 @@ test("declared references may safely target another Data Space in the same works
     });
 
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Client" },
       actor,
     });
     const job = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "production",
       entity: "jobs",
       data: { name: "Shoot", client: company.recordId },
@@ -388,12 +412,14 @@ test("transaction can update a reference to a record created earlier in the same
   withData((catalog, records, transactions) => {
     bootstrap(catalog);
     const oldCompany = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Old" },
       actor,
     });
     const deal = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Deal", company: oldCompany.recordId },
