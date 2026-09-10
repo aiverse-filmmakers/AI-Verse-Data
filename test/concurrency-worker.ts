@@ -77,6 +77,7 @@ process.once("message", (message: GoMessage) => {
             entity: "counters",
             recordId,
             expectedVersion: 1,
+            idempotencyKey: `race-delete-${process.pid}`,
             actor,
             reason: "concurrency race",
           })
@@ -105,6 +106,7 @@ process.once("message", (message: GoMessage) => {
               entity: "counters",
               recordId,
               expectedVersion: 1,
+              idempotencyKey: `race-update-${process.pid}`,
               patch: { value: value! },
               actor,
             });
