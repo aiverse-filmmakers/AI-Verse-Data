@@ -1,6 +1,7 @@
 import type { DataCatalogStorage } from "./catalog-store.js";
 import type { DataRecordStorage } from "./record-store.js";
 import type { DataQueryStorage } from "./query-store.js";
+import type { DataIdempotencyStorage } from "./idempotency-store.js";
 import type { DataRelationStorage } from "./relation-store.js";
 
 export const AI_VERSE_DATA_SQLITE_FORMAT = "ai-verse-data/sqlite" as const;
@@ -57,6 +58,7 @@ export interface DataStorageDatabase {
   recordStorage(): DataRecordStorage;
   queryStorage(): DataQueryStorage;
   relationStorage(): DataRelationStorage;
+  idempotencyStorage(): DataIdempotencyStorage;
   transaction<T>(
     operation: () => T,
     mode?: StorageTransactionMode,
