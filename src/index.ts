@@ -9,7 +9,7 @@ export * from "./query/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.6" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.7" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -19,12 +19,13 @@ export interface FoundationStatus {
   readonly scopeAvailable: true;
   readonly catalogAvailable: true;
   readonly recordOperationsAvailable: true;
+  readonly queryOperationsAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, and record CRUD exist. Queries, relations, and transactions remain later.
+ * schemas, record CRUD, safe queries, and aggregates exist. Relations and transactions remain later.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -35,5 +36,6 @@ export function getFoundationStatus(): FoundationStatus {
     scopeAvailable: true,
     catalogAvailable: true,
     recordOperationsAvailable: true,
+    queryOperationsAvailable: true,
   };
 }
