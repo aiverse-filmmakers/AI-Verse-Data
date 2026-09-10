@@ -269,3 +269,68 @@ test("raw SQL and database-path extras are rejected", () => {
     ),
   );
 });
+
+
+test("field defaults must satisfy their declared field type and constraints", () => {
+  validateFieldDefinition({
+    type: "string",
+    minLength: 1,
+    maxLength: 10,
+    default: "ready",
+  });
+  validateFieldDefinition({
+    type: "date",
+    default: "2026-09-10",
+  });
+  validateFieldDefinition({
+    type: "datetime",
+    default: "2026-09-10T12:00:00Z",
+  });
+  validateFieldDefinition({
+    type: "string",
+    nullable: true,
+    default: null,
+  });
+
+  rejects(() =>
+    validateFieldDefinition({
+      type: "integer",
+      default: 1.5,
+    }),
+  );
+  rejects(() =>
+    validateFieldDefinition({
+      type: "enum",
+      values: ["lead", "won"],
+      default: "lost",
+    }),
+  );
+  rejects(() =>
+    validateFieldDefinition({
+      type: "string",
+      default: null,
+    }),
+  );
+});
+
+test("protocol recognizes destructive schema changes so the catalog can return migration-required", () => {
+  for (const change of [
+    { op: "remove_field", field: "value" },
+    {
+      op: "replace_field",
+      field: "value",
+      definition: { type: "string" },
+    },
+    { op: "rename_field", field: "value", newField: "amount" },
+  ]) {
+    const request = validateRequestEnvelope(
+      base("data.schema.update", {
+        spaceId: "crm",
+        entity: "deals",
+        expectedSchemaVersion: 1,
+        changes: [change],
+      }),
+    );
+    assert.equal(request.operation, "data.schema.update");
+  }
+});
