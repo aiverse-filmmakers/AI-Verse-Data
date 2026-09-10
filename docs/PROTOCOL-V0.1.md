@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; core execution, optimistic concurrency, and durable idempotent mutation semantics implemented through Phase 2.2  
+**Status:** Protocol foundation implemented; core execution, optimistic concurrency, durable idempotency, mutation events, receipts, and provenance queries implemented through Phase 2.3  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -409,19 +409,23 @@ Transaction size/count is bounded.
 
 ### `data.events.list`
 
-Read-only audit/change query:
+Read-only audit/change query. Phase 2.3 supports a workspace-wide stream with an empty payload or progressively narrower filters:
 
 ```json
 {
   "spaceId": "crm",
   "entity": "deals",
-  "recordId": "deal_01J...",
+  "recordId": "rec_01J...",
   "after": null,
   "limit": 100
 }
 ```
 
-Normal callers receive redacted/structured event metadata rather than internal SQL details.
+`spaceId` is optional. If `entity` is present, `spaceId` is required. If `recordId` is present, both `spaceId` and `entity` are required.
+
+Results are bounded and paginated with opaque filter-bound event cursors. Workspace-wide listing includes transaction-level events that do not belong to a single Data Space/entity.
+
+Normal callers receive structured provenance metadata rather than internal SQL details or full record payload copies.
 
 ## 13. Health operations
 
@@ -436,6 +440,10 @@ Lightweight current status.
 Both must distinguish no-data-in-workspace from broken-data-in-workspace.
 
 ## 14. Record mutation receipt
+
+Phase 2.3 now persists one durable receipt for each successful record mutation and one final receipt for each successful bounded transaction.
+
+Receipt-returning in-process APIs are available through `createWithReceipt`, `updateWithReceipt`, `softDeleteWithReceipt`, and `executeWithReceipt`.
 
 Canonical mutation receipt example:
 
@@ -459,7 +467,7 @@ Canonical mutation receipt example:
 }
 ```
 
-Receipts prove Data mutation, not external side effects elsewhere.
+Receipts prove a committed AI-Verse Data mutation, not external side effects elsewhere. Receipt and linked-event digests and shared fields are verified before public use.
 
 ## 15. Actor model
 
@@ -637,7 +645,7 @@ Data Space and entity-schema execution is now implemented through `DataCatalog`.
 
 Direct safe updates currently execute `add_field`, `set_name`, and `set_description`. The protocol also recognizes `remove_field`, `replace_field`, and `rename_field`, but these return `SCHEMA_MIGRATION_REQUIRED` until the user-schema migration framework exists.
 
-Field defaults are validated against their declared type and constraints before schema persistence. Direct schema-aware record CRUD, relation enforcement, race-safe optimistic concurrency, and persistent idempotency are now implemented. Full transport dispatch plus events and durable receipts remain later tasks.
+Field defaults are validated against their declared type and constraints before schema persistence. Direct schema-aware record CRUD, relation enforcement, race-safe optimistic concurrency, persistent idempotency, mutation events, durable receipts, and provenance queries are now implemented. Full transport dispatch and later bulk/backup/migration capabilities remain future tasks.
 
 
 ## 25. Phase 1.6 implementation note
@@ -728,3 +736,20 @@ For bounded transactions, the outer key protects the entire transaction result w
 Committed v0.1 idempotency entries do not automatically expire. Mutation events and durable receipts remain Task 12 / 41.
 
 Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
+
+
+## 29. Phase 2.3 events, receipts, and provenance implementation note
+
+Phase 2.3 implements immutable structured Data provenance for successful record and bounded-transaction mutations.
+
+SQLite persists fixed engine-owned `_events` and `_mutation_receipts` tables. Normal UPDATE/DELETE operations against those tables are rejected by triggers. Events and receipts carry SHA-256 digests that are recomputed before public use, and a returned receipt is verified against its linked event.
+
+Record events preserve operation, request ID, optional transaction ID, trusted database scope/workspace identity, idempotency key, Data Space/entity/record identity, before/after versions, trusted actor, commit time, and bounded details. Full record payloads are not copied into normal event details.
+
+A bounded transaction assigns one transaction ID across all nested mutation provenance and emits one final `transaction.committed` event/receipt containing ordered child event and receipt IDs.
+
+Matching idempotent replay emits no additional event or receipt and receipt-returning APIs return the original committed receipt. Fresh transactions reject nested idempotency keys already committed outside that transaction, preventing provenance laundering.
+
+`data.events.list` supports workspace-wide or progressively scoped event queries with bounded filter-bound opaque cursors.
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
