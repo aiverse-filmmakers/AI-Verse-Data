@@ -158,6 +158,30 @@ Idempotency does not grant authorization. Native host integrations must authoriz
 
 Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
 
+## 9.1 Provenance integrity and writer boundary
+
+Phase 2.3 implements durable mutation events and receipts without exposing an unrestricted public provenance writer.
+
+Security rules:
+
+- normal callers can read provenance but cannot append arbitrary audit facts through the public package surface;
+- record/transaction provenance is emitted only as part of governed canonical mutation execution;
+- provenance and canonical Data/idempotency effects commit or roll back together;
+- idempotent replay creates no duplicate event or receipt;
+- SQLite triggers reject normal UPDATE/DELETE against committed event and receipt rows;
+- event and receipt SHA-256 digests are verified before public use;
+- receipt lookups also validate the linked event and require shared provenance fields to match;
+- event details do not normally copy the full canonical record payload;
+- trusted workspace identity comes from the database binding, not model input;
+- a fresh transaction cannot adopt a previously committed nested idempotency receipt as a new child;
+- duplicate nested idempotency keys and outer/nested key reuse are rejected.
+
+These controls make provenance tampering or provenance laundering fail visibly rather than becoming trusted history.
+
+Events remain Data audit facts, not automatic Memory.
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
 ## 10. Transaction safety
 
 Transactions are:
