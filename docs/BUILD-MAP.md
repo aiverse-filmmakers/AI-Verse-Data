@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 5 / 41 tasks complete  
-**Next:** Task 6 / 41, Phase 1.6 - Record CRUD
+**Implementation progress:** 6 / 41 tasks complete  
+**Next:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    56%  (5/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    67%  (6/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **5 / 41 tasks complete**.
+Overall implementation: **6 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 5 / 9 tasks complete
+**Progress:** 6 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -220,15 +220,51 @@ No record storage/CRUD was introduced.
 
 ## Task 6 / 41 - Phase 1.6 Record CRUD
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Create/get/list/update/soft-delete, schema validation, defaults, stable record IDs/timestamps, initial actor attribution.
+Implemented:
 
-Acceptance: CRUD survives reopen, invalid fields fail, deleted records are hidden by normal reads unless explicitly requested.
+- public `@ai-verse/data/records` surface;
+- storage-neutral `DataRecordStorage` contract;
+- SQLite `_records` STRICT, WITHOUT ROWID table;
+- fixed engine-owned storage rather than generated per-entity SQL tables;
+- create/get/list/update/soft-delete operations;
+- stable engine-generated `rec_...` record IDs;
+- exact persisted `schemaVersion` provenance;
+- monotonically increasing record versions;
+- schema-aware field validation for all first-release field types;
+- required/nullability/string/range/date/datetime/enum validation;
+- unknown-field rejection unless explicitly allowed by schema;
+- deep-cloned schema defaults on create and compatible schema evolution;
+- stable creation/update timestamps;
+- `createdBy`, `updatedBy`, and `deletedBy` actor attribution;
+- bounded basic record listing;
+- normal deleted-record hiding with explicit `includeDeleted` access;
+- basic `expectedVersion` rejection for update/delete;
+- fail-closed stored-record validation against historical schema;
+- reopen persistence for CRUD state and provenance.
+
+Verification:
+
+```text
+GitHub Actions run: 34514486550
+Node 22:             PASS
+Node 24:             PASS
+Tests:               71 / 71 PASS
+Failures:            0
+```
+
+Detailed contract: `docs/RECORD-CRUD-V0.1.md`.
+
+Task 10 / 41 remains responsible for race-safe atomic optimistic concurrency under competing writers. Tasks 11 and 12 remain responsible for persistent idempotency and events/receipts.
+
+No general query/aggregate engine, relation enforcement, or multi-record transaction execution was introduced.
+
+**Task 1.6 gate: PASSED.**
 
 ## Task 7 / 41 - Phase 1.7 Safe query + aggregate engine
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 Bounded query AST execution, filters, sorting, cursor pagination, field selection, count/sum/min/max/avg, parameterized compilation.
 
@@ -400,6 +436,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 6 / 41: Phase 1.6 - Record CRUD.**
+**Task 7 / 41: Phase 1.7 - Safe query + aggregate engine.**
 
-Do not begin Task 7 / 41 until Task 6 is implemented, tested, committed, and reported complete.
+Do not begin Task 8 / 41 until Task 7 is implemented, tested, committed, and reported complete.
