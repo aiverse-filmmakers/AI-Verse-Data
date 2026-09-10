@@ -13,11 +13,11 @@ import {
   validateBulkExecutePayload,
   validateBulkPreviewPayload,
 } from "../protocol/index.js";
+import { DataProvenance } from "../provenance/index.js";
 import {
-  DataProvenance,
   createRequestId,
   validateRequestId,
-} from "../provenance/index.js";
+} from "../provenance/identifiers.js";
 import { validateRecordActor } from "../records/validation.js";
 import type { DataStorageDatabase } from "../storage/index.js";
 import {
