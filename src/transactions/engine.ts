@@ -11,7 +11,7 @@ import {
   validateTransactionExecutePayload,
 } from "../protocol/index.js";
 import { DataRecords } from "../records/index.js";
-import { DataProvenance } from "../provenance/index.js";
+import { DataProvenance, DataProvenanceError } from "../provenance/index.js";
 import {
   createRequestId,
   createTransactionId,
@@ -129,6 +129,26 @@ export class DataTransactions implements DataTransactionsApi {
       operations: payload.operations,
     };
 
+    const nestedKeys = new Set<string>();
+    for (let index = 0; index < payload.operations.length; index += 1) {
+      const key = payload.operations[index]!.payload.idempotencyKey;
+      if (key === payload.idempotencyKey) {
+        throw new DataTransactionError(
+          "TRANSACTION_INVALID",
+          "Transaction outer idempotency key must differ from every nested mutation key.",
+          { index },
+        );
+      }
+      if (nestedKeys.has(key)) {
+        throw new DataTransactionError(
+          "TRANSACTION_INVALID",
+          `Duplicate nested idempotency key '${key}'.`,
+          { index, idempotencyKey: key },
+        );
+      }
+      nestedKeys.add(key);
+    }
+
     return this.database.transaction(() => {
       const prepared = this.idempotency.prepare<DataTransactionResult>(
         payload.idempotencyKey,
@@ -143,6 +163,44 @@ export class DataTransactions implements DataTransactionsApi {
       const results: DataTransactionOperationResult[] = [];
       const childEventIds: string[] = [];
       const childReceiptIds: string[] = [];
+      const attachChildProvenance = (
+        idempotencyKey: string,
+        index: number,
+      ): void => {
+        let receipt;
+        try {
+          receipt = this.provenance.getReceiptByIdempotencyKey({
+            idempotencyKey,
+          });
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            throw new DataTransactionError(
+              "TRANSACTION_INVALID",
+              "Nested mutation replay has no provenance receipt and cannot be adopted into a fresh transaction.",
+              { index, idempotencyKey },
+              error,
+            );
+          }
+          throw error;
+        }
+
+        if (
+          receipt.transactionId !== transactionId ||
+          receipt.requestId !== requestId
+        ) {
+          throw new DataTransactionError(
+            "TRANSACTION_INVALID",
+            "Nested idempotency key is already bound to a mutation outside this fresh transaction.",
+            { index, idempotencyKey },
+          );
+        }
+
+        childEventIds.push(receipt.eventId);
+        childReceiptIds.push(receipt.receiptId);
+      };
 
       for (let index = 0; index < payload.operations.length; index += 1) {
         const item = payload.operations[index]!;
@@ -169,11 +227,7 @@ export class DataTransactions implements DataTransactionsApi {
             transactionId,
             ...(create.clientRef === undefined ? {} : { clientRef: create.clientRef }),
           });
-          const provenance = this.provenance.getReceiptByIdempotencyKey({
-            idempotencyKey: create.idempotencyKey,
-          });
-          childEventIds.push(provenance.eventId);
-          childReceiptIds.push(provenance.receiptId);
+          attachChildProvenance(create.idempotencyKey, index);
 
           if (create.clientRef !== undefined) {
             clientRefs.set(create.clientRef, record.recordId);
@@ -198,11 +252,7 @@ export class DataTransactions implements DataTransactionsApi {
             requestId,
             transactionId,
           });
-          const provenance = this.provenance.getReceiptByIdempotencyKey({
-            idempotencyKey: update.idempotencyKey,
-          });
-          childEventIds.push(provenance.eventId);
-          childReceiptIds.push(provenance.receiptId);
+          attachChildProvenance(update.idempotencyKey, index);
           results.push({ index, operation: item.operation, record });
           continue;
         }
@@ -218,11 +268,7 @@ export class DataTransactions implements DataTransactionsApi {
           transactionId,
           ...(item.payload.reason === undefined ? {} : { reason: item.payload.reason }),
         });
-        const provenance = this.provenance.getReceiptByIdempotencyKey({
-          idempotencyKey: item.payload.idempotencyKey,
-        });
-        childEventIds.push(provenance.eventId);
-        childReceiptIds.push(provenance.receiptId);
+        attachChildProvenance(item.payload.idempotencyKey, index);
         results.push({ index, operation: item.operation, record });
       }
 
