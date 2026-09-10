@@ -826,6 +826,42 @@ export function validateAggregatePayload(
   return input as AggregatePayload;
 }
 
+export function validateTransactionExecutePayload(
+  input: unknown,
+  path = "$transaction",
+): TransactionExecutePayload {
+  const value = object(input, path);
+  keysOnly(value, ["idempotencyKey", "operations"], path);
+  validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
+  if (
+    !Array.isArray(value.operations) ||
+    value.operations.length < 1 ||
+    value.operations.length > DATA_PROTOCOL_LIMITS.maxTransactionOperations
+  ) {
+    fail(
+      `${path}.operations`,
+      `must contain 1..${DATA_PROTOCOL_LIMITS.maxTransactionOperations} operations`,
+    );
+  }
+  value.operations.forEach((item, index) => {
+    const nested = object(item, `${path}.operations[${index}]`);
+    keysOnly(nested, ["operation", "payload"], `${path}.operations[${index}]`);
+    const nestedOperation = nested.operation;
+    if (
+      nestedOperation !== "data.record.create" &&
+      nestedOperation !== "data.record.update" &&
+      nestedOperation !== "data.record.delete"
+    ) {
+      fail(
+        `${path}.operations[${index}].operation`,
+        "must be a supported record mutation",
+      );
+    }
+    validatePayload(nestedOperation, nested.payload);
+  });
+  return input as TransactionExecutePayload;
+}
+
 function validatePayload(operation: DataOperation, input: unknown): void {
   const path = "$.payload";
   const value = object(input, path);
@@ -941,34 +977,7 @@ function validatePayload(operation: DataOperation, input: unknown): void {
       return;
 
     case "data.transaction.execute":
-      keysOnly(value, ["idempotencyKey", "operations"], path);
-      validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
-      if (
-        !Array.isArray(value.operations) ||
-        value.operations.length < 1 ||
-        value.operations.length > DATA_PROTOCOL_LIMITS.maxTransactionOperations
-      ) {
-        fail(
-          `${path}.operations`,
-          `must contain 1..${DATA_PROTOCOL_LIMITS.maxTransactionOperations} operations`,
-        );
-      }
-      value.operations.forEach((item, index) => {
-        const nested = object(item, `${path}.operations[${index}]`);
-        keysOnly(nested, ["operation", "payload"], `${path}.operations[${index}]`);
-        const nestedOperation = nested.operation;
-        if (
-          nestedOperation !== "data.record.create" &&
-          nestedOperation !== "data.record.update" &&
-          nestedOperation !== "data.record.delete"
-        ) {
-          fail(
-            `${path}.operations[${index}].operation`,
-            "must be a supported record mutation",
-          );
-        }
-        validatePayload(nestedOperation, nested.payload);
-      });
+      validateTransactionExecutePayload(value, path);
       return;
 
     case "data.events.list":
