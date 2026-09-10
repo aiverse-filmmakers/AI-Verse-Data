@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 6 / 9  
-**Overall implementation tasks completed:** 6 / 41  
-**Next:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine
+**Implementation tasks completed:** 7 / 9  
+**Overall implementation tasks completed:** 7 / 41  
+**Next:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -457,14 +457,101 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 7 / 41 - Phase 1.7 Safe query + aggregate engine
+
+**Status:** COMPLETE
+
+### Implemented
+
+Public query surface:
+
+```text
+@ai-verse/data/query
+```
+
+The engine now executes bounded schema-aware query/filter/sort/select/cursor operations and count/sum/min/max/avg aggregates through a storage-neutral `DataQueryStorage` contract.
+
+SQLite receives parameterized plans rather than raw caller SQL. Query values and JSON field paths are bound parameters. Sort directions and aggregate operators come only from fixed validated enums.
+
+### Semantic safety
+
+- filter fields must be declared schema fields;
+- flexible unknown fields cannot become untyped query targets;
+- value types must match schema field types;
+- invalid field/operator pairs fail;
+- enum values must be declared;
+- JSON fields are restricted to null tests in v0.1;
+- duplicate select fields, sort fields, and aggregate aliases fail;
+- sum/avg require numeric fields;
+- min/max require comparable fields;
+- count is record count and omits a field;
+- LIKE wildcard characters are escaped for contains/starts-with;
+- SQL-looking values remain inert bound parameters.
+
+### Pagination
+
+Opaque base64url cursors contain a version, bounded offset, and SHA-256 fingerprint of the query shape. Cursors cannot be reused across different filter/sort/select/page-size/deleted-visibility shapes.
+
+```text
+default page size = 50
+maximum page size = 200
+maximum cursor offset = 100000
+```
+
+### Canonical read integrity
+
+Query rows use the same historical-schema hydration path as normal record reads. Query does not bypass stored JSON/schema/timestamp/actor corruption checks.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34516259373
+Node 22:             PASS
+Node 24:             PASS
+Tests:               90 / 90 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/QUERY-AND-AGGREGATES-V0.1.md`.
+
+### Deliberately not implemented
+
+- relation traversal/existence enforcement;
+- cross-entity joins;
+- bounded multi-record transaction execution;
+- intra-transaction references;
+- full-text search;
+- arbitrary SQL;
+- idempotency/events/receipts;
+- permission/capability filtering.
+
+### Task 1.7 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- structured query AST executes;
+- filters and boolean groups work;
+- sorting and projection work;
+- cursors are bounded and query-bound;
+- server ceilings override callers;
+- invalid field/type/operator combinations fail;
+- SQL-looking values cannot become executable SQL;
+- aggregates are type-checked and bounded;
+- no Task 1.8 relation/transaction work was introduced early.
+
+---
+
 ## Remaining Phase 1 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 7 / 41 | 1.7 | NEXT | Safe query + aggregate engine |
-| 8 / 41 | 1.8 | NOT STARTED | Relations + bounded transactions |
+| 8 / 41 | 1.8 | NEXT | Relations + bounded transactions |
 | 9 / 41 | 1.9 | NOT STARTED | Phase 1 integration gate |
 
 ## Current boundary
 
-Do not begin Task 1.8 or later work while implementing Task 1.7. Task 1.7 introduces general safe query and aggregate execution only; relations and bounded transactions remain Task 1.8.
+Do not begin Task 1.9 or later work while implementing Task 1.8. Task 1.8 introduces relations and bounded transactions only; the Phase 1 integration gate remains Task 1.9.
