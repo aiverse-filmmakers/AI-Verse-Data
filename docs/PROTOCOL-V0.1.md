@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; catalog, schema, record CRUD, query, aggregate, relation, and transaction semantics implemented through Phase 1.8  
+**Status:** Protocol foundation implemented; core execution, optimistic concurrency, and durable idempotent mutation semantics implemented through Phase 2.2  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -225,7 +225,7 @@ Phase 1.6 direct record execution:
 - rejects unknown fields unless the schema explicitly allows them;
 - persists the canonical record with schema version, timestamps, and actor attribution.
 
-The public transport payload already reserves `idempotencyKey`. Persistent idempotency/replay lands in Task 11 / 41, while mutation events and receipts land in Task 12 / 41. Phase 1.6 does not falsely claim those later guarantees.
+The public transport and direct record mutation surfaces require `idempotencyKey`. Phase 2.2 persistently binds each successful key to a canonical request fingerprint and original committed result. A matching retry replays that result without mutating again; different reuse returns `IDEMPOTENCY_CONFLICT`. Mutation events and durable receipts remain Task 12 / 41.
 
 ### `data.record.get`
 
@@ -380,6 +380,7 @@ A bounded transaction contains a sequence of supported mutations in the same wor
       "payload": {
         "spaceId": "crm",
         "entity": "companies",
+        "idempotencyKey": "task_123:onboard-company:company",
         "clientRef": "company",
         "data": { "name": "Acme" }
       }
@@ -389,6 +390,7 @@ A bounded transaction contains a sequence of supported mutations in the same wor
       "payload": {
         "spaceId": "crm",
         "entity": "deals",
+        "idempotencyKey": "task_123:onboard-company:deal",
         "data": {
           "title": "Acme onboarding",
           "company": { "$ref": "company" }
@@ -699,3 +701,30 @@ SQLite maintains the normalized `_record_relations` index. Record and relation-i
 The transaction-local `clientRef` mechanism is deliberately narrow. A record created earlier in the same transaction may expose a unique alias. Later create/update data may use `{ "$ref": "alias" }` only in a schema-declared reference field. The alias is replaced with the canonical generated record ID before normal record validation.
 
 Protocol idempotency keys are structurally accepted but persistent replay semantics remain Task 11 / 41. Race-safe optimistic concurrency is implemented in Task 10 / 41. Mutation events and durable receipts remain Task 12 / 41.
+
+
+## 28. Phase 2.2 idempotency implementation note
+
+Record create/update/delete and `data.transaction.execute` now have durable idempotent execution semantics.
+
+A successful key is unique within one workspace database and is bound to:
+
+- fingerprint version 1;
+- operation;
+- trusted actor;
+- canonical semantic request fingerprint;
+- original committed result;
+- SHA-256 result digest;
+- commit timestamp.
+
+The idempotency key itself is excluded from request fingerprint material. Canonical JSON object-key ordering is deterministic, so equivalent objects with different property insertion order produce the same fingerprint.
+
+Matching retries replay the original result before current record/version checks. This means a successfully committed update with `expectedVersion = 1` can later be retried safely even after the current record has advanced beyond version 2.
+
+Different reuse of the same key returns `IDEMPOTENCY_CONFLICT`. Failed mutations do not reserve the key.
+
+For bounded transactions, the outer key protects the entire transaction result while nested mutation keys are also persisted. All canonical data effects plus nested/outer idempotency entries share the same SQLite transaction and roll back together.
+
+Committed v0.1 idempotency entries do not automatically expire. Mutation events and durable receipts remain Task 12 / 41.
+
+Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
