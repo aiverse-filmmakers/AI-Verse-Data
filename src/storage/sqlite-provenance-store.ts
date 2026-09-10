@@ -151,8 +151,12 @@ export class SqliteProvenanceStorage implements DataProvenanceStorage {
       CREATE TABLE IF NOT EXISTS _events (
         event_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
         event_id TEXT NOT NULL UNIQUE,
-        event_type TEXT NOT NULL,
-        operation TEXT NOT NULL,
+        event_type TEXT NOT NULL CHECK (
+          event_type IN ('record.created', 'record.updated', 'record.deleted', 'transaction.committed')
+        ),
+        operation TEXT NOT NULL CHECK (
+          operation IN ('data.record.create', 'data.record.update', 'data.record.delete', 'data.transaction.execute')
+        ),
         request_id TEXT NOT NULL,
         transaction_id TEXT,
         scope_kind TEXT NOT NULL CHECK (scope_kind IN ('unbound', 'standalone', 'workspace')),
@@ -184,7 +188,9 @@ export class SqliteProvenanceStorage implements DataProvenanceStorage {
       CREATE TABLE IF NOT EXISTS _mutation_receipts (
         receipt_id TEXT PRIMARY KEY,
         event_id TEXT NOT NULL UNIQUE,
-        operation TEXT NOT NULL,
+        operation TEXT NOT NULL CHECK (
+          operation IN ('data.record.create', 'data.record.update', 'data.record.delete', 'data.transaction.execute')
+        ),
         request_id TEXT NOT NULL,
         transaction_id TEXT,
         scope_kind TEXT NOT NULL CHECK (scope_kind IN ('unbound', 'standalone', 'workspace')),
