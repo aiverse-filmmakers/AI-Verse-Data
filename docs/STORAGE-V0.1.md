@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1, durable idempotency extended in Phase 2.2  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -260,9 +260,29 @@ Record mutations and bounded multi-record write transactions use `immediate` mod
 
 Detailed semantics: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
 
+## Phase 2.2 idempotency extension
+
+The storage boundary now exposes `DataIdempotencyStorage`.
+
+SQLite creates the fixed engine-owned table:
+
+```text
+_idempotency
+```
+
+It stores one durable binding per workspace-database-global key: operation, fingerprint version, request SHA-256, canonical replay-result JSON, result SHA-256, and creation timestamp.
+
+Fresh record/transaction mutations write this entry in the same short SQLite transaction as their canonical Data effects. Failed operations therefore leave neither partial Data nor a ghost idempotency reservation.
+
+Matching retries read and verify the stored result; conflicting key reuse is rejected above storage. Stored replay result digests and metadata are validated fail-closed.
+
+v0.1 does not automatically expire committed idempotency entries.
+
+Detailed semantics: `docs/IDEMPOTENCY-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
-No idempotency/event/receipt persistence.  
+No event/receipt persistence.  
 No AI-Verse OS manifest/workspace validation.  
 No OS extension registration.  
 No Memory/Brain/Bot/Dashboard/App integration.
@@ -300,3 +320,7 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 22. Mutable record writes require an atomic expected-version predicate.
 23. Record and bounded transaction mutation paths may request immediate write intent through the storage abstraction.
 24. SQLite writer serialization does not replace caller-visible optimistic version checks.
+
+25. Durable idempotency entries use one fixed engine-owned `_idempotency` table.
+26. Canonical mutation effects and their idempotency replay result commit or roll back together.
+27. Committed idempotency entries do not automatically expire in v0.1.
