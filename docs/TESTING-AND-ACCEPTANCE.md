@@ -220,6 +220,44 @@ The suite verifies:
 
 Behavioral verification run `34523382398` passed 125 / 125 tests on Node 22 and Node 24.
 
+### Phase 2.3 events, receipts, and provenance evidence
+
+Task 12 / 41 adds durable provenance acceptance coverage.
+
+The suite proves:
+
+- one immutable event + durable receipt for fresh create/update/delete;
+- explicit request ID and trusted actor retention;
+- trusted workspace-scope attribution from the bound database;
+- ordered create/update/delete before/after version history;
+- bounded event pagination with opaque query-bound cursors;
+- workspace-wide event streams plus hierarchical Data Space/entity/record filters;
+- receipt lookup by receipt ID and idempotency key;
+- idempotent replay returns the original receipt and creates no extra event/receipt;
+- bounded transactions link all nested events/receipts to one transaction ID and one final `transaction.committed` event;
+- failed direct mutations leave no provenance;
+- failed transactions roll back all nested/outer provenance;
+- SQLite immutability triggers reject UPDATE/DELETE of committed provenance;
+- event and receipt digest tampering fails closed;
+- fresh transactions cannot adopt prior committed nested idempotency provenance;
+- duplicate nested idempotency keys and outer/nested key reuse fail before mutation;
+- normal event details do not duplicate complete record payloads.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34526163488
+Commit:              911c5d51d605bd6234f35dc351eef76c68ac61e6
+Node 22:             PASS
+Node 24:             PASS
+Tests:               141 / 141 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
