@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 2.1 concurrency boundary", () => {
+test("--help succeeds and identifies the Phase 2.2 idempotency boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 2\.1 adds race-safe optimistic concurrency/);
+  assert.match(result.stdout, /Phase 2\.2 adds durable idempotent record and transaction mutations/);
   assert.equal(result.stderr, "");
 });
 
