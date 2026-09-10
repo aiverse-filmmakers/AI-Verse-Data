@@ -4,6 +4,7 @@ export * from "./protocol/index.js";
 export * from "./storage/index.js";
 export * from "./scope/index.js";
 export * from "./catalog/index.js";
+export * from "./records/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
