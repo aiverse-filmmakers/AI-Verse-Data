@@ -680,7 +680,7 @@ Update/delete require a matching `expectedVersion`. Phase 2.1 now enforces that 
 
 Reference/attachment fields validate identifier shape in Phase 1.6. Reference existence and relation indexing remain Task 8 / 41.
 
-The direct CRUD API does not yet execute the protocol's persistent idempotency semantics, append mutation events, or issue mutation receipts. Those remain Tasks 11 and 12.
+The direct CRUD API now executes persistent idempotency semantics from Phase 2.2 and appends immutable mutation events plus durable receipts from Phase 2.3. Receipt-returning variants expose the committed receipt without breaking the existing record-returning mutation methods.
 
 
 ## 26. Phase 1.7 implementation note
