@@ -70,9 +70,9 @@ Detailed contract: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
 
 Task 2.1 does not implement:
 
-- persistent idempotency;
-- request fingerprints;
-- idempotent replay;
+- persistent idempotency (completed later in Task 11 / Phase 2.2);
+- request fingerprints (completed later in Task 11 / Phase 2.2);
+- idempotent replay (completed later in Task 11 / Phase 2.2);
 - mutation events;
 - durable receipts;
 - bulk operations;
@@ -94,7 +94,7 @@ Acceptance requirements are satisfied:
 - the decisive version comparison occurs at the storage write;
 - real independent-process races have exactly one winner;
 - bounded transactions cannot bypass version checks;
-- no Task 2.2 idempotency persistence was introduced early.
+- no Task 2.2 idempotency persistence was introduced early; Task 2.2 has since completed separately.
 
 ---
 
