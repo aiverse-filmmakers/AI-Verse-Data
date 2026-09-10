@@ -17,12 +17,15 @@ import type {
   DataOperation,
   DataRequestEnvelope,
   DataResponseEnvelope,
+  DataSpaceDefinition,
+  EntitySchemaDefinition,
   FieldDefinition,
   JsonObject,
   JsonValue,
   QueryFilter,
   QueryOrder,
   SchemaChange,
+  SchemaUpdatePayload,
 } from "./types.js";
 
 const SLUG_RE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
@@ -30,6 +33,8 @@ const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
 const OPAQUE_PREFIX_RE = /^(req|evt|txn|rcpt)_[A-Za-z0-9][A-Za-z0-9_-]*$/;
 const FIELD_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_DATETIME_RE =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
 
 export class DataProtocolValidationError extends Error {
   readonly code: "REQUEST_INVALID" | "OPERATION_UNSUPPORTED" | "PAYLOAD_INVALID";
@@ -243,6 +248,108 @@ function jsonObject(value: unknown, path: string, maxBytes?: number): JsonObject
   return result;
 }
 
+function validateFieldDefaultCompatibility(
+  definition: Record<string, unknown>,
+  type: FieldDefinition["type"],
+  path: string,
+): void {
+  if (!Object.prototype.hasOwnProperty.call(definition, "default")) return;
+
+  const value = definition.default;
+  const defaultPath = `${path}.default`;
+
+  if (value === null) {
+    if (definition.nullable !== true) {
+      fail(defaultPath, "null default requires nullable: true");
+    }
+    return;
+  }
+
+  switch (type) {
+    case "string": {
+      if (typeof value !== "string") fail(defaultPath, "must be a string");
+      const minLength =
+        typeof definition.minLength === "number" ? definition.minLength : 0;
+      const maxLength =
+        typeof definition.maxLength === "number"
+          ? definition.maxLength
+          : 1_000_000;
+      if (value.length < minLength || value.length > maxLength) {
+        fail(
+          defaultPath,
+          `length must satisfy declared range ${minLength}..${maxLength}`,
+        );
+      }
+      return;
+    }
+
+    case "number": {
+      if (typeof value !== "number" || !Number.isFinite(value)) {
+        fail(defaultPath, "must be a finite number");
+      }
+      if (typeof definition.min === "number" && value < definition.min) {
+        fail(defaultPath, "must be greater than or equal to declared min");
+      }
+      if (typeof definition.max === "number" && value > definition.max) {
+        fail(defaultPath, "must be less than or equal to declared max");
+      }
+      return;
+    }
+
+    case "integer": {
+      if (!Number.isSafeInteger(value)) {
+        fail(defaultPath, "must be a safe integer");
+      }
+      if (typeof definition.min === "number" && value < definition.min) {
+        fail(defaultPath, "must be greater than or equal to declared min");
+      }
+      if (typeof definition.max === "number" && value > definition.max) {
+        fail(defaultPath, "must be less than or equal to declared max");
+      }
+      return;
+    }
+
+    case "boolean":
+      if (typeof value !== "boolean") fail(defaultPath, "must be a boolean");
+      return;
+
+    case "date":
+      if (typeof value !== "string" || !isValidIsoDate(value)) {
+        fail(defaultPath, "must be a valid YYYY-MM-DD date");
+      }
+      return;
+
+    case "datetime":
+      if (
+        typeof value !== "string" ||
+        !ISO_DATETIME_RE.test(value) ||
+        Number.isNaN(Date.parse(value))
+      ) {
+        fail(defaultPath, "must be a valid timezone-qualified ISO datetime");
+      }
+      return;
+
+    case "enum":
+      if (
+        typeof value !== "string" ||
+        !Array.isArray(definition.values) ||
+        !definition.values.includes(value)
+      ) {
+        fail(defaultPath, "must be one of the declared enum values");
+      }
+      return;
+
+    case "reference":
+    case "attachment_ref":
+      safeId(value, defaultPath);
+      return;
+
+    case "json":
+      validateJsonValue(value, defaultPath);
+      return;
+  }
+}
+
 export function validateFieldDefinition(
   input: unknown,
   path = "$field",
@@ -350,6 +457,7 @@ export function validateFieldDefinition(
       break;
   }
 
+  validateFieldDefaultCompatibility(value, type, path);
   return input as FieldDefinition;
 }
 
