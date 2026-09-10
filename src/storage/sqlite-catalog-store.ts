@@ -310,21 +310,6 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
         };
       }
 
-      this.database
-        .prepare(
-          `INSERT INTO _entity_schema_versions
-            (space_id, entity_id, schema_version, schema_digest, definition_json, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          schema.spaceId,
-          schema.entity,
-          schema.schemaVersion,
-          schema.schemaDigest,
-          schema.definitionJson,
-          schema.createdAt,
-        );
-
       const updated = this.database
         .prepare(
           `UPDATE _entities
@@ -352,6 +337,21 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
           currentVersion: latest.current_version,
         };
       }
+
+      this.database
+        .prepare(
+          `INSERT INTO _entity_schema_versions
+            (space_id, entity_id, schema_version, schema_digest, definition_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        )
+        .run(
+          schema.spaceId,
+          schema.entity,
+          schema.schemaVersion,
+          schema.schemaDigest,
+          schema.definitionJson,
+          schema.createdAt,
+        );
 
       const stored = this.getCurrentSchema(schema.spaceId, schema.entity);
       if (stored === null) {
