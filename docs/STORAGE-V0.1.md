@@ -303,6 +303,31 @@ Fresh record/transaction mutation effects, provenance rows, and idempotency rows
 
 Detailed semantics: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
 
+## Phase 2.4 bulk storage composition
+
+Phase 2.4 adds no new canonical SQLite table.
+
+Bulk preview and execute reuse the existing storage transaction boundary and existing canonical/supporting tables.
+
+Preview opens an outer immediate transaction, executes the real bounded transaction path, captures a deterministic summary, and intentionally rolls the entire outer transaction back.
+
+The acceptance suite verifies that preview leaves no durable changes to:
+
+```text
+_records
+_record_relations
+_idempotency
+_events
+_mutation_receipts
+sqlite_sequence for _events
+```
+
+Bulk commit uses the existing atomic transaction path. Its outer retry state uses `_idempotency`; committed mutation audit history remains in the existing record/transaction event and receipt rows.
+
+A future storage driver must provide equivalent rollback-preview and all-or-nothing commit semantics to support the public bulk contract.
+
+Detailed semantics: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
 
