@@ -8,7 +8,7 @@ interface PackageMetadata {
   readonly version: string;
 }
 
-export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1.8 provides schema-aware record CRUD, bounded safe queries and aggregates, declared relations, and bounded atomic transactions. Persistent idempotency, events, and receipts are added in later tasks.\n`;
+export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1 is complete through 1.9: schema-aware record CRUD, bounded safe queries and aggregates, declared relations, and bounded atomic transactions have passed the integration gate. Phase 2 adds concurrency hardening, persistent idempotency, events, and receipts.\n`;
 
 function packageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
