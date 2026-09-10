@@ -7,6 +7,7 @@ import { SqliteCatalogStorage } from "./sqlite-catalog-store.js";
 import { SqliteRecordStorage } from "./sqlite-record-store.js";
 import { SqliteQueryStorage } from "./sqlite-query-store.js";
 import { SqliteRelationStorage } from "./sqlite-relation-store.js";
+import { SqliteIdempotencyStorage } from "./sqlite-idempotency-store.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
@@ -514,6 +515,11 @@ class SqliteStorageDatabase implements DataStorageDatabase {
   relationStorage(): SqliteRelationStorage {
     this.assertOpen();
     return new SqliteRelationStorage(this.database);
+  }
+
+  idempotencyStorage(): SqliteIdempotencyStorage {
+    this.assertOpen();
+    return new SqliteIdempotencyStorage(this.database);
   }
 
   transaction<T>(
