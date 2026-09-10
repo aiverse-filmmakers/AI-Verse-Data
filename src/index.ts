@@ -10,7 +10,7 @@ export * from "./transactions/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.8" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "1.9" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -28,7 +28,7 @@ export interface FoundationStatus {
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions exist. The Phase 1 integration gate remains later.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions exist. The full Phase 1 integration gate has passed.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
