@@ -23,7 +23,7 @@ test("--help succeeds and identifies the Phase 1.8 boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 1\.7/);
+  assert.match(result.stdout, /Phase 1\.8/);
   assert.equal(result.stderr, "");
 });
 
