@@ -169,6 +169,6 @@ export class DataTransactions implements DataTransactionsApi {
         operations: results,
         clientRefs: Object.fromEntries(clientRefs),
       };
-    });
+    }, "immediate");
   }
 }
