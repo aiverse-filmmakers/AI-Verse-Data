@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-10  
-**Status:** Phase 1 in progress  
-**Implementation progress:** 8 / 41 tasks complete  
-**Next:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate
+**Status:** Phase 1 complete; Phase 2 next  
+**Implementation progress:** 9 / 41 tasks complete  
+**Next:** Task 10 / 41, Phase 2.1 - Optimistic concurrency
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    89%  (8/9)
-Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
+Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
+Phase 2  Reliability + Agent Safety    [NEXT]            0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **8 / 41 tasks complete**.
+Overall implementation: **9 / 41 tasks complete**.
 
 ---
 
@@ -54,8 +54,8 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 
 # Phase 1 - Core Data Engine
 
-**Status:** IN PROGRESS  
-**Progress:** 8 / 9 tasks complete
+**Status:** COMPLETE  
+**Progress:** 9 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -341,19 +341,56 @@ Persistent idempotency, race-safe optimistic concurrency, events, and receipts r
 
 ## Task 9 / 41 - Phase 1.9 Phase 1 integration gate
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Run the full Phase 1 acceptance suite in `docs/TESTING-AND-ACCEPTANCE.md`.
+The final Phase 1 acceptance audit added an integrated end-to-end suite proving the core engine operates correctly as one system.
 
-**Phase 1 completes only after this gate passes.**
+Acceptance coverage:
+
+- standalone scoped database initialization;
+- native-ready workspace-scoped database initialization;
+- Data Space create/list/get;
+- entity schema create/list/get;
+- first-release field validation;
+- record create/get/list/update/soft-delete;
+- matching/stale `expectedVersion` behavior;
+- validated query/filter/sort/pagination;
+- count/sum/min/max/avg aggregates;
+- declared references;
+- bounded atomic transactions;
+- exact committed-state recovery after close/reopen;
+- two-workspace physical/logical isolation;
+- unsupported newer database format rejection.
+
+During the gate, `docs/TESTING-AND-ACCEPTANCE.md` was corrected because its original Phase 1 checklist incorrectly included mutation events and durable receipts. Those remain mandatory under Task 12 / 41, Phase 2.3, matching the canonical Build Map.
+
+Verification:
+
+```text
+GitHub Actions run: 34520521012
+Node 22:             PASS
+Node 24:             PASS
+Tests:               106 / 106 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed acceptance evidence: `docs/PHASE-1-ACCEPTANCE.md`.
+
+**Task 1.9 gate: PASSED.**  
+**Phase 1 Core Data Engine gate: PASSED.**
 
 ---
 
 # Phase 2 - Reliability + Agent Safety
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 ## Task 10 / 41 - Phase 2.1 Optimistic concurrency
+
+**Status:** NEXT
+
 Record versions, `expectedVersion`, conflict errors, race tests.
 
 ## Task 11 / 41 - Phase 2.2 Idempotent mutations
@@ -497,6 +534,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 9 / 41: Phase 1.9 - Phase 1 integration gate.**
+**Task 10 / 41: Phase 2.1 - Optimistic concurrency.**
 
-Do not begin Task 10 / 41 until Task 9 is run, verified, committed, and reported complete.
+Do not begin Task 11 / 41 until Task 10 is implemented, verified, committed, and reported complete.
