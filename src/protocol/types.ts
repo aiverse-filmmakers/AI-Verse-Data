@@ -306,6 +306,18 @@ export interface TransactionExecutePayload {
   readonly operations: readonly TransactionOperation[];
 }
 
+export type BulkMutationOperation = TransactionOperation;
+
+export interface BulkPreviewPayload {
+  readonly operations: readonly BulkMutationOperation[];
+}
+
+export interface BulkExecutePayload {
+  readonly idempotencyKey: string;
+  readonly expectedPreviewDigest: string;
+  readonly operations: readonly BulkMutationOperation[];
+}
+
 export interface EventsListPayload {
   readonly spaceId?: DataSpaceId;
   readonly entity?: EntityId;
@@ -329,6 +341,8 @@ export interface DataOperationPayloadMap {
   readonly "data.record.delete": RecordDeletePayload;
   readonly "data.query": QueryPayload;
   readonly "data.aggregate": AggregatePayload;
+  readonly "data.bulk.preview": BulkPreviewPayload;
+  readonly "data.bulk.execute": BulkExecutePayload;
   readonly "data.transaction.execute": TransactionExecutePayload;
   readonly "data.events.list": EventsListPayload;
   readonly "data.doctor": EmptyPayload;
