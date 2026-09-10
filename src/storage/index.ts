@@ -1,3 +1,4 @@
+export * from "./record-store.js";
 export * from "./catalog-store.js";
 export * from "./errors.js";
 export * from "./types.js";
