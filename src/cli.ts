@@ -8,7 +8,7 @@ interface PackageMetadata {
   readonly version: string;
 }
 
-export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 2.3 adds immutable mutation events, durable receipts, actor and workspace provenance, bounded event queries, and atomic transaction provenance. Bulk-operation safety remains the next Phase 2 task.\n`;
+export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 2.4 adds bounded bulk preview and atomic bulk execution with hard count/size ceilings, mandatory preview-digest matching, and no best-effort partial success. Backup/export/import remains the next Phase 2 task.\n`;
 
 function packageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
