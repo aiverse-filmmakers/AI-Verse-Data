@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 4 / 9  
-**Overall implementation tasks completed:** 4 / 41  
-**Next:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas
+**Implementation tasks completed:** 5 / 9  
+**Overall implementation tasks completed:** 5 / 41  
+**Next:** Task 6 / 41, Phase 1.6 - Record CRUD
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -274,16 +274,98 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 5 / 41 - Phase 1.5 Data Spaces and entity schemas
+
+**Status:** COMPLETE
+
+### Implemented
+
+Public catalog surface:
+
+```text
+@ai-verse/data/catalog
+```
+
+The catalog now provides Data Space create/list/get and entity schema create/list/get/update on top of the storage-driver abstraction.
+
+SQLite persists catalog truth in fixed engine-owned STRICT tables:
+
+```text
+_data_spaces
+_entities
+_entity_schema_versions
+```
+
+Agent-defined schemas remain structured JSON and never become arbitrary model-generated SQL tables.
+
+### Schema integrity and evolution
+
+- first entity schema version is 1;
+- accepted updates create immutable subsequent versions;
+- historical versions remain readable;
+- deterministic canonical JSON produces a SHA-256 schema digest;
+- persisted definitions are revalidated and digest-checked on read;
+- stale `expectedSchemaVersion` fails with `SCHEMA_VERSION_CONFLICT`;
+- duplicate Data Spaces/entities fail without replacement;
+- defaults must satisfy field type, nullability, enum, range, date, and datetime constraints;
+- additive fields are allowed when compatible;
+- a new required field without a default requires migration;
+- remove/replace/rename field operations return `SCHEMA_MIGRATION_REQUIRED`;
+- invalid/unsupported changes do not create partial versions.
+
+Schema creation and updates use SQLite transactions. The current-version pointer and immutable version row commit together or roll back together.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34513039706
+Node 22:             PASS
+Node 24:             PASS
+Tests:               53 / 53 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/CATALOG-AND-SCHEMAS-V0.1.md`.
+
+### Deliberately not implemented
+
+- record table/storage;
+- record create/get/list/update/delete;
+- record defaults application;
+- record actor attribution;
+- query/aggregate execution;
+- relations;
+- record transactions/events/receipts;
+- OS extension installation;
+- sibling-layer adapters.
+
+### Task 1.5 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- Data Spaces persist and survive reopen;
+- entity schemas persist and survive reopen;
+- schema versions/digests are stable and historical versions are immutable;
+- invalid schemas fail before canonical persistence;
+- unsupported destructive changes return migration-required;
+- safe additive updates are versioned and atomic;
+- no record CRUD was implemented early.
+
+---
+
 ## Remaining Phase 1 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 5 / 41 | 1.5 | NEXT | Data Spaces and entity schemas |
-| 6 / 41 | 1.6 | NOT STARTED | Record CRUD |
+| 6 / 41 | 1.6 | NEXT | Record CRUD |
 | 7 / 41 | 1.7 | NOT STARTED | Safe query + aggregate engine |
 | 8 / 41 | 1.8 | NOT STARTED | Relations + bounded transactions |
 | 9 / 41 | 1.9 | NOT STARTED | Phase 1 integration gate |
 
 ## Current boundary
 
-Do not begin Task 1.6 or later work while implementing Task 1.5. Task 1.5 introduces Data Spaces and entity schemas only; record CRUD remains Task 1.6.
+Do not begin Task 1.7 or later work while implementing Task 1.6. Task 1.6 introduces record CRUD only; general query/aggregate execution remains Task 1.7.
