@@ -2,10 +2,10 @@
 
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
-**Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 8 / 9  
-**Overall implementation tasks completed:** 8 / 41  
-**Next:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate
+**Phase status:** COMPLETE  
+**Implementation tasks completed:** 9 / 9  
+**Overall implementation tasks completed:** 9 / 41  
+**Next:** Task 10 / 41, Phase 2.1 - Optimistic concurrency
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -636,12 +636,94 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 9 / 41 - Phase 1.9 Phase 1 integration gate
+
+**Status:** COMPLETE
+
+### Gate purpose
+
+Task 1.9 did not introduce a new product feature. It proved the Phase 1 components compose into one coherent host-neutral Data engine and corrected one acceptance-plan phase-boundary contradiction.
+
+### Integrated acceptance story
+
+The new `test/phase1-integration.test.ts` suite exercises:
+
+```text
+trusted scope
+  -> SQLite database
+  -> Data Spaces
+  -> entity schemas
+  -> record CRUD
+  -> query + aggregate
+  -> declared references
+  -> bounded transactions
+  -> close/reopen
+  -> exact committed-state recovery
+```
+
+It also proves a native-ready workspace database path and real two-workspace physical/logical isolation.
+
+### Acceptance-plan correction
+
+The original Phase 1 checklist in `docs/TESTING-AND-ACCEPTANCE.md` incorrectly required:
+
+- mutation event append;
+- stable mutation receipt.
+
+Those requirements belong to Task 12 / 41, Phase 2.3 according to the canonical Build Map.
+
+The checklist was corrected rather than implementing Phase 2 early. Events and receipts remain mandatory for Phase 2 and the final release.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34520521012
+Node 22:             PASS
+Node 24:             PASS
+Tests:               106 / 106 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed acceptance record: `docs/PHASE-1-ACCEPTANCE.md`.
+
+### Phase 1 acceptance result
+
+The gate proves:
+
+1. standalone database initialization;
+2. workspace-scoped database initialization;
+3. Data Space create/list/get;
+4. schema create/list/get;
+5. first-release field validation;
+6. record create/get/list;
+7. matching/stale update version behavior;
+8. version-checked soft delete;
+9. validated query/filter/sort/pagination;
+10. count/sum/min/max/avg aggregates;
+11. validated declared references;
+12. bounded atomic transactions;
+13. exact committed-state recovery after reopen;
+14. unsupported newer database format rejection;
+15. two-workspace isolation across real canonical records.
+
+### Task 1.9 gate
+
+**PASSED.**
+
+### Phase 1 gate
+
+**PASSED.**
+
+Phase 1 Core Data Engine is complete.
+
+---
+
 ## Remaining Phase 1 tasks
 
-| Overall task | Phase task | Status | Purpose |
-|---|---|---|---|
-| 9 / 41 | 1.9 | NEXT | Phase 1 integration gate |
+None. Phase 1 is complete.
 
 ## Current boundary
 
-Do not begin Task 10 / 41 until Task 9 / 41 completes the full Phase 1 integration gate.
+Phase 1 is complete. Task 10 / 41 is the next canonical task. Do not begin Task 11 / 41 until Task 10 is complete.
