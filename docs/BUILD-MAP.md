@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 2 / 41 tasks complete  
-**Next:** Task 3 / 41, Phase 1.3 - Storage-driver contract + SQLite bootstrap
+**Implementation progress:** 3 / 41 tasks complete  
+**Next:** Task 4 / 41, Phase 1.4 - Scope and database identity
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    22%  (2/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    33%  (3/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **2 / 41 tasks complete**.
+Overall implementation: **3 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 2 / 9 tasks complete
+**Progress:** 3 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -68,10 +68,9 @@ Implemented Node 22+ package metadata, strict TypeScript, ESM package/export bou
 Verification:
 
 ```text
-Local:       5/5 tests passed
-GitHub CI:   Node 22 PASS
-GitHub CI:   Node 24 PASS
-CI run:      34505126081
+5 / 5 tests passed
+Node 22 PASS
+Node 24 PASS
 ```
 
 **Task 1.1 gate: PASSED.**
@@ -80,78 +79,91 @@ CI run:      34505126081
 
 **Status:** COMPLETE
 
-Implemented:
-
-- `ai-verse-data/0.1` protocol constant;
-- operation registry;
-- discriminated request envelopes;
-- stable success/failure response envelopes;
-- machine-readable error codes;
-- workspace scope and actor model;
-- authorization metadata;
-- Data Space/schema/record types;
-- first-release field types;
-- additive schema-change types;
-- query AST, operators, sort, aggregate types;
-- bounded transaction types;
-- runtime validators for requests/responses/fields/query filters;
-- strict unknown-field rejection;
-- safe identifier/slug validation;
-- cyclic/non-finite JSON rejection;
-- hard bounded defaults for requests, records, schemas, filters, pages, transactions, events, and nested JSON;
-- public `@ai-verse/data/protocol` export.
+Implemented the storage-neutral `ai-verse-data/0.1` protocol, operation registry, discriminated request/response envelopes, machine-readable errors, actor/scope/authorization types, Data Space/schema/record/query/aggregate/transaction types, first-release field types, strict runtime validators, safe identifiers, and hard request/query/schema/transaction ceilings.
 
 Security proof includes explicit rejection of raw SQL/database-path extras in normal protocol operations.
 
-Verification on the final implementation head:
+Verification:
 
 ```text
-GitHub Actions run: 34508602201
-Node 22:             PASS
-Node 24:             PASS
-Tests:               18 / 18 PASS
-Failures:            0
+18 / 18 tests passed
+Node 22 PASS
+Node 24 PASS
 ```
-
-No SQLite/storage execution was introduced.
-
-Detailed evidence: `docs/PHASE-1-STATUS.md`.
 
 **Task 1.2 gate: PASSED.**
 
 ## Task 3 / 41 - Phase 1.3 Storage-driver contract + SQLite bootstrap
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Implement only the storage foundation:
+Implemented:
 
 - storage-driver interface;
-- SQLite driver/binding;
-- database create/open/close;
-- internal `_meta`/format metadata;
-- SQLite feature/version checks;
-- foreign keys;
-- local WAL policy;
-- STRICT internal tables where practical;
-- internal database format version;
-- read-only integrity/status primitives needed by later doctor work.
+- public `@ai-verse/data/storage` surface;
+- `better-sqlite3` 13.0.3 SQLite driver;
+- create-or-open and open-existing modes;
+- database close behavior;
+- `_aiverse_meta` format metadata;
+- database format string/version;
+- SQLite `application_id` and `user_version` identity;
+- SQLite runtime-version check with minimum 3.37.0;
+- `STRICT` + `WITHOUT ROWID` internal metadata table;
+- foreign-key enforcement;
+- local WAL mode;
+- `synchronous=NORMAL`;
+- 5-second busy timeout;
+- integrity checking;
+- storage diagnostics;
+- fail-closed rejection of unrelated SQLite files;
+- fail-closed rejection of unsupported/newer AI-Verse Data formats;
+- explicit closed-handle safety.
 
-Acceptance:
+Database format v1:
 
-- create and reopen database successfully;
-- format metadata survives restart;
-- unsupported database format fails closed;
-- integrity check works;
-- public protocol remains SQLite-neutral;
-- no Data Space/schema/record CRUD is implemented early.
+```text
+format:          ai-verse-data/sqlite
+format version:  1
+application_id:  0x41495644 (AIVD)
+user_version:    1
+```
+
+Verification:
+
+```text
+GitHub Actions run: 34509888259
+Node 22:             PASS
+Node 24:             PASS
+Tests:               25 / 25 PASS
+Failures:            0
+```
+
+Detailed evidence: `docs/PHASE-1-STATUS.md`. Storage contract: `docs/STORAGE-V0.1.md`.
+
+No Data Space/schema/record CRUD or workspace binding was introduced early.
+
+**Task 1.3 gate: PASSED.**
 
 ## Task 4 / 41 - Phase 1.4 Scope and database identity
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
-Trusted-root abstraction, workspace/database binding metadata, safe path helpers, no Dashboard `systemId` dependency.
+Implement:
 
-Acceptance: a database cannot be reopened under conflicting workspace identity and public record/query requests never accept raw DB paths.
+- trusted-root abstraction;
+- host-neutral standalone scope;
+- native-ready workspace/database identity metadata;
+- safe path-helper contracts;
+- database binding validation;
+- no Dashboard `systemId` dependency;
+- no public raw database-path record/query requests.
+
+Acceptance:
+
+- a database cannot be reopened under conflicting workspace identity;
+- workspace/database binding survives reopen;
+- direct raw path remains outside public record/query protocol requests;
+- no Data Space/schema/record semantics are introduced early.
 
 ## Task 5 / 41 - Phase 1.5 Data Spaces and entity schemas
 
@@ -343,6 +355,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 3 / 41: Phase 1.3 - Storage-driver contract + SQLite bootstrap.**
+**Task 4 / 41: Phase 1.4 - Scope and database identity.**
 
-Do not begin Task 4 / 41 until Task 3 is implemented, tested, committed, and reported complete.
+Do not begin Task 5 / 41 until Task 4 is implemented, tested, committed, and reported complete.
