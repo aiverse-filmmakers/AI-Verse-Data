@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 2 / 9  
-**Overall implementation tasks completed:** 11 / 41  
-**Next:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance
+**Implementation tasks completed:** 3 / 9  
+**Overall implementation tasks completed:** 12 / 41  
+**Next:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -213,12 +213,91 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 12 / 41 - Phase 2.3 Events, receipts, provenance
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.3 adds durable, immutable Data audit provenance for successful record mutations and bounded transactions.
+
+Public surface:
+
+```text
+@ai-verse/data/provenance
+```
+
+Core storage:
+
+```text
+_events
+_mutation_receipts
+```
+
+Implemented guarantees:
+
+- one record event and one receipt per fresh successful create/update/delete;
+- one final `transaction.committed` event/receipt per fresh successful bounded transaction;
+- nested transaction mutations retain their own event/receipt facts;
+- event/receipt state commits atomically with canonical Data + relation + idempotency state;
+- failed mutations and transactions leave no partial provenance;
+- idempotent replay does not mint new provenance;
+- receipt-returning record and transaction APIs return the original durable receipt on replay;
+- trusted actor, request, transaction, scope/workspace, target, versions, and commit time are preserved;
+- event and receipt SHA-256 digests are verified before public use;
+- linked receipt/event shared fields must match;
+- SQLite triggers reject normal UPDATE/DELETE against provenance tables;
+- full record payloads are not copied into normal event details;
+- event streams are bounded and use filter-bound opaque cursors;
+- workspace-wide event queries can include transaction-level events;
+- fresh transactions reject old nested idempotency provenance, duplicate nested keys, and outer/nested key reuse.
+
+### Adversarial finding closed during implementation
+
+The audit identified a subtle possible provenance-laundering case: a fresh transaction could otherwise reuse a nested idempotency key that had committed earlier outside that transaction.
+
+The transaction engine now requires each nested receipt to belong to the current transaction ID and request ID. A prior committed nested key is rejected with `TRANSACTION_INVALID`, and the fresh outer transaction rolls back.
+
+### Verification
+
+```text
+GitHub Actions run: 34526163488
+Commit:              911c5d51d605bd6234f35dc351eef76c68ac61e6
+Node 22:             PASS
+Node 24:             PASS
+Tests:               141 / 141 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.3 does not implement:
+
+- bulk mutation APIs;
+- bulk dry-run/preview;
+- event subscriptions;
+- automation scheduling;
+- Memory writes;
+- cross-workspace event aggregation;
+- external-system side-effect receipts.
+
+Those remain later tasks. Task 13 / 41 is next.
+
+### Task 2.3 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 12 / 41 | 2.3 | NEXT | Events, receipts, provenance |
-| 13 / 41 | 2.4 | NOT STARTED | Bulk-operation safety and limits |
+| 13 / 41 | 2.4 | NEXT | Bulk-operation safety and limits |
 | 14 / 41 | 2.5 | NOT STARTED | Backup/export/import foundation |
 | 15 / 41 | 2.6 | NOT STARTED | Internal migration framework |
 | 16 / 41 | 2.7 | NOT STARTED | User-schema migration framework |
@@ -227,4 +306,4 @@ Acceptance requirements are satisfied:
 
 ## Current boundary
 
-Do not begin Task 13 / 41 until Task 12 / 41 is implemented, verified, committed, and reported complete.
+Do not begin Task 14 / 41 until Task 13 / 41 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
