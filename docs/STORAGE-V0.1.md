@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -85,7 +85,7 @@ scope_kind
 workspace_id
 ```
 
-An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space and entity-schema catalog tables are added in Phase 1.5. Record storage remains deferred.
+An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space and entity-schema catalog tables are added in Phase 1.5. Canonical record storage is added in Phase 1.6.
 
 ## Open modes
 
@@ -199,12 +199,27 @@ These are fixed engine-owned STRICT tables. User/agent entity definitions are st
 
 The catalog contract and semantics are documented in `docs/CATALOG-AND-SCHEMAS-V0.1.md`.
 
+## Phase 1.6 record extension
+
+The storage driver now also exposes a storage-neutral `DataRecordStorage` contract. SQLite creates one fixed engine-owned record table:
+
+```text
+_records
+```
+
+`_records` is a STRICT, WITHOUT ROWID table. It stores Data Space/entity identity, stable record ID, exact schema version, record version, canonical JSON payload, timestamps, actor attribution, and soft-delete metadata.
+
+The stored `schema_version` is protected by a foreign key to the exact immutable row in `_entity_schema_versions`. User-defined entities still do not become arbitrary physical SQL tables.
+
+Record reads and writes remain behind `DataRecordStorage`; consumers are not expected to use SQLite directly.
+
+Detailed semantics: `docs/RECORD-CRUD-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
-No records.  
-No CRUD.  
-No queries.  
+No general query/aggregate execution.  
 No relations.  
+No idempotency/event/receipt persistence.  
 No AI-Verse OS manifest/workspace validation.  
 No OS extension registration.  
 No Memory/Brain/Bot/Dashboard/App integration.
@@ -226,3 +241,7 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 
 11. Agent-defined schemas are persisted through fixed engine-owned catalog tables rather than arbitrary generated SQL.
 12. Schema version snapshots are immutable and digest-verified.
+
+13. Canonical records use one fixed engine-owned `_records` table rather than generated per-entity SQL tables.
+14. Every record persists the exact entity schema version used for its canonical payload.
+15. Soft deletion preserves the canonical row and deletion attribution.
