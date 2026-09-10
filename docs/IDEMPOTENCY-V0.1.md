@@ -418,20 +418,37 @@ Any future sanctioned storage driver must provide equivalent guarantees:
 - conflicting-fingerprint rejection;
 - no duplicate canonical execution after a committed result.
 
+## 22.1 Phase 2.3 provenance extension
+
+Task 12 / Phase 2.3 now composes durable idempotency with immutable mutation provenance.
+
+For a fresh successful mutation, canonical Data effects, event, receipt, and idempotency result share the same SQLite transaction.
+
+For a matching retry:
+
+```text
+return original mutation result
+return original durable receipt through receipt-returning APIs
+create no new event
+create no new receipt
+```
+
+A retry may carry a different delivery-time request ID, but the durable receipt continues to identify the original committed request.
+
+Bounded transactions also protect provenance from nested idempotency reuse. A fresh transaction rejects a nested key already committed outside that transaction, rejects duplicate nested keys, and rejects reuse of the outer key as a nested key.
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
 ## 22. Deliberately not implemented
 
 Phase 2.2 does not implement:
 
-- mutation events;
-- durable mutation receipts;
-- event IDs;
-- receipt IDs;
 - idempotency cleanup/pruning command;
 - cross-database/global distributed idempotency;
 - external-system side-effect idempotency;
 - remote multi-primary coordination.
 
-Events, receipts, and provenance remain Task 12 / 41.
+Events, receipts, and provenance are implemented in Task 12 / Phase 2.3.
 
 ## 23. Non-negotiable invariants
 
@@ -447,4 +464,4 @@ Events, receipts, and provenance remain Task 12 / 41.
 10. Replay result integrity is digest-checked.
 11. Committed entries do not silently expire in v0.1.
 12. Idempotency is not authorization.
-13. Events and receipts remain a separate Task 12 concern.
+13. Events and receipts compose with idempotency through the Phase 2.3 provenance contract.
