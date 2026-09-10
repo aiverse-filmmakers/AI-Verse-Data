@@ -8,6 +8,7 @@ export * from "./records/index.js";
 export * from "./query/index.js";
 export * from "./transactions/index.js";
 export * from "./idempotency/index.js";
+export * from "./provenance/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
