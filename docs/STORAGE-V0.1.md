@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -215,10 +215,20 @@ Record reads and writes remain behind `DataRecordStorage`; consumers are not exp
 
 Detailed semantics: `docs/RECORD-CRUD-V0.1.md`.
 
+## Phase 1.7 query extension
+
+The storage driver now exposes a storage-neutral `DataQueryStorage` contract. SQLite compiles validated query plans into parameterized statements over `_records`.
+
+User values and JSON field paths are bound parameters. Dynamic sort directions and aggregate function names come only from fixed validated enums. Aggregate aliases are validated and quoted before they are used as result identifiers.
+
+The query driver implements bounded page reads plus count/sum/min/max/avg aggregation. It does not expose SQL text to protocol callers.
+
+Detailed query semantics: `docs/QUERY-AND-AGGREGATES-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
-No general query/aggregate execution.  
 No relations.  
+
 No idempotency/event/receipt persistence.  
 No AI-Verse OS manifest/workspace validation.  
 No OS extension registration.  
@@ -245,3 +255,7 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 13. Canonical records use one fixed engine-owned `_records` table rather than generated per-entity SQL tables.
 14. Every record persists the exact entity schema version used for its canonical payload.
 15. Soft deletion preserves the canonical row and deletion attribution.
+
+16. Query storage accepts structured plans rather than caller SQL.
+17. Query values and JSON field paths are bound parameters.
+18. Query and aggregate execution remain schema-validated above the storage layer.
