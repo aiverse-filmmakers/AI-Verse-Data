@@ -1,6 +1,6 @@
 # AI-Verse Data Record CRUD v0.1
 
-**Status:** Implemented in Phase 1.6  
+**Status:** Implemented in Phase 1.6; reference integrity extended in Phase 1.8  
 **Date:** 2026-09-10
 
 This document defines the first implemented canonical record layer for AI-Verse Data.
@@ -164,7 +164,7 @@ Validation includes:
 - JSON validity/depth/size constraints;
 - unknown-field rejection unless `allowUnknownFields: true`.
 
-References are shape-validated only in Phase 1.6. Cross-record existence and relation enforcement remain Task 8 / 41.
+Phase 1.8 extends reference fields beyond shape validation: non-null targets must exist, be active, and match the schema-declared Data Space/entity. Valid references are also maintained in the normalized `_record_relations` index atomically with the record mutation.
 
 ## 7. Defaults
 
@@ -210,7 +210,9 @@ If valid stored JSON no longer satisfies that historical schema, Data treats the
 5. enforces the record-size ceiling;
 6. allocates a stable record ID;
 7. writes the canonical row;
-8. returns the stored record shape.
+8. validates declared reference targets;
+9. writes the canonical row and normalized relation entries atomically;
+10. returns the stored record shape.
 
 New records begin at:
 
@@ -276,8 +278,10 @@ The engine:
 4. merges the patch with current data;
 5. validates the full result against the current schema;
 6. applies missing current-schema defaults;
-7. increments record version;
-8. stores current schema version and updated actor/timestamp.
+7. validates the resulting declared reference targets;
+8. increments record version;
+9. stores current schema version and updated actor/timestamp;
+10. atomically replaces normalized relation entries.
 
 A stale version returns:
 
@@ -305,6 +309,8 @@ A successful soft delete:
 Deleted records are hidden by normal get/list calls.
 
 Normal update/delete calls cannot operate on an already deleted record.
+
+Phase 1.8 also prevents soft deletion of a record while active inbound references still point to it. Deleting a source record removes its outgoing normalized relation entries in the same transaction.
 
 Hard purge is not implemented.
 
@@ -366,7 +372,9 @@ Therefore:
 - missing required fields do not create partial records;
 - oversized records do not create partial records;
 - stale expected versions do not write a new record version;
-- invalid updates leave the previous canonical row unchanged.
+- invalid updates leave the previous canonical row unchanged;
+- invalid reference targets do not create/update canonical records;
+- record and normalized relation-index changes commit or roll back together.
 
 SQLite constraints additionally protect JSON validity, schema-version foreign keys, actor kinds, and soft-delete metadata consistency.
 
@@ -387,13 +395,8 @@ These conditions return `DATABASE_CORRUPT` from the record layer rather than pre
 
 Phase 1.6 does not implement:
 
-- general query filters/sorts;
-- cursor pagination for the general query engine;
-- aggregates;
-- relation existence/index validation;
-- bounded multi-record transactions;
-- atomic cross-process optimistic update predicates;
 - persistent idempotency keys/replay;
+- race-safe atomic cross-process optimistic update predicates;
 - mutation events;
 - mutation receipts;
 - bulk operations;
@@ -415,4 +418,4 @@ Those remain separate tasks in the canonical Build Map.
 7. Deleted records remain canonical until an explicit future purge contract exists.
 8. Actor attribution is stored with record state.
 9. Record and schema versions remain distinct.
-10. General query, idempotency, events, receipts, relations, and concurrency hardening remain later tasks.
+10. Reference integrity and bounded transactions are implemented; persistent idempotency, events, receipts, and concurrency hardening remain later tasks.
