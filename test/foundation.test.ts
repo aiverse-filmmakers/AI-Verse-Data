@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes package, CLI, protocol, storage, scope, catalog, records, query, and transactions subpaths", () => {
+test("package metadata exposes package, CLI, protocol, storage, scope, catalog, records, query, transactions, and idempotency subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -35,15 +35,16 @@ test("package metadata exposes package, CLI, protocol, storage, scope, catalog, 
   assert.ok("./records" in packageJson.exports);
   assert.ok("./query" in packageJson.exports);
   assert.ok("./transactions" in packageJson.exports);
+  assert.ok("./idempotency" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 2.1 optimistic concurrency", () => {
+test("foundation surface reports Phase 2.2 durable idempotent mutations", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.1");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.2");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "2.1",
+    phase: "2.2",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -53,5 +54,6 @@ test("foundation surface reports Phase 2.1 optimistic concurrency", () => {
     relationOperationsAvailable: true,
     transactionOperationsAvailable: true,
     optimisticConcurrencyAvailable: true,
+    idempotentMutationsAvailable: true,
   });
 });
