@@ -166,7 +166,9 @@ export function validateRecordActor(actor: DataActor): DataActor {
     typeof actor.id !== "string" ||
     actor.id.length < 1 ||
     actor.id.length > DATA_PROTOCOL_LIMITS.maxIdLength ||
-    actor.id.includes("\u0000")
+    actor.id === "." ||
+    actor.id === ".." ||
+    !SAFE_ID_RE.test(actor.id)
   ) {
     throw new DataRecordError(
       "FIELD_INVALID",
@@ -263,4 +265,16 @@ export function validateRecordLimit(limit: number | undefined): number {
     );
   }
   return resolved;
+}
+
+
+export function validateExpectedRecordVersion(version: number): number {
+  if (!Number.isSafeInteger(version) || version < 1) {
+    throw new DataRecordError(
+      "FIELD_INVALID",
+      "Expected record version must be a positive integer.",
+      { expectedVersion: version },
+    );
+  }
+  return version;
 }
