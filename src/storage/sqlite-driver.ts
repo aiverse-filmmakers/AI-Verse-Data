@@ -4,6 +4,7 @@ import Database from "better-sqlite3";
 
 import { DataStorageError, isDataStorageError } from "./errors.js";
 import { SqliteCatalogStorage } from "./sqlite-catalog-store.js";
+import { SqliteRecordStorage } from "./sqlite-record-store.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
@@ -495,6 +496,11 @@ class SqliteStorageDatabase implements DataStorageDatabase {
   catalogStorage(): SqliteCatalogStorage {
     this.assertOpen();
     return new SqliteCatalogStorage(this.database);
+  }
+
+  recordStorage(): SqliteRecordStorage {
+    this.assertOpen();
+    return new SqliteRecordStorage(this.database);
   }
 
   close(): void {
