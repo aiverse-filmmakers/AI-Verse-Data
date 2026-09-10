@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 2 / 9  
-**Overall implementation tasks completed:** 2 / 41  
-**Next:** Task 3 / 41, Phase 1.3 - Storage-driver contract + SQLite bootstrap
+**Implementation tasks completed:** 3 / 9  
+**Overall implementation tasks completed:** 3 / 41  
+**Next:** Task 4 / 41, Phase 1.4 - Scope and database identity
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -13,15 +13,14 @@ This document records concrete implementation evidence for Phase 1. `docs/BUILD-
 
 **Status:** COMPLETE
 
-Implemented Node.js 22+ package metadata, TypeScript 5.8 strict compilation, ESM exports, CLI help/version, explicit unsupported-input failure, Node test harness, source/test layout, build/check scripts, `.gitignore`, and GitHub Actions CI on Node 22/24.
+Implemented Node.js 22+ package metadata, TypeScript strict compilation, ESM exports, CLI help/version, explicit unsupported-input failure, Node test harness, source/test layout, build/check scripts, `.gitignore`, and GitHub Actions CI on Node 22/24.
 
 Verification:
 
 ```text
-Local:       5/5 tests passed
-GitHub CI:   Node 22 PASS
-GitHub CI:   Node 24 PASS
-CI run:      34505126081
+5 / 5 tests passed
+Node 22 PASS
+Node 24 PASS
 ```
 
 **Task 1.1 gate: PASSED.**
@@ -32,111 +31,158 @@ CI run:      34505126081
 
 **Status:** COMPLETE
 
-Public protocol surface:
+Implemented the storage-neutral `ai-verse-data/0.1` protocol, discriminated operation envelopes, response/error envelopes, actor/scope/authorization types, Data Space/schema/record/query/aggregate/transaction types, first-release field types, runtime validators, strict unknown-field rejection, safe logical identifiers, and hard request/query/schema/transaction ceilings.
+
+Security proof includes explicit rejection of raw SQL and database-path extras from normal public protocol requests.
+
+Verification:
 
 ```text
-@ai-verse/data/protocol
-protocol: ai-verse-data/0.1
+18 / 18 tests passed
+Node 22 PASS
+Node 24 PASS
 ```
 
-Implemented:
+**Task 1.2 gate: PASSED.**
 
-- stable operation-name registry;
-- discriminated request types keyed by operation;
-- success/failure response envelopes;
-- stable machine-readable error-code registry;
-- workspace scope type;
-- actor kinds for human, bot, worker, app, automation, system, import, and connection;
-- host-bound/local-operator authorization metadata;
-- Data Space IDs and `local_canonical` first-release authority class;
-- entity/schema definitions;
-- record types;
-- additive schema-change types;
-- safe query AST with condition/AND/OR/NOT nodes;
-- sort and aggregate types;
-- discriminated bounded transaction types;
-- first-release field types: string, number, integer, boolean, date, datetime, enum, reference, json, attachment_ref;
-- JSON-safe value validation;
-- request and response runtime validation;
-- field-definition and query-filter validation;
-- strict unknown-field rejection;
-- explicit `OPERATION_UNSUPPORTED` behavior;
-- safe workspace/object ID validation;
-- lowercase logical slugs for Data Spaces/entities;
-- cyclic JSON and non-finite number rejection;
-- hard request/record/schema/query/transaction/event ceilings.
+---
 
-### Hard protocol ceilings
+## Task 3 / 41 - Phase 1.3 Storage-driver contract + SQLite bootstrap
+
+**Status:** COMPLETE
+
+### Implemented
+
+Public/internal storage surface:
 
 ```text
-request bytes                 256 KiB
-schema fields                 128
-record JSON                   128 KiB
-query page                    200
-filter depth                  8
-filter nodes                  100
-IN/NOT IN values              100
-sort keys                     4
-selected fields               128
-aggregate metrics             16
-transaction operations        50
-event page                    200
-authorization capability refs 64
-JSON depth                    16
-array items                   1000
+@ai-verse/data/storage
 ```
 
-These are protocol safety ceilings, not claims about storage-engine capacity.
+Storage-driver contract:
 
-### Security/authority boundary proved
+- `DataStorageDriver`;
+- `DataStorageDatabase`;
+- `StorageOpenOptions`;
+- storage metadata;
+- diagnostics;
+- integrity results;
+- stable storage error codes.
 
-Normal protocol requests do not expose or accept arbitrary SQL, canonical database paths, invented operation names, unknown envelope/payload fields, path traversal through workspace/Data Space IDs, unbounded query recursion, or unbounded transaction/list shapes.
+SQLite implementation:
 
-Authorization metadata does not itself prove permission. The future host/engine permission boundary still decides effective authority.
+- `SqliteStorageDriver`;
+- `better-sqlite3` 13.0.3 behind the driver boundary;
+- create-or-open mode;
+- open-existing mode;
+- explicit close behavior;
+- idempotent close;
+- `_aiverse_meta` internal table;
+- database format string/version;
+- SQLite `application_id` identity;
+- SQLite `user_version` identity;
+- creation timestamp persistence;
+- SQLite runtime version check;
+- minimum SQLite version 3.37.0;
+- `STRICT` metadata table;
+- `WITHOUT ROWID` metadata table;
+- foreign-key enforcement;
+- WAL mode;
+- `synchronous=NORMAL`;
+- 5-second busy timeout;
+- integrity checking;
+- driver diagnostics.
 
-### Type-level hardening
+### Database identity
 
-Transaction operations pair each operation name with its exact payload type. Empty payload operations use a strict empty-record type rather than TypeScript's permissive `{}`. The public protocol contains no SQLite-specific type.
+Format v1 currently uses:
+
+```text
+format:          ai-verse-data/sqlite
+formatVersion:   1
+application_id:  0x41495644  (AIVD)
+user_version:    1
+```
+
+These remain distinct from package/protocol/entity-schema versions.
+
+Detailed storage contract: `docs/STORAGE-V0.1.md`.
+
+### Fail-closed behavior
+
+The driver refuses to silently adopt an unrelated SQLite file.
+
+It also fails visibly when:
+
+- `open-existing` points to a missing database;
+- an existing database is not initialized as AI-Verse Data;
+- stored AI-Verse Data format is newer/unsupported;
+- SQLite identity metadata conflicts;
+- SQLite runtime is too old;
+- a closed handle is used again.
+
+The driver does not silently repair identity or rewrite unknown databases.
 
 ### Verification evidence
 
-Final implementation head CI:
+Final implementation CI:
 
 ```text
-GitHub Actions run: 34508602201
+GitHub Actions run: 34509888259
 Node 22:             PASS
 Node 24:             PASS
-Tests:               18 / 18 PASS
+Tests:               25 / 25 PASS
 Failures:            0
-Skipped:             0
-Cancelled:           0
 ```
 
-The 18 tests cover package/CLI compatibility, protocol export, valid request acceptance, wrong protocol rejection, unsupported-operation rejection, unknown-field rejection, unsafe logical IDs, field/enum validation, schema ceilings, bounded query recursion, bounded `in` lists, page/aggregate/transaction ceilings, nested transaction operation restrictions, non-finite/oversized JSON rejection, response/error validation, and explicit raw-SQL/database-path rejection.
+The 25-test suite includes the 18 prior package/protocol tests plus 7 storage tests proving:
+
+1. creation of a real AI-Verse Data SQLite database;
+2. stable metadata across close/reopen;
+3. WAL mode and foreign-key enforcement;
+4. STRICT metadata storage;
+5. healthy `PRAGMA integrity_check` behavior;
+6. clear missing-database failure for `open-existing`;
+7. rejection of unrelated existing SQLite databases;
+8. rejection of unsupported newer format versions;
+9. rejection of conflicting application identity;
+10. explicit closed-handle failure.
+
+### Build issue found and fixed during the task
+
+The first strict TypeScript build rejected a redundant redeclaration of `Error.cause`. The implementation was corrected to use the native `Error` cause mechanism. Final Node 22 and Node 24 CI is green.
 
 ### Deliberately not implemented
 
-- SQLite;
-- storage-driver interface;
-- persistent databases;
-- Data Space/schema persistence;
-- record CRUD execution;
-- query compilation/execution;
-- real permission evaluation;
-- OS installation/extension registration.
+Task 1.3 does **not** implement:
 
-Those remain later tasks.
+- trusted OS/workspace path resolution;
+- workspace/database binding;
+- Data Spaces;
+- entity-schema persistence;
+- records;
+- CRUD;
+- query execution;
+- relations;
+- OS extension registration;
+- sibling-layer integrations.
 
-### Task 1.2 gate
+Those remain later tasks and are not hidden inside the SQLite driver.
+
+### Task 1.3 gate
 
 **PASSED.**
 
 Acceptance requirements are satisfied:
 
-- malformed envelopes reject deterministically;
-- unknown operations fail explicitly;
-- protocol semantics remain storage-neutral;
-- protocol, future DB-format, engine, and entity-schema versions remain separate concepts.
+- create database succeeds;
+- reopen succeeds;
+- metadata survives restart/reopen;
+- unsupported format fails closed;
+- integrity checking works;
+- SQLite remains behind a storage-driver abstraction;
+- public protocol remains SQLite-neutral;
+- no Data Space/schema/record CRUD was implemented early.
 
 ---
 
@@ -144,8 +190,7 @@ Acceptance requirements are satisfied:
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 3 / 41 | 1.3 | NEXT | Storage-driver contract + SQLite bootstrap |
-| 4 / 41 | 1.4 | NOT STARTED | Scope and database identity |
+| 4 / 41 | 1.4 | NEXT | Scope and database identity |
 | 5 / 41 | 1.5 | NOT STARTED | Data Spaces and entity schemas |
 | 6 / 41 | 1.6 | NOT STARTED | Record CRUD |
 | 7 / 41 | 1.7 | NOT STARTED | Safe query + aggregate engine |
@@ -154,4 +199,4 @@ Acceptance requirements are satisfied:
 
 ## Current boundary
 
-Do not begin Task 1.4 or later work while implementing Task 1.3. Task 1.3 may create/open a database and establish internal storage metadata, but it must not skip ahead into Data Space/schema/record CRUD semantics.
+Do not begin Task 1.5 or later work while implementing Task 1.4. Task 1.4 binds storage safely to trusted standalone/native workspace identity. It must not introduce Data Space/schema/record semantics early.
