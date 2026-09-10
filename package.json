@@ -47,6 +47,10 @@
     "./provenance": {
       "types": "./dist/src/provenance/index.d.ts",
       "import": "./dist/src/provenance/index.js"
+    },
+    "./bulk": {
+      "types": "./dist/src/bulk/index.d.ts",
+      "import": "./dist/src/bulk/index.js"
     }
   },
   "files": [
