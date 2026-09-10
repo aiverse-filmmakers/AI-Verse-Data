@@ -193,7 +193,7 @@ Task 2.2 does not implement:
 - idempotency auto-expiry/pruning;
 - external-system side-effect idempotency.
 
-Those remain later tasks, with events/receipts/provenance next in Task 12 / 41.
+At the Task 2.2 boundary those remained later tasks, with events/receipts/provenance next in Task 12 / 41. Task 12 / Phase 2.3 has since completed that provenance layer.
 
 ### Task 2.2 gate
 
@@ -285,7 +285,7 @@ Task 2.3 does not implement:
 - cross-workspace event aggregation;
 - external-system side-effect receipts.
 
-Those remain later tasks. Task 13 / 41 is next.
+At the Task 2.3 boundary those remained later tasks and Task 13 / 41 was next. Task 13 / Phase 2.4 has since completed bounded bulk preview/execute; the other listed capabilities remain later work.
 
 ### Task 2.3 gate
 
