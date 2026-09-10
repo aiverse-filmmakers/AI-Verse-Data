@@ -261,7 +261,7 @@ export function hydrateStoredEvent(stored: StoredDataEvent): DataEvent {
     ) {
       corrupt("Stored event details are not an object.");
     }
-    details = validated as JsonObject;
+    details = JSON.parse(JSON.stringify(validated)) as JsonObject;
   } catch (error) {
     if (error instanceof DataProvenanceError) throw error;
     corrupt("Stored event details JSON is invalid.");
