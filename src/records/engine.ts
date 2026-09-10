@@ -91,7 +91,7 @@ export class DataRecords implements DataRecordsApi {
           relations,
         );
         return true;
-      });
+      }, "immediate");
 
       if (created) return hydrateStoredRecord(stored, schema);
     }
@@ -223,14 +223,33 @@ export class DataRecords implements DataRecordsApi {
         updatedActorId: actor.id,
       };
 
-      if (!this.store.updateRecord(updated)) {
+      if (!this.store.updateRecord(updated, expectedVersion)) {
+        const latest = this.store.getRecord(
+          input.spaceId,
+          input.entity,
+          input.recordId,
+          true,
+        );
+        if (latest === null || latest.deletedAt !== null) {
+          throw new DataRecordError(
+            "RECORD_NOT_FOUND",
+            `Record '${input.recordId}' was not available for update.`,
+            {
+              spaceId: input.spaceId,
+              entity: input.entity,
+              recordId: input.recordId,
+            },
+          );
+        }
         throw new DataRecordError(
-          "RECORD_NOT_FOUND",
-          `Record '${input.recordId}' was not available for update.`,
+          "RECORD_VERSION_CONFLICT",
+          `Expected record version ${expectedVersion}, current version is ${latest.version}.`,
           {
             spaceId: input.spaceId,
             entity: input.entity,
             recordId: input.recordId,
+            expectedVersion,
+            currentVersion: latest.version,
           },
         );
       }
@@ -242,7 +261,7 @@ export class DataRecords implements DataRecordsApi {
         relations,
       );
       return hydrateStoredRecord(updated, currentSchema);
-    });
+    }, "immediate");
   }
 
   softDelete(input: RecordDeleteInput): DataRecordSnapshot {
@@ -316,14 +335,33 @@ export class DataRecords implements DataRecordsApi {
         deletedActorId: actor.id,
       };
 
-      if (!this.store.softDeleteRecord(deleted)) {
+      if (!this.store.softDeleteRecord(deleted, expectedVersion)) {
+        const latest = this.store.getRecord(
+          input.spaceId,
+          input.entity,
+          input.recordId,
+          true,
+        );
+        if (latest === null || latest.deletedAt !== null) {
+          throw new DataRecordError(
+            "RECORD_NOT_FOUND",
+            `Record '${input.recordId}' was not available for deletion.`,
+            {
+              spaceId: input.spaceId,
+              entity: input.entity,
+              recordId: input.recordId,
+            },
+          );
+        }
         throw new DataRecordError(
-          "RECORD_NOT_FOUND",
-          `Record '${input.recordId}' was not available for deletion.`,
+          "RECORD_VERSION_CONFLICT",
+          `Expected record version ${expectedVersion}, current version is ${latest.version}.`,
           {
             spaceId: input.spaceId,
             entity: input.entity,
             recordId: input.recordId,
+            expectedVersion,
+            currentVersion: latest.version,
           },
         );
       }
@@ -340,6 +378,6 @@ export class DataRecords implements DataRecordsApi {
         stored.schemaVersion,
       );
       return hydrateStoredRecord(deleted, historicalSchema);
-    });
+    }, "immediate");
   }
 }
