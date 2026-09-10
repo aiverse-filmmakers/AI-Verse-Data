@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; catalog, schema, record CRUD, query, and aggregate semantics implemented through Phase 1.7  
+**Status:** Protocol foundation implemented; catalog, schema, record CRUD, query, aggregate, relation, and transaction semantics implemented through Phase 1.8  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -399,7 +399,7 @@ A bounded transaction contains a sequence of supported mutations in the same wor
 }
 ```
 
-The exact intra-transaction reference syntax is implementation work, but the protocol must support safe creation of related records without exposing SQL.
+Phase 1.8 locks this intra-transaction reference syntax. A create may declare a unique `clientRef`; only a later schema-declared reference field may use the exact one-key marker `{ "$ref": "clientRef" }`. It resolves to the earlier created canonical record ID. Forward references, duplicate aliases, and use outside declared reference fields are rejected.
 
 Transaction size/count is bounded.
 
@@ -686,3 +686,16 @@ Query pages use opaque base64url cursors containing a bounded offset and SHA-256
 Supported aggregates are count, sum, min, max, and avg with schema-aware type rules. Normal queries and aggregates exclude soft-deleted rows unless the query operation explicitly sets `includeDeleted`; aggregate v0.1 has no deleted-row override and therefore excludes them.
 
 Query rows pass through the same historical-schema hydration and corruption checks as ordinary record reads. Relations, cross-entity joins, and bounded multi-record transactions remain Phase 1.8.
+
+
+## 27. Phase 1.8 implementation note
+
+Declared `reference` fields now enforce target existence and active state on ordinary create/update operations. The target Data Space defaults to the source schema's Data Space unless the field definition explicitly declares another Data Space. Cross-space references remain inside the same physical workspace database.
+
+SQLite maintains the normalized `_record_relations` index. Record and relation-index changes commit atomically. A target with active inbound references cannot be soft-deleted; deleting a source removes its outgoing relation-index rows.
+
+`data.transaction.execute` now executes through `DataTransactions`, exported from `@ai-verse/data/transactions`. Transactions contain 1..50 record create/update/delete operations and execute atomically on one workspace database. Any nested failure rolls back the whole sequence.
+
+The transaction-local `clientRef` mechanism is deliberately narrow. A record created earlier in the same transaction may expose a unique alias. Later create/update data may use `{ "$ref": "alias" }` only in a schema-declared reference field. The alias is replaced with the canonical generated record ID before normal record validation.
+
+Protocol idempotency keys are structurally accepted but persistent replay semantics remain Task 11 / 41. Race-safe optimistic concurrency hardening remains Task 10 / 41. Mutation events and durable receipts remain Task 12 / 41.
