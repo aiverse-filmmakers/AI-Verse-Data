@@ -56,6 +56,14 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
   });
   catalog.createSchema({
     spaceId: "crm",
+    entity: "companies",
+    name: "Companies",
+    fields: {
+      name: { type: "string", required: true },
+    },
+  });
+  catalog.createSchema({
+    spaceId: "crm",
     entity: "deals",
     name: "Deals",
     fields: {
