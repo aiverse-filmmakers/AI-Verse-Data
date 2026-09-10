@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 11 / 41 tasks complete  
-**Next:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance
+**Implementation progress:** 12 / 41 tasks complete  
+**Next:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    22%  (2/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    33%  (3/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **11 / 41 tasks complete**.
+Overall implementation: **12 / 41 tasks complete**.
 
 ---
 
@@ -471,11 +471,62 @@ No mutation events, durable receipts, event IDs, or provenance query system were
 
 ## Task 12 / 41 - Phase 2.3 Events, receipts, provenance
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Append-oriented Data events, mutation receipts, actor attribution, transaction/event atomicity, event queries.
+Implemented:
+
+- public `@ai-verse/data/provenance` reader surface;
+- internal-only governed provenance writer;
+- fixed SQLite `_events` append-oriented table;
+- fixed SQLite `_mutation_receipts` table;
+- immutable UPDATE/DELETE rejection triggers for both provenance tables;
+- engine-generated `evt_`, `rcpt_`, `req_`, and `txn_` identifiers;
+- record create/update/delete event + receipt generation;
+- trusted actor attribution;
+- trusted database scope/workspace attribution;
+- before/after record-version provenance;
+- bounded structured event details without full record-payload duplication;
+- SHA-256 event digests;
+- SHA-256 receipt digests;
+- receipt-to-linked-event consistency verification;
+- `createWithReceipt`, `updateWithReceipt`, and `softDeleteWithReceipt`;
+- `executeWithReceipt` for bounded transactions;
+- child record provenance plus one final `transaction.committed` event/receipt;
+- transaction child event/receipt linking;
+- transaction-wide rollback of record, relation, event, receipt, and idempotency state;
+- idempotent replay with no duplicate events or receipts;
+- original receipt/request identity retained on replay;
+- fresh-transaction rejection of already-committed nested idempotency provenance;
+- duplicate nested-key and outer-key reuse rejection;
+- workspace-wide or progressively scoped event queries;
+- opaque query-bound `evc_` event cursors;
+- stable `RECEIPT_NOT_FOUND` error;
+- fail-closed digest/linkage corruption behavior.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34526163488
+Commit:              911c5d51d605bd6234f35dc351eef76c68ac61e6
+Node 22:             PASS
+Node 24:             PASS
+Tests:               141 / 141 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.  
+Continuation state: `docs/CONTINUATION-HANDOFF.md`.
+
+No Task 13 bulk-operation, preview, or dry-run behavior was introduced.
+
+**Task 2.3 gate: PASSED.**
 
 ## Task 13 / 41 - Phase 2.4 Bulk-operation safety and limits
+
+**Status:** NEXT
+
 Bounded bulk operations, dry-run/preview, hard size/count ceilings.
 
 ## Task 14 / 41 - Phase 2.5 Backup/export/import foundation
@@ -610,6 +661,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 12 / 41: Phase 2.3 - Events, receipts, provenance.**
+**Task 13 / 41: Phase 2.4 - Bulk-operation safety and limits.**
 
-Do not begin Task 13 / 41 until Task 12 is implemented, verified, committed, and reported complete.
+Do not begin Task 14 / 41 until Task 13 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
