@@ -7,6 +7,7 @@ import {
   type JsonObject,
 } from "../protocol/index.js";
 import type {
+  DataProvenanceStorage,
   DataStorageDatabase,
   StoredDataEventInput,
   StoredMutationReceipt,
@@ -84,7 +85,7 @@ function validateDetails(details: JsonObject | undefined): JsonObject {
 }
 
 export class DataProvenanceWriter {
-  private readonly store;
+  private readonly store: DataProvenanceStorage;
   private readonly scopeKind: "unbound" | "standalone" | "workspace";
   private readonly workspaceId: string | null;
 
