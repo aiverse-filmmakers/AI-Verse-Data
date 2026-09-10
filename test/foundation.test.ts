@@ -40,7 +40,7 @@ test("foundation surface reports catalog support without claiming record CRUD", 
   assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.5");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "1.4",
+    phase: "1.5",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
