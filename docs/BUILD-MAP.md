@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 7 / 41 tasks complete  
-**Next:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions
+**Implementation progress:** 8 / 41 tasks complete  
+**Next:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    78%  (7/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    89%  (8/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **7 / 41 tasks complete**.
+Overall implementation: **8 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 7 / 9 tasks complete
+**Progress:** 8 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -305,15 +305,43 @@ No relation traversal, relation validation, or multi-record transaction executio
 
 ## Task 8 / 41 - Phase 1.8 Relations + bounded transactions
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Declared references, relation validation/indexing, atomic multi-record transactions, bounded operation counts, safe intra-transaction references if retained.
+Implemented:
 
-Acceptance: invalid references prevent commit and failed transactions leave no required partial state.
+- storage-neutral `DataRelationStorage` contract;
+- SQLite `_record_relations` STRICT normalized relation index;
+- declared-reference target existence and active-state validation;
+- same-space and declared cross-space references within one workspace database;
+- atomic record and relation-index create/update/delete behavior;
+- inbound-reference protection against dangling soft deletes;
+- public `@ai-verse/data/transactions` surface;
+- bounded create/update/delete transaction sequences;
+- maximum 50 operations per transaction;
+- whole-transaction rollback on any nested failure;
+- safe `clientRef` aliases for records created earlier in the same transaction;
+- rejection of forward and duplicate transaction aliases;
+- normal schema/reference/version rules reused inside transactions.
+
+Verification:
+
+```text
+GitHub Actions run: 34517605246
+Node 22:             PASS
+Node 24:             PASS
+Tests:               102 / 102 PASS
+Failures:            0
+```
+
+Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
+
+Persistent idempotency, race-safe optimistic concurrency, events, and receipts remain Phase 2. No Phase 1.9 integration-gate work was introduced.
+
+**Task 1.8 gate: PASSED.**
 
 ## Task 9 / 41 - Phase 1.9 Phase 1 integration gate
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 Run the full Phase 1 acceptance suite in `docs/TESTING-AND-ACCEPTANCE.md`.
 
@@ -469,6 +497,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 8 / 41: Phase 1.8 - Relations + bounded transactions.**
+**Task 9 / 41: Phase 1.9 - Phase 1 integration gate.**
 
-Do not begin Task 9 / 41 until Task 8 is implemented, tested, committed, and reported complete.
+Do not begin Task 10 / 41 until Task 9 is run, verified, committed, and reported complete.
