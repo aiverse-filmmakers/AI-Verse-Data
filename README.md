@@ -71,6 +71,16 @@ Record CRUD
   -> actor attribution
   -> basic expectedVersion checks
   -> deleted-record visibility controls
+
+Task 7 / 41 - COMPLETE
+Safe query + aggregate engine
+  -> structured filter AST
+  -> schema-aware operator/type checks
+  -> parameterized SQLite compilation
+  -> bounded sorting + field selection
+  -> opaque query-bound cursors
+  -> count/sum/min/max/avg
+  -> SQL-looking values remain parameters
 ```
 
 Data Spaces, entity schemas, record CRUD, safe queries, and aggregates are now implemented. Relations, bounded transactions, OS installation, and sibling-layer adapters remain later tasks.
@@ -159,6 +169,16 @@ Basic `expectedVersion` checks are implemented now. Race-safe atomic optimistic 
 
 See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
+## Safe queries and aggregates
+
+Phase 1.7 adds `@ai-verse/data/query`. Callers submit structured filters, sort keys, selected fields, bounded limits/cursors, and aggregate metrics instead of SQL.
+
+The engine validates every filter, sort, and aggregate field against the current entity schema before storage execution. SQLite receives parameterized queries, including bound JSON field paths and user values. String wildcard characters are escaped for `contains` and `starts_with`, and SQL-looking text remains inert data.
+
+Query results pass through the same historical-schema hydration and corruption checks used by normal CRUD reads. Opaque cursors are bounded and fingerprinted to one query shape.
+
+See [`docs/QUERY-AND-AGGREGATES-V0.1.md`](docs/QUERY-AND-AGGREGATES-V0.1.md).
+
 ### Latest verification
 
 Task 7 implementation CI run: `34516259373`
@@ -172,7 +192,7 @@ Node 24  PASS
 0 failed
 ```
 
-The suite now also proves schema-aware create/get/list/update/soft-delete, defaults, field constraints, unknown-field policy, actor provenance, schema evolution behavior, basic stale-version rejection, deleted-record visibility, reopen persistence, record-size ceilings, and fail-closed stored-record validation.
+The suite now also proves nested filters, schema-aware operator/value checks, wildcard escaping, sorting, projection, cursor pagination, cursor/query mismatch rejection, deleted-row behavior, aggregate math/type checks, server ceilings, and SQL-looking values remaining inert parameters.
 
 ## Why Data is separate from Memory
 
@@ -273,6 +293,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md) - trusted-root and persistent scope-binding contract
 - [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md) - implemented Data Space and entity-schema catalog
 - [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md) - implemented schema-aware record CRUD contract
+- [`docs/QUERY-AND-AGGREGATES-V0.1.md`](docs/QUERY-AND-AGGREGATES-V0.1.md) - implemented safe query and aggregate contract
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
