@@ -369,9 +369,9 @@ Examples:
 
 ## 24. Deliberately not implemented
 
-Phase 2.3 does not implement Task 13 bulk-operation APIs, bulk preview/dry-run, event subscriptions, automation scheduling, Memory writes, cross-workspace event aggregation, external-key cryptographic signing, remote multi-primary event coordination, external-system side-effect receipts, or event pruning/compaction.
+At the Phase 2.3 boundary, Task 13 bulk-operation APIs and preview/dry-run were intentionally not implemented early. They have since landed in Phase 2.4. Event subscriptions, automation scheduling, Memory writes, cross-workspace event aggregation, external-key cryptographic signing, remote multi-primary event coordination, external-system side-effect receipts, and event pruning/compaction remain outside Phase 2.3.
 
-Bulk-operation safety is Task 13 / 41. Automation event adapters remain a later ecosystem-adapter task.
+Bulk-operation safety has since been completed in Task 13 / Phase 2.4. Automation event adapters remain a later ecosystem-adapter task.
 
 ## 25. Verification
 
@@ -407,4 +407,4 @@ Final exact-head closeout CI is verified separately after all documentation/log 
 13. Event queries are bounded and cursor-bound to their filter.
 14. Provenance writing remains internal to governed canonical mutation execution.
 15. Data events are audit facts, not automatic Memory.
-16. Task 13 bulk-operation behavior is not implemented early.
+16. Task 13 bulk-operation behavior was not implemented early in Phase 2.3; it has since landed independently in Phase 2.4.
