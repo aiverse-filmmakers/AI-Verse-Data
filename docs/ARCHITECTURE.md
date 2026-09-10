@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency, Phase 2.2 durable idempotency, and Phase 2.3 events/receipts/provenance implemented
+**Implementation:** Phase 1 complete; Phase 2.1 concurrency, Phase 2.2 idempotency, Phase 2.3 provenance, and Phase 2.4 bounded bulk safety implemented
 
 ## 1. Architectural position
 
@@ -495,6 +495,31 @@ A reference target must exist, be active, and match the schema-declared Data Spa
 Canonical record mutations and normalized relation-index changes share the same storage transaction. Active inbound references block target soft deletion, preventing dangling canonical relationships.
 
 Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
+
+## 14.2 Implemented bulk safety layer
+
+Phase 2.4 adds a review-before-commit wrapper around the existing bounded transaction engine.
+
+The bulk layer does not own a second record mutation implementation. Both preview and execute reuse the same schema, relation, optimistic-concurrency, idempotency, and provenance paths already used by direct transactions.
+
+Preview is implemented as:
+
+```text
+outer BEGIN IMMEDIATE
+  execute the real bounded transaction path
+  derive deterministic review summary
+  force rollback
+```
+
+The rollback includes temporary records, relations, nested/outer transaction idempotency entries, events, receipts, and SQLite event-sequence movement.
+
+The public preview never exposes temporary generated create IDs. Its digest binds actor, exact ordered operations, deterministic state summary, and the all-or-nothing policy.
+
+Fresh execute re-previews current state, requires the supplied digest to match, then commits through the normal transaction engine. Commit has one supported policy: all-or-nothing.
+
+Bulk adds no canonical SQLite table. Its durable outer retry state uses the existing idempotency store, and committed mutation history remains the nested record provenance plus final transaction provenance.
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
 
 ## 15. Delete semantics
 
