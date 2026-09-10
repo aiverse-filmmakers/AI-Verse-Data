@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 10 / 41 tasks complete  
-**Next:** Task 11 / 41, Phase 2.2 - Idempotent mutations
+**Implementation progress:** 11 / 41 tasks complete  
+**Next:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    11%  (1/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    22%  (2/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **10 / 41 tasks complete**.
+Overall implementation: **11 / 41 tasks complete**.
 
 ---
 
@@ -427,11 +427,52 @@ No persistent idempotency/request-fingerprint/replay behavior was introduced.
 
 ## Task 11 / 41 - Phase 2.2 Idempotent mutations
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Persistent idempotency keys, canonical request fingerprints, replay semantics, conflict rejection.
+Implemented:
+
+- public `@ai-verse/data/idempotency` surface;
+- workspace-database-global durable idempotency keys;
+- fixed SQLite `_idempotency` STRICT table;
+- fingerprint version 1;
+- deterministic canonical JSON request serialization;
+- SHA-256 request fingerprints;
+- operation + trusted actor + semantic-request binding;
+- direct record create/update/delete idempotency enforcement;
+- exact original-result replay before current-state checks;
+- same-key/different-request `IDEMPOTENCY_CONFLICT`;
+- SHA-256 replay-result integrity verification;
+- no key reservation after failed mutation;
+- replay persistence across close/reopen;
+- outer + nested bounded-transaction idempotency;
+- transaction rollback of all idempotency entries on failure;
+- no automatic v0.1 idempotency expiry;
+- separate-process same-key/same-request duplicate-delivery proof;
+- separate-process same-key/different-request conflict proof.
+
+Verification:
+
+```text
+GitHub Actions run: 34523382398
+Node 22:             PASS
+Node 24:             PASS
+Tests:               125 / 125 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+No mutation events, durable receipts, event IDs, or provenance query system were introduced.
+
+**Task 2.2 gate: PASSED.**
 
 ## Task 12 / 41 - Phase 2.3 Events, receipts, provenance
+
+**Status:** NEXT
+
 Append-oriented Data events, mutation receipts, actor attribution, transaction/event atomicity, event queries.
 
 ## Task 13 / 41 - Phase 2.4 Bulk-operation safety and limits
@@ -569,6 +610,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 11 / 41: Phase 2.2 - Idempotent mutations.**
+**Task 12 / 41: Phase 2.3 - Events, receipts, provenance.**
 
-Do not begin Task 12 / 41 until Task 11 is implemented, verified, committed, and reported complete.
+Do not begin Task 13 / 41 until Task 12 is implemented, verified, committed, and reported complete.
