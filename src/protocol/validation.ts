@@ -14,6 +14,8 @@ import {
 import type {
   AggregateMetric,
   AggregatePayload,
+  BulkExecutePayload,
+  BulkPreviewPayload,
   DataErrorCode,
   DataOperation,
   DataRequestEnvelope,
@@ -38,6 +40,7 @@ const FIELD_NAME_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_DATETIME_RE =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/;
+const SHA256_HEX_RE = /^[0-9a-f]{64}$/;
 
 export class DataProtocolValidationError extends Error {
   readonly code: "REQUEST_INVALID" | "OPERATION_UNSUPPORTED" | "PAYLOAD_INVALID";
@@ -827,26 +830,22 @@ export function validateAggregatePayload(
   return input as AggregatePayload;
 }
 
-export function validateTransactionExecutePayload(
+function validateMutationOperations(
   input: unknown,
-  path = "$transaction",
-): TransactionExecutePayload {
-  const value = object(input, path);
-  keysOnly(value, ["idempotencyKey", "operations"], path);
-  validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
+  path: string,
+  maxOperations: number,
+): void {
   if (
-    !Array.isArray(value.operations) ||
-    value.operations.length < 1 ||
-    value.operations.length > DATA_PROTOCOL_LIMITS.maxTransactionOperations
+    !Array.isArray(input) ||
+    input.length < 1 ||
+    input.length > maxOperations
   ) {
-    fail(
-      `${path}.operations`,
-      `must contain 1..${DATA_PROTOCOL_LIMITS.maxTransactionOperations} operations`,
-    );
+    fail(path, `must contain 1..${maxOperations} operations`);
   }
-  value.operations.forEach((item, index) => {
-    const nested = object(item, `${path}.operations[${index}]`);
-    keysOnly(nested, ["operation", "payload"], `${path}.operations[${index}]`);
+
+  input.forEach((item, index) => {
+    const nested = object(item, `${path}[${index}]`);
+    keysOnly(nested, ["operation", "payload"], `${path}[${index}]`);
     const nestedOperation = nested.operation;
     if (
       nestedOperation !== "data.record.create" &&
@@ -854,13 +853,90 @@ export function validateTransactionExecutePayload(
       nestedOperation !== "data.record.delete"
     ) {
       fail(
-        `${path}.operations[${index}].operation`,
+        `${path}[${index}].operation`,
         "must be a supported record mutation",
       );
     }
     validatePayload(nestedOperation, nested.payload);
   });
+}
+
+export function validateTransactionExecutePayload(
+  input: unknown,
+  path = "$transaction",
+): TransactionExecutePayload {
+  const value = object(input, path);
+  keysOnly(value, ["idempotencyKey", "operations"], path);
+  validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
+  validateMutationOperations(
+    value.operations,
+    `${path}.operations`,
+    DATA_PROTOCOL_LIMITS.maxTransactionOperations,
+  );
   return input as TransactionExecutePayload;
+}
+
+export function validateBulkPreviewPayload(
+  input: unknown,
+  path = "$bulkPreview",
+): BulkPreviewPayload {
+  const value = object(input, path);
+  keysOnly(value, ["operations"], path);
+  validateMutationOperations(
+    value.operations,
+    `${path}.operations`,
+    DATA_PROTOCOL_LIMITS.maxBulkOperations,
+  );
+
+  const bytes = Buffer.byteLength(JSON.stringify(value), "utf8");
+  if (bytes > DATA_PROTOCOL_LIMITS.maxBulkBytes) {
+    fail(
+      path,
+      `bulk payload exceeds ${DATA_PROTOCOL_LIMITS.maxBulkBytes} bytes`,
+    );
+  }
+  return input as BulkPreviewPayload;
+}
+
+export function validateBulkExecutePayload(
+  input: unknown,
+  path = "$bulkExecute",
+): BulkExecutePayload {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    ["idempotencyKey", "expectedPreviewDigest", "operations"],
+    path,
+  );
+  validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
+
+  const digest = string(
+    value.expectedPreviewDigest,
+    `${path}.expectedPreviewDigest`,
+    64,
+    64,
+  );
+  if (!SHA256_HEX_RE.test(digest)) {
+    fail(
+      `${path}.expectedPreviewDigest`,
+      "must be a lowercase SHA-256 hex digest",
+    );
+  }
+
+  validateMutationOperations(
+    value.operations,
+    `${path}.operations`,
+    DATA_PROTOCOL_LIMITS.maxBulkOperations,
+  );
+
+  const bytes = Buffer.byteLength(JSON.stringify(value), "utf8");
+  if (bytes > DATA_PROTOCOL_LIMITS.maxBulkBytes) {
+    fail(
+      path,
+      `bulk payload exceeds ${DATA_PROTOCOL_LIMITS.maxBulkBytes} bytes`,
+    );
+  }
+  return input as BulkExecutePayload;
 }
 
 function validatePayload(operation: DataOperation, input: unknown): void {
@@ -975,6 +1051,14 @@ function validatePayload(operation: DataOperation, input: unknown): void {
 
     case "data.aggregate":
       validateAggregatePayload(value, path);
+      return;
+
+    case "data.bulk.preview":
+      validateBulkPreviewPayload(value, path);
+      return;
+
+    case "data.bulk.execute":
+      validateBulkExecutePayload(value, path);
       return;
 
     case "data.transaction.execute":
