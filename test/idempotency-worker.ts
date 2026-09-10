@@ -19,9 +19,13 @@ function send(message: ResultMessage | { readonly type: "ready" }): void {
   process.send?.(message);
 }
 
-const [databasePath, idempotencyKey] = process.argv.slice(2);
+const [databasePath, idempotencyKey, valueText] = process.argv.slice(2);
 if (databasePath === undefined || idempotencyKey === undefined) {
   throw new Error("Idempotency worker requires database path and key.");
+}
+const value = valueText === undefined ? 42 : Number(valueText);
+if (!Number.isFinite(value)) {
+  throw new Error("Idempotency worker value must be finite.");
 }
 
 const database = new SqliteStorageDriver().open({
@@ -45,7 +49,7 @@ process.once("message", (message: GoMessage) => {
       idempotencyKey,
       data: {
         name: "same-delivery",
-        value: 42,
+        value,
       },
       actor: {
         kind: "worker",
