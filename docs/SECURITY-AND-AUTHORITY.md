@@ -196,6 +196,30 @@ Do not hold write transactions open while calling models, external APIs, or wait
 
 Plan first. Authorize. Then open a short local transaction and commit.
 
+## 10.1 Bulk mutation safety
+
+Phase 2.4 treats bulk mutation as a high-amplification path and therefore does not expose an unbounded or best-effort batch primitive.
+
+Security controls:
+
+- maximum 50 operations;
+- maximum 256 KiB bulk payload;
+- only existing record create/update/delete mutation shapes;
+- preview runs exact mutation logic but rolls back every effect;
+- preview digest binds trusted actor, exact ordered operation set, and deterministic validated state summary;
+- commit requires the supplied preview digest to match a fresh current-state preview;
+- preview does not authorize execution;
+- execution is all-or-nothing;
+- lower-layer optimistic-concurrency, reference, schema, idempotency, and provenance checks remain active;
+- outer/nested/internal idempotency key collisions are rejected;
+- replay is verified against the underlying transaction result and durable provenance receipt;
+- no synthetic duplicate bulk audit event is created;
+- no cross-workspace bulk operation exists.
+
+These controls reduce blast radius and prevent an agent from silently changing a reviewed batch between preview and commit.
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## 11. Delete safety
 
 Normal record delete is soft delete.
