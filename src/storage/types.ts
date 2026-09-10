@@ -3,6 +3,7 @@ import type { DataRecordStorage } from "./record-store.js";
 import type { DataQueryStorage } from "./query-store.js";
 import type { DataIdempotencyStorage } from "./idempotency-store.js";
 import type { DataRelationStorage } from "./relation-store.js";
+import type { DataProvenanceStorage } from "./provenance-store.js";
 
 export const AI_VERSE_DATA_SQLITE_FORMAT = "ai-verse-data/sqlite" as const;
 export const AI_VERSE_DATA_DATABASE_FORMAT_VERSION = 1 as const;
@@ -59,6 +60,7 @@ export interface DataStorageDatabase {
   queryStorage(): DataQueryStorage;
   relationStorage(): DataRelationStorage;
   idempotencyStorage(): DataIdempotencyStorage;
+  provenanceStorage(): DataProvenanceStorage;
   transaction<T>(
     operation: () => T,
     mode?: StorageTransactionMode,
