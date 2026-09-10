@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -85,7 +85,7 @@ scope_kind
 workspace_id
 ```
 
-An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space/schema/record tables are still deferred to their own build tasks.
+An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space and entity-schema catalog tables are added in Phase 1.5. Record storage remains deferred.
 
 ## Open modes
 
@@ -185,10 +185,22 @@ A conflicting binding returns `DATABASE_SCOPE_CONFLICT`. The driver never silent
 
 For the full path and scope contract, see `docs/SCOPE-AND-IDENTITY-V0.1.md`.
 
+## Phase 1.5 catalog extension
+
+The SQLite storage driver now exposes a storage-neutral `DataCatalogStorage` contract. The first SQLite implementation creates:
+
+```text
+_data_spaces
+_entities
+_entity_schema_versions
+```
+
+These are fixed engine-owned STRICT tables. User/agent entity definitions are stored as validated canonical JSON plus immutable version/digest metadata. Data does not create arbitrary SQL tables from agent-proposed schemas.
+
+The catalog contract and semantics are documented in `docs/CATALOG-AND-SCHEMAS-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
-No Data Space tables.  
-No entity schema persistence.  
 No records.  
 No CRUD.  
 No queries.  
@@ -211,3 +223,6 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 8. Scope binding is persisted only when a trusted host supplies the expected binding.
 9. A database cannot be silently rebound to a different workspace or scope kind.
 10. Raw root paths and Dashboard `systemId` values are not canonical database identity.
+
+11. Agent-defined schemas are persisted through fixed engine-owned catalog tables rather than arbitrary generated SQL.
+12. Schema version snapshots are immutable and digest-verified.
