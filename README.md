@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 11 / 41  
-**Latest completed:** Task 11 / 41, Phase 2.2 - Idempotent mutations  
-**Next task:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance  
+**Completed implementation tasks:** 12 / 41  
+**Latest completed:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance  
+**Next task:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -124,9 +124,23 @@ Idempotent mutations
   -> failed-write rollback/no ghost key
   -> close/reopen replay persistence
   -> duplicate-delivery process races
+
+Task 12 / 41 - COMPLETE
+Events, receipts, provenance
+  -> immutable _events + _mutation_receipts
+  -> public @ai-verse/data/provenance reader
+  -> internal-only provenance writer
+  -> create/update/delete event + receipt atomicity
+  -> transaction child + final transaction provenance
+  -> actor/request/workspace/transaction attribution
+  -> SHA-256 event + receipt integrity
+  -> receipt-to-event consistency verification
+  -> bounded opaque event cursors
+  -> idempotent replay creates no duplicate audit facts
+  -> transaction provenance-laundering protection
 ```
 
-Phase 1 is complete. Phase 2.1 and 2.2 now add race-safe optimistic concurrency and durable idempotent mutation replay. Events, receipts, provenance, backup, migrations, and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.3 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events, durable receipts, and provenance queries. Bulk-operation safety, backup, migrations, and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -210,7 +224,7 @@ Records live in one fixed engine-owned `_records` STRICT table rather than arbit
 
 Create applies validated schema defaults. Get/list hide deleted records unless explicitly requested. Update validates the existing payload against its historical schema, then validates the merged result against the current schema. Soft delete preserves the canonical row and deletion attribution.
 
-Phase 2.1 now enforces `expectedVersion` atomically at the canonical SQLite write. Real separate-process races prove one stale-version writer can commit and the others receive `RECORD_VERSION_CONFLICT`. Durable idempotency is implemented in Task 11. Events and receipts remain Task 12.
+Phase 2.1 enforces `expectedVersion` atomically at the canonical SQLite write. Phase 2.2 adds durable idempotency. Phase 2.3 now appends one immutable event and durable receipt for every successful record mutation, with explicit receipt-returning variants and no duplicate provenance on idempotent replay.
 
 See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
@@ -230,7 +244,7 @@ Phase 1.8 enforces declared reference fields against real active target records 
 
 `@ai-verse/data/transactions` executes up to 50 create/update/delete operations atomically inside one workspace database. A later operation may reference a record created earlier in the same transaction using an explicit `clientRef` marker on a declared reference field. Any failed operation rolls back the whole transaction.
 
-Race-hardening and durable idempotency are implemented in Phase 2.1 and 2.2. Mutation events and durable receipts remain Task 12.
+Race-hardening, durable idempotency, mutation events, durable receipts, and transaction provenance are implemented through Phase 2.3.
 
 See [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-V0.1.md).
 
@@ -259,6 +273,18 @@ A matching retry returns the original result without executing again. Reusing th
 Separate-process tests prove concurrent duplicate delivery creates one canonical record and replays one shared result. A same-key/different-payload race produces one commit and one conflict.
 
 See [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md).
+
+## Events, receipts, and provenance
+
+Phase 2.3 adds immutable structured audit facts for record create/update/delete and bounded transactions. SQLite stores fixed engine-owned `_events` and `_mutation_receipts` tables, guarded by append-only triggers and SHA-256 integrity checks.
+
+The public `@ai-verse/data/provenance` surface can list bounded event streams, fetch receipts by receipt ID or idempotency key, and list all receipts for a transaction. Provenance writing remains internal to canonical mutation execution.
+
+Existing mutation methods remain compatible. Receipt-returning variants are available for records and transactions. Matching idempotent replay reuses the original receipt and creates no second event. Fresh bounded transactions reject nested idempotency keys already bound outside that transaction, preventing old mutations from being laundered into new transaction provenance.
+
+Data events are audit facts, not automatic Memory.
+
+See [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md).
 
 ### Latest verification
 
@@ -390,4 +416,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 12 / 41, Phase 2.3 - Events, receipts, provenance.**
+**Next: Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits.**
