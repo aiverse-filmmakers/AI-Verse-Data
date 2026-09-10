@@ -199,6 +199,27 @@ final canonical version advances exactly once
 
 Implementation run `34521416868` passed 110 / 110 tests on Node 22 and Node 24.
 
+### Phase 2.2 idempotency evidence
+
+Task 11 / 41 adds durable retry-safety proof for record and bounded-transaction mutations.
+
+The suite verifies:
+
+- canonical SHA-256 fingerprints are stable across object property order;
+- operation, trusted actor, and semantic request are fingerprint-bound;
+- create/update/delete matching retries return the original committed snapshot;
+- replay is resolved before stale current-version checks;
+- same key with a changed request returns `IDEMPOTENCY_CONFLICT`;
+- failed mutations leave no key reservation;
+- replay survives database close/reopen;
+- bounded transaction replay returns identical generated record IDs;
+- failed transactions roll back nested and outer idempotency entries;
+- persisted replay result tampering fails closed by digest verification;
+- four separate Node processes delivering the same key/request create one canonical record and receive one shared result;
+- two processes racing with one key but different payloads produce one commit and one conflict.
+
+Behavioral verification run `34523382398` passed 125 / 125 tests on Node 22 and Node 24.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
