@@ -43,6 +43,10 @@
     "./idempotency": {
       "types": "./dist/src/idempotency/index.d.ts",
       "import": "./dist/src/idempotency/index.js"
+    },
+    "./provenance": {
+      "types": "./dist/src/provenance/index.d.ts",
+      "import": "./dist/src/provenance/index.js"
     }
   },
   "files": [
