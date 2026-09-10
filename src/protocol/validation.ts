@@ -983,9 +983,19 @@ function validatePayload(operation: DataOperation, input: unknown): void {
 
     case "data.events.list":
       keysOnly(value, ["spaceId", "entity", "recordId", "after", "limit"], path);
-      slug(value.spaceId, `${path}.spaceId`);
-      if (value.entity !== undefined) slug(value.entity, `${path}.entity`);
-      if (value.recordId !== undefined) safeId(value.recordId, `${path}.recordId`);
+      if (value.spaceId !== undefined) slug(value.spaceId, `${path}.spaceId`);
+      if (value.entity !== undefined) {
+        if (value.spaceId === undefined) {
+          fail(`${path}.entity`, "requires spaceId");
+        }
+        slug(value.entity, `${path}.entity`);
+      }
+      if (value.recordId !== undefined) {
+        if (value.entity === undefined) {
+          fail(`${path}.recordId`, "requires spaceId and entity");
+        }
+        safeId(value.recordId, `${path}.recordId`);
+      }
       if (value.after !== undefined) validateCursor(value.after, `${path}.after`);
       if (value.limit !== undefined) {
         positiveInt(value.limit, `${path}.limit`, DATA_PROTOCOL_LIMITS.maxEventPageSize);
