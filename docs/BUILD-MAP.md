@@ -256,7 +256,7 @@ Failures:            0
 
 Detailed contract: `docs/RECORD-CRUD-V0.1.md`.
 
-Task 10 / 41 remains responsible for race-safe atomic optimistic concurrency under competing writers. Tasks 11 and 12 remain responsible for persistent idempotency and events/receipts.
+At the Phase 1.6 boundary, Tasks 10, 11, and 12 were still responsible for race-safe concurrency, persistent idempotency, and events/receipts. Tasks 10 and 11 have since completed concurrency and idempotency; Task 12 still owns events/receipts.
 
 No general query/aggregate engine, relation enforcement, or multi-record transaction execution was introduced.
 
@@ -421,7 +421,7 @@ Cancelled:           0
 Detailed contract: `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.  
 Phase status: `docs/PHASE-2-STATUS.md`.
 
-No persistent idempotency/request-fingerprint/replay behavior was introduced.
+At the Task 10 boundary, no persistent idempotency/request-fingerprint/replay behavior had been introduced. Task 11 has since implemented that layer.
 
 **Task 2.1 gate: PASSED.**
 
