@@ -15,27 +15,32 @@ interface PackageJson {
   readonly bin: Record<string, string>;
   readonly engines: Record<string, string>;
   readonly exports: Record<string, unknown>;
+  readonly dependencies: Record<string, string>;
 }
 
 const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes the intended package, CLI, and protocol subpath", () => {
+test("package metadata exposes package, CLI, protocol, and storage subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
   assert.equal(packageJson.engines.node, ">=22.0.0");
   assert.match(packageJson.version, /^0\.1\.0-alpha\.0$/);
   assert.ok("./protocol" in packageJson.exports);
+  assert.ok("./storage" in packageJson.exports);
+  assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports protocol phase while persistence remains unavailable", () => {
+test("foundation surface reports storage bootstrap without claiming CRUD", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.2");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "1.3");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "1.2",
+    phase: "1.3",
+    protocolAvailable: true,
+    storageAvailable: true,
     dataOperationsAvailable: false,
   });
 });
