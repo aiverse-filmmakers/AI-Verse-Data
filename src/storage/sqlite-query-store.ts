@@ -161,18 +161,19 @@ export class SqliteQueryStorage implements DataQueryStorage {
   }
 
   aggregate(plan: StorageAggregatePlan): Readonly<Record<string, number | string | null>> {
-    const params: Array<string | number | null> = [plan.spaceId, plan.entity];
-    const predicates = ["space_id = ?", "entity_id = ?", "deleted_at IS NULL"];
-    if (plan.where !== undefined) predicates.push(compileFilter(plan.where, params));
-
+    const metricParams: Array<string | number | null> = [];
     const expressions = plan.metrics.map((metric) => {
       if (metric.op === "count") return "COUNT(*) AS " + quoteIdentifier(metric.as);
-      params.push(jsonPath(metric.field ?? ""));
+      metricParams.push(jsonPath(metric.field ?? ""));
       return metric.op.toUpperCase() + "(json_extract(data_json, ?)) AS " + quoteIdentifier(metric.as);
     });
 
+    const whereParams: Array<string | number | null> = [plan.spaceId, plan.entity];
+    const predicates = ["space_id = ?", "entity_id = ?", "deleted_at IS NULL"];
+    if (plan.where !== undefined) predicates.push(compileFilter(plan.where, whereParams));
+
     const sql = "SELECT " + expressions.join(", ") + " FROM _records WHERE " + predicates.join(" AND ");
-    const row = this.database.prepare(sql).get(...params) as Record<string, unknown>;
+    const row = this.database.prepare(sql).get(...metricParams, ...whereParams) as Record<string, unknown>;
     const output: Record<string, number | string | null> = {};
     for (const metric of plan.metrics) {
       const value = row[metric.as];
