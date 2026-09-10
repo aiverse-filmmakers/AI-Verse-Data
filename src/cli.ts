@@ -8,7 +8,7 @@ interface PackageMetadata {
   readonly version: string;
 }
 
-export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1.2 provides public protocol types and runtime validators. Database persistence and CRUD execution are added in later tasks.\n`;
+export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1.3 provides the storage-driver contract and SQLite bootstrap. Data Spaces, schemas, records, queries, and CRUD execution are added in later tasks.\n`;
 
 function packageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
