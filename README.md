@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 12 / 41  
-**Latest completed:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance  
-**Next task:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits  
+**Completed implementation tasks:** 13 / 41  
+**Latest completed:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits  
+**Next task:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -138,9 +138,23 @@ Events, receipts, provenance
   -> bounded opaque event cursors
   -> idempotent replay creates no duplicate audit facts
   -> transaction provenance-laundering protection
+
+Task 13 / 41 - COMPLETE
+Bulk-operation safety and limits
+  -> public @ai-verse/data/bulk surface
+  -> data.bulk.preview + data.bulk.execute protocol operations
+  -> exact rollback-only preview using the real transaction engine
+  -> zero committed preview state, including event sequence
+  -> 50-operation + 256 KiB hard ceilings
+  -> actor/operation/state-bound SHA-256 preview digest
+  -> mandatory preview-digest match before commit
+  -> all-or-nothing commit only, no best-effort partial success
+  -> existing schema/reference/OCC/idempotency/provenance guarantees reused
+  -> idempotent bulk replay verified against transaction + provenance state
+  -> preview-created IDs never exposed as canonical identity
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.3 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events, durable receipts, and provenance queries. Bulk-operation safety, backup, migrations, and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.4 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, and bounded review-before-commit bulk operations. Backup, migrations, and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -155,6 +169,7 @@ Phase 1 is complete. Phase 2.1 through 2.3 now add race-safe optimistic concurre
 @ai-verse/data/transactions
 @ai-verse/data/idempotency
 @ai-verse/data/provenance
+@ai-verse/data/bulk
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -287,22 +302,32 @@ Data events are audit facts, not automatic Memory.
 
 See [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md).
 
+## Bounded bulk operations
+
+Phase 2.4 adds `@ai-verse/data/bulk` with explicit preview and execute operations. Preview runs the real bounded transaction engine inside a rollback-only SQLite transaction, so schema, reference, concurrency, idempotency, and provenance rules are evaluated exactly while leaving no committed records, relations, idempotency entries, events, receipts, or event-sequence changes.
+
+Bulk execution is capped at 50 operations and 256 KiB. Commit requires the SHA-256 digest returned by preview, revalidates current state, and is always all-or-nothing. v0.1 intentionally has no best-effort partial-success mode.
+
+The bulk layer does not create a second synthetic audit event. Successful execution returns the underlying transaction receipt and preserves the existing nested mutation + transaction provenance model.
+
+See [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md).
+
 ### Latest verification
 
-Task 12 behavioral CI run: `34526163488`
+Task 13 behavioral CI run: `34535289214`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-141 tests
-141 passed
+153 tests
+153 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite now additionally proves immutable event/receipt storage, actor/request/workspace provenance, bounded event cursors, receipt-to-event integrity, transaction provenance linkage, rollback atomicity, idempotent replay without duplicate audit facts, and protection against laundering previously committed nested mutations into a fresh transaction.
+The suite now additionally proves exact rollback-only bulk preview, zero durable preview effects including SQLite event-sequence state, hard count/byte ceilings, actor-bound preview digests, all-or-nothing commit, stale preview rejection, safe clientRef preview, bulk idempotent replay, and key-separation enforcement.
 
 ## Why Data is separate from Memory
 
@@ -420,4 +445,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits.**
+**Next: Task 14 / 41, Phase 2.5 - Backup/export/import foundation.**
