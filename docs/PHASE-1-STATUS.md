@@ -13,20 +13,7 @@ This document records concrete implementation evidence for Phase 1. `docs/BUILD-
 
 **Status:** COMPLETE
 
-Implemented:
-
-- Node.js 22+ package metadata;
-- TypeScript 5.8 strict compiler configuration;
-- ESM package/export boundary;
-- `ai-verse-data` CLI entrypoint;
-- `--help` and `--version` behavior;
-- explicit nonzero failure for unsupported CLI arguments;
-- public foundation status surface;
-- Node built-in test harness;
-- source/test directory structure;
-- build/test/check scripts;
-- `.gitignore`;
-- GitHub Actions CI for Node 22 and Node 24.
+Implemented Node.js 22+ package metadata, TypeScript 5.8 strict compilation, ESM exports, CLI help/version, explicit unsupported-input failure, Node test harness, source/test layout, build/check scripts, `.gitignore`, and GitHub Actions CI on Node 22/24.
 
 Verification:
 
@@ -45,16 +32,11 @@ CI run:      34505126081
 
 **Status:** COMPLETE
 
-Implemented public protocol surface:
+Public protocol surface:
 
 ```text
 @ai-verse/data/protocol
-```
-
-Protocol version:
-
-```text
-ai-verse-data/0.1
+protocol: ai-verse-data/0.1
 ```
 
 Implemented:
@@ -66,40 +48,25 @@ Implemented:
 - workspace scope type;
 - actor kinds for human, bot, worker, app, automation, system, import, and connection;
 - host-bound/local-operator authorization metadata;
-- Data Space identifiers and `local_canonical` first-release authority class;
+- Data Space IDs and `local_canonical` first-release authority class;
 - entity/schema definitions;
 - record types;
 - additive schema-change types;
 - safe query AST with condition/AND/OR/NOT nodes;
 - sort and aggregate types;
-- bounded transaction request types;
-- first-release field-definition types:
-  - string
-  - number
-  - integer
-  - boolean
-  - date
-  - datetime
-  - enum
-  - reference
-  - json
-  - attachment_ref
+- discriminated bounded transaction types;
+- first-release field types: string, number, integer, boolean, date, datetime, enum, reference, json, attachment_ref;
 - JSON-safe value validation;
-- request-envelope runtime validation;
-- response-envelope runtime validation;
-- field-definition runtime validation;
-- query/filter runtime validation;
-- explicit rejection of unknown fields;
+- request and response runtime validation;
+- field-definition and query-filter validation;
+- strict unknown-field rejection;
 - explicit `OPERATION_UNSUPPORTED` behavior;
-- safe workspace/object identifier validation;
-- logical slug validation for Data Spaces/entities;
-- request/record/schema/query/transaction/event ceilings;
-- cyclic JSON rejection;
-- non-finite JSON number rejection.
+- safe workspace/object ID validation;
+- lowercase logical slugs for Data Spaces/entities;
+- cyclic JSON and non-finite number rejection;
+- hard request/record/schema/query/transaction/event ceilings.
 
 ### Hard protocol ceilings
-
-The implementation now defines explicit bounded defaults, including:
 
 ```text
 request bytes                 256 KiB
@@ -119,74 +86,40 @@ JSON depth                    16
 array items                   1000
 ```
 
-These are protocol safety ceilings, not storage-engine capabilities. Future host configuration may only alter limits through an explicitly safe policy contract.
+These are protocol safety ceilings, not claims about storage-engine capacity.
 
-### Security/authority boundary proved in this task
+### Security/authority boundary proved
 
-Normal protocol requests do not expose or accept:
+Normal protocol requests do not expose or accept arbitrary SQL, canonical database paths, invented operation names, unknown envelope/payload fields, path traversal through workspace/Data Space IDs, unbounded query recursion, or unbounded transaction/list shapes.
 
-- a canonical database filesystem path;
-- arbitrary SQL text;
-- caller-created new operation names;
-- arbitrary unknown top-level/payload fields;
-- path traversal through workspace/Data Space IDs;
-- unbounded query recursion;
-- unbounded list/transaction shapes.
-
-Authorization metadata remains descriptive input to the future host/engine boundary. A request containing capability references does not itself prove permission.
+Authorization metadata does not itself prove permission. The future host/engine permission boundary still decides effective authority.
 
 ### Type-level hardening
 
-Transaction operations are discriminated so each operation name is paired with its exact payload type rather than a loose mutation union.
-
-Empty payload operations use a strict empty-record type rather than TypeScript's permissive `{}` shape.
-
-The protocol remains storage-driver neutral. No SQLite-specific type is part of the public operation contract.
+Transaction operations pair each operation name with its exact payload type. Empty payload operations use a strict empty-record type rather than TypeScript's permissive `{}`. The public protocol contains no SQLite-specific type.
 
 ### Verification evidence
 
-GitHub Actions run `34508602201` passed the pre-final type-hardening implementation with:
+Final implementation head CI:
 
 ```text
-Node 22  PASS
-Node 24  PASS
-
-18 tests
-18 passed
-0 failed
-0 skipped
-0 cancelled
+GitHub Actions run: 34508602201
+Node 22:             PASS
+Node 24:             PASS
+Tests:               18 / 18 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
 ```
 
-After the final type-only hardening commit, GitHub Actions run `34508602201` was superseded by the latest CI run for the exact head and both Node 22/24 build-and-test jobs also passed.
-
-The test suite covers:
-
-1. CLI and package foundation compatibility;
-2. public protocol package export;
-3. valid documented record-update request;
-4. protocol-version rejection;
-5. unsupported-operation rejection;
-6. unknown envelope/payload field rejection;
-7. filesystem-like scope/logical ID rejection;
-8. field type/enum validation;
-9. schema field ceilings;
-10. bounded query recursion;
-11. bounded `in`/`not_in` lists;
-12. page/aggregate/transaction ceilings;
-13. unsupported nested transaction operations;
-14. non-finite JSON rejection;
-15. oversized record rejection;
-16. success response validation;
-17. failure/error-code validation;
-18. explicit raw-SQL/database-path rejection.
+The 18 tests cover package/CLI compatibility, protocol export, valid request acceptance, wrong protocol rejection, unsupported-operation rejection, unknown-field rejection, unsafe logical IDs, field/enum validation, schema ceilings, bounded query recursion, bounded `in` lists, page/aggregate/transaction ceilings, nested transaction operation restrictions, non-finite/oversized JSON rejection, response/error validation, and explicit raw-SQL/database-path rejection.
 
 ### Deliberately not implemented
 
 - SQLite;
 - storage-driver interface;
 - persistent databases;
-- actual Data Space/schema persistence;
+- Data Space/schema persistence;
 - record CRUD execution;
 - query compilation/execution;
 - real permission evaluation;
@@ -198,12 +131,12 @@ Those remain later tasks.
 
 **PASSED.**
 
-Acceptance requirements from the Build Map are satisfied:
+Acceptance requirements are satisfied:
 
-- malformed envelopes are rejected deterministically;
+- malformed envelopes reject deterministically;
 - unknown operations fail explicitly;
-- protocol semantics do not depend on SQLite;
-- public protocol version is separate from future database-format and schema versions.
+- protocol semantics remain storage-neutral;
+- protocol, future DB-format, engine, and entity-schema versions remain separate concepts.
 
 ---
 
