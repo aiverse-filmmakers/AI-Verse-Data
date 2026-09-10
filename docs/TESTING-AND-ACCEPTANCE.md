@@ -149,7 +149,7 @@ No implementation code is required for this gate.
 The first engine phase must prove at minimum:
 
 1. initialize a standalone temporary Data database;
-2. initialize a native workspace Data database;
+2. initialize a native-ready workspace-scoped Data database through the trusted workspace scope abstraction;
 3. create/list/get Data Spaces;
 4. create/list/get entity schemas;
 5. validate first-release field types;
@@ -160,10 +160,21 @@ The first engine phase must prove at minimum:
 10. aggregate count/sum/min/max/avg where valid;
 11. create validated references;
 12. execute a bounded transaction atomically;
-13. append mutation event in the same commit;
-14. return stable mutation receipt;
-15. reopen database and recover exactly the committed state;
-16. reject unsupported database format/version.
+13. reopen database and recover exactly the committed state;
+14. reject unsupported database format/version.
+
+Phase 1 does **not** require native AI-Verse OS manifest detection/registration. That begins in Phase 3.
+
+### Phase-boundary correction recorded during Task 9 / 41
+
+The original Phase 1 checklist incorrectly included:
+
+- appending mutation events in the same commit;
+- returning stable mutation receipts.
+
+Those requirements conflict with the canonical Build Map, which assigns events and receipts to **Task 12 / 41, Phase 2.3**. They are therefore part of the Phase 2 reliability gate, not the Phase 1 core-engine gate.
+
+This correction does not remove those requirements from the product. It prevents Task 9 from silently implementing Phase 2 work early and keeps the canonical task ownership consistent.
 
 ## 6. Phase 2 Reliability and Agent Safety gate
 
@@ -175,6 +186,8 @@ Must prove:
 - process restart does not forget committed idempotency outcome;
 - concurrent create/update attempts preserve invariants;
 - transaction failure rolls back all required writes/events;
+- every committed canonical mutation appends its required Data event atomically;
+- every committed mutation returns a stable mutation receipt;
 - soft-delete history remains inspectable;
 - bulk operations enforce limits;
 - record/query size ceilings are enforced;
