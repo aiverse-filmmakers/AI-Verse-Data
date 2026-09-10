@@ -307,7 +307,7 @@ export interface TransactionExecutePayload {
 }
 
 export interface EventsListPayload {
-  readonly spaceId: DataSpaceId;
+  readonly spaceId?: DataSpaceId;
   readonly entity?: EntityId;
   readonly recordId?: RecordId;
   readonly after?: string | null;
