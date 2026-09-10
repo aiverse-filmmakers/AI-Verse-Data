@@ -2,6 +2,7 @@ import {
   DATA_PROTOCOL_LIMITS,
 } from "../protocol/index.js";
 import type {
+  DataProvenanceStorage,
   DataStorageDatabase,
   StoredMutationReceipt,
 } from "../storage/index.js";
@@ -112,7 +113,7 @@ function validateLimit(value: number | undefined): number {
 }
 
 export class DataProvenance implements DataProvenanceApi {
-  private readonly store;
+  private readonly store: DataProvenanceStorage;
 
   constructor(database: DataStorageDatabase) {
     this.store = database.provenanceStorage();
