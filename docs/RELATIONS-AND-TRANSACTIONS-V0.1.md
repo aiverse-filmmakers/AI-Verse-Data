@@ -1,6 +1,6 @@
 # AI-Verse Data Relations and Transactions v0.1
 
-**Status:** Implemented in Phase 1.8  
+**Status:** Implemented in Phase 1.8; concurrency extended in Phase 2.1; idempotency extended in Phase 2.2; transaction provenance extended in Phase 2.3  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -253,7 +253,7 @@ Conceptually:
 }
 ```
 
-Mutation receipts are not claimed yet. Durable receipts land in Task 12 / 41.
+Phase 2.3 additionally provides `executeWithReceipt(...)`, returning the existing transaction result plus the final durable transaction receipt. Nested mutation receipts remain queryable by the shared transaction ID.
 
 ## 15. Idempotency boundary
 
@@ -271,11 +271,17 @@ Phase 2.1 now hardens this behavior under competing database writers: update/del
 
 ## 17. Events and receipts
 
-Phase 1.8 does not append mutation events or issue durable mutation receipts.
+Phase 2.3 now appends provenance inside the same outer transaction as all nested Data effects.
 
-Those remain Task 12 / 41.
+Every fresh nested create/update/delete receives its own event and receipt with the shared transaction ID and request ID. After all nested mutations succeed, Data appends one final `transaction.committed` event and receipt containing ordered child event and receipt IDs.
 
-Transaction atomicity is implemented now; audit/event atomicity comes later when the event subsystem exists.
+If any nested operation fails, record/relation changes, nested provenance, outer provenance, and nested/outer idempotency entries all roll back together.
+
+Matching outer idempotent replay returns the original transaction result/receipt and appends no new provenance.
+
+A fresh transaction cannot adopt an already-committed nested idempotency key from outside the current transaction. Nested keys must be unique, must differ from the outer key, and their receipts must match the current transaction/request identity. This prevents provenance laundering.
+
+Detailed provenance contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
 
 ## 18. Not implemented
 
@@ -286,9 +292,6 @@ Phase 1.8 intentionally does not add:
 - many-to-many collection fields;
 - cross-workspace references;
 - cross-workspace transactions;
-- persistent idempotent replay;
-- mutation events;
-- durable mutation receipts;
 - hard delete;
 - permission/capability enforcement;
 - external-system synchronization.
