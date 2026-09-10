@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Not started
+**Implementation:** Phase 1 in progress; scope and schema catalog implemented
 
 ## 1. Architectural position
 
@@ -172,9 +172,10 @@ The first implementation should use a fixed internal storage schema instead of c
 Conceptual internal tables:
 
 ```text
-_meta
+_aiverse_meta
 _data_spaces
-_entity_schemas
+_entities
+_entity_schema_versions
 _records
 _record_relations
 _events
@@ -200,15 +201,21 @@ Illustrative responsibilities:
 - authority class;
 - created/updated provenance.
 
-### `_entity_schemas`
+### `_entities`
+
+- stable Data Space/entity identity;
+- current schema version pointer;
+- current schema digest;
+- created/updated timestamps.
+
+### `_entity_schema_versions`
 
 - Data Space ID;
 - entity ID;
-- schema version;
-- schema JSON;
-- content digest;
-- status;
-- timestamps.
+- immutable schema version;
+- validated canonical schema JSON;
+- deterministic SHA-256 digest;
+- version creation timestamp.
 
 ### `_records`
 
@@ -238,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-Exact SQL DDL is an implementation task and is not frozen by this architecture document.
+The catalog portion of this model is now implemented. Record/event/idempotency/migration tables remain later implementation tasks.
 
 ## 7. Record representation
 
