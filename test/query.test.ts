@@ -75,6 +75,15 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
     },
   });
 
+  const companies = ["Acme", "Beta", "Real", "Other"].map((name) =>
+    records.create({
+      spaceId: "crm",
+      entity: "companies",
+      data: { name },
+      actor: human,
+    }),
+  );
+
   const inputs = [
     {
       title: "Alpha Campaign",
@@ -82,7 +91,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
       seats: 1,
       stage: "lead",
       due: "2026-09-10",
-      company: "acme",
+      company: companies[0]!.recordId,
     },
     {
       title: "Beta Proposal",
@@ -90,7 +99,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
       seats: 2,
       stage: "proposal",
       due: "2026-09-11",
-      company: "beta",
+      company: companies[1]!.recordId,
     },
     {
       title: "Gamma Renewal",
@@ -106,7 +115,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
       seats: 8,
       stage: "proposal",
       due: "2026-09-12",
-      company: "real",
+      company: companies[2]!.recordId,
     },
     {
       title: "1000 Real",
@@ -114,7 +123,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
       seats: 16,
       stage: "lost",
       due: "2026-09-13",
-      company: "other",
+      company: companies[3]!.recordId,
     },
   ] as const;
 
