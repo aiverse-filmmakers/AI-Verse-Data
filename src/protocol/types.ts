@@ -173,7 +173,9 @@ export interface AggregateMetric {
   readonly as: string;
 }
 
-export interface SpaceListPayload {}
+export type EmptyPayload = Readonly<Record<string, never>>;
+export type SpaceListPayload = EmptyPayload;
+
 export interface SpaceGetPayload {
   readonly spaceId: DataSpaceId;
 }
@@ -267,10 +269,19 @@ export type TransactionMutationOperation =
   | "data.record.update"
   | "data.record.delete";
 
-export interface TransactionOperation {
-  readonly operation: TransactionMutationOperation;
-  readonly payload: RecordCreatePayload | RecordUpdatePayload | RecordDeletePayload;
-}
+export type TransactionOperation =
+  | {
+      readonly operation: "data.record.create";
+      readonly payload: RecordCreatePayload;
+    }
+  | {
+      readonly operation: "data.record.update";
+      readonly payload: RecordUpdatePayload;
+    }
+  | {
+      readonly operation: "data.record.delete";
+      readonly payload: RecordDeletePayload;
+    };
 
 export interface TransactionExecutePayload {
   readonly idempotencyKey: string;
@@ -284,8 +295,6 @@ export interface EventsListPayload {
   readonly after?: string | null;
   readonly limit?: number;
 }
-
-export interface EmptyPayload {}
 
 export interface DataOperationPayloadMap {
   readonly "data.space.list": SpaceListPayload;
