@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 5 / 41  
-**Latest completed:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas  
-**Next task:** Task 6 / 41, Phase 1.6 - Record CRUD  
+**Completed implementation tasks:** 6 / 41  
+**Latest completed:** Task 6 / 41, Phase 1.6 - Record CRUD  
+**Next task:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -60,9 +60,19 @@ Data Spaces and entity schemas
   -> field/default validation
   -> safe additive schema updates
   -> migration-required destructive changes
+Task 6 / 41 - COMPLETE
+Record CRUD
+  -> fixed canonical _records table
+  -> create/get/list/update/soft-delete
+  -> schema-aware field validation
+  -> defaults and schema-version provenance
+  -> stable record IDs and timestamps
+  -> actor attribution
+  -> basic expectedVersion checks
+  -> deleted-record visibility controls
 ```
 
-Data Spaces and entity schemas are now implemented. Record CRUD, query execution, relations, OS installation, and sibling-layer adapters remain later tasks. They remain later tasks in the canonical Build Map.
+Data Spaces, entity schemas, and record CRUD are now implemented. General query/aggregate execution, relations, OS installation, and sibling-layer adapters remain later tasks.
 
 ## Public package surfaces
 
@@ -72,6 +82,7 @@ Data Spaces and entity schemas are now implemented. Record CRUD, query execution
 @ai-verse/data/storage
 @ai-verse/data/scope
 @ai-verse/data/catalog
+@ai-verse/data/records
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -133,21 +144,32 @@ Entity definitions are stored as validated structured JSON inside fixed engine-o
 Safe direct updates currently include adding compatible fields and changing entity name/description. Removing, replacing, or renaming fields returns `SCHEMA_MIGRATION_REQUIRED` until the dedicated migration framework exists.
 
 See [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md).
+## Record CRUD
+
+Phase 1.6 adds canonical schema-aware record storage behind `@ai-verse/data/records`.
+
+Records live in one fixed engine-owned `_records` STRICT table rather than arbitrary per-entity SQL tables. Each record persists its exact schema version, stable ID, record version, timestamps, actor attribution, JSON payload, and soft-delete state.
+
+Create applies validated schema defaults. Get/list hide deleted records unless explicitly requested. Update validates the existing payload against its historical schema, then validates the merged result against the current schema. Soft delete preserves the canonical row and deletion attribution.
+
+Basic `expectedVersion` checks are implemented now. Race-safe atomic optimistic concurrency under competing writers remains Task 10 / 41. Persistent idempotency, events, and receipts remain Tasks 11 and 12.
+
+See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
 ### Latest verification
 
-Task 5 implementation CI run: `34513039706`
+Task 6 implementation CI run: `34514486550`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-53 tests
-53 passed
+71 tests
+71 passed
 0 failed
 ```
 
-The suite now also proves trusted-root canonicalization, standalone/native-ready path derivation, cross-platform-safe workspace filesystem IDs, child-symlink escape rejection, durable scope binding, one-time binding of older unbound Data databases, conflicting workspace/kind rejection, partial-binding corruption detection, and physical separation across different trusted roots.
+The suite now also proves schema-aware create/get/list/update/soft-delete, defaults, field constraints, unknown-field policy, actor provenance, schema evolution behavior, basic stale-version rejection, deleted-record visibility, reopen persistence, record-size ceilings, and fail-closed stored-record validation.
 
 ## Why Data is separate from Memory
 
@@ -247,6 +269,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/STORAGE-V0.1.md`](docs/STORAGE-V0.1.md) - implemented SQLite driver/storage format
 - [`docs/SCOPE-AND-IDENTITY-V0.1.md`](docs/SCOPE-AND-IDENTITY-V0.1.md) - trusted-root and persistent scope-binding contract
 - [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md) - implemented Data Space and entity-schema catalog
+- [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md) - implemented schema-aware record CRUD contract
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
@@ -257,4 +280,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 6 / 41, Phase 1.6 - Record CRUD.**
+**Next: Task 7 / 41, Phase 1.7 - Safe query + aggregate engine.**
