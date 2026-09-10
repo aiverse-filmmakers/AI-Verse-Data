@@ -672,7 +672,7 @@ The original Phase 1 checklist in `docs/TESTING-AND-ACCEPTANCE.md` incorrectly r
 
 Those requirements belong to Task 12 / 41, Phase 2.3 according to the canonical Build Map.
 
-The checklist was corrected rather than implementing Phase 2 early. Events and receipts remain mandatory for Phase 2 and the final release.
+The checklist was corrected rather than implementing Phase 2 early. At that Phase 1 closeout, events and receipts remained mandatory for Phase 2 and the final release. They have since been implemented and verified in Task 12 / Phase 2.3.
 
 ### Verification evidence
 
