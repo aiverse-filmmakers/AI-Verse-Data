@@ -11,6 +11,13 @@ import {
   validateTransactionExecutePayload,
 } from "../protocol/index.js";
 import { DataRecords } from "../records/index.js";
+import { DataProvenance } from "../provenance/index.js";
+import {
+  createRequestId,
+  createTransactionId,
+  validateRequestId,
+} from "../provenance/identifiers.js";
+import { DataProvenanceWriter } from "../provenance/writer.js";
 import { validateRecordActor } from "../records/validation.js";
 import type { DataStorageDatabase } from "../storage/index.js";
 import { DataTransactionError } from "./errors.js";
@@ -19,6 +26,7 @@ import type {
   DataTransactionOperationResult,
   DataTransactionResult,
   DataTransactionsApi,
+  DataTransactionWithReceipt,
 } from "./types.js";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -78,11 +86,15 @@ export class DataTransactions implements DataTransactionsApi {
   private readonly records: DataRecords;
   private readonly catalog: DataCatalog;
   private readonly idempotency: DataIdempotency;
+  private readonly provenance: DataProvenance;
+  private readonly provenanceWriter: DataProvenanceWriter;
 
   constructor(private readonly database: DataStorageDatabase) {
     this.records = new DataRecords(database);
     this.catalog = new DataCatalog(database);
     this.idempotency = new DataIdempotency(database);
+    this.provenance = new DataProvenance(database);
+    this.provenanceWriter = new DataProvenanceWriter(database);
   }
 
   execute(input: DataTransactionExecuteInput): DataTransactionResult {
@@ -109,6 +121,10 @@ export class DataTransactions implements DataTransactionsApi {
     }
 
     const actor = validateRecordActor(input.actor);
+    const requestId =
+      input.requestId === undefined
+        ? createRequestId()
+        : validateRequestId(input.requestId);
     const idempotencyRequest = {
       operations: payload.operations,
     };
@@ -122,8 +138,11 @@ export class DataTransactions implements DataTransactionsApi {
       );
       if (prepared.kind === "replay") return prepared.value;
 
+      const transactionId = createTransactionId();
       const clientRefs = new Map<string, string>();
       const results: DataTransactionOperationResult[] = [];
+      const childEventIds: string[] = [];
+      const childReceiptIds: string[] = [];
 
       for (let index = 0; index < payload.operations.length; index += 1) {
         const item = payload.operations[index]!;
@@ -146,8 +165,15 @@ export class DataTransactions implements DataTransactionsApi {
             idempotencyKey: create.idempotencyKey,
             data,
             actor,
+            requestId,
+            transactionId,
             ...(create.clientRef === undefined ? {} : { clientRef: create.clientRef }),
           });
+          const provenance = this.provenance.getReceiptByIdempotencyKey({
+            idempotencyKey: create.idempotencyKey,
+          });
+          childEventIds.push(provenance.eventId);
+          childReceiptIds.push(provenance.receiptId);
 
           if (create.clientRef !== undefined) {
             clientRefs.set(create.clientRef, record.recordId);
@@ -169,7 +195,14 @@ export class DataTransactions implements DataTransactionsApi {
             idempotencyKey: update.idempotencyKey,
             patch,
             actor,
+            requestId,
+            transactionId,
           });
+          const provenance = this.provenance.getReceiptByIdempotencyKey({
+            idempotencyKey: update.idempotencyKey,
+          });
+          childEventIds.push(provenance.eventId);
+          childReceiptIds.push(provenance.receiptId);
           results.push({ index, operation: item.operation, record });
           continue;
         }
@@ -181,8 +214,15 @@ export class DataTransactions implements DataTransactionsApi {
           expectedVersion: item.payload.expectedVersion,
           idempotencyKey: item.payload.idempotencyKey,
           actor,
+          requestId,
+          transactionId,
           ...(item.payload.reason === undefined ? {} : { reason: item.payload.reason }),
         });
+        const provenance = this.provenance.getReceiptByIdempotencyKey({
+          idempotencyKey: item.payload.idempotencyKey,
+        });
+        childEventIds.push(provenance.eventId);
+        childReceiptIds.push(provenance.receiptId);
         results.push({ index, operation: item.operation, record });
       }
 
@@ -190,6 +230,16 @@ export class DataTransactions implements DataTransactionsApi {
         operations: results,
         clientRefs: Object.fromEntries(clientRefs),
       };
+      this.provenanceWriter.transactionCommitted({
+        requestId,
+        transactionId,
+        idempotencyKey: payload.idempotencyKey,
+        actor,
+        committedAt: new Date().toISOString(),
+        childEventIds,
+        childReceiptIds,
+        operationCount: results.length,
+      });
       return this.idempotency.complete(
         payload.idempotencyKey,
         "data.transaction.execute",
@@ -197,5 +247,15 @@ export class DataTransactions implements DataTransactionsApi {
         result,
       );
     }, "immediate");
+  }
+
+  executeWithReceipt(
+    input: DataTransactionExecuteInput,
+  ): DataTransactionWithReceipt {
+    const result = this.execute(input);
+    const receipt = this.provenance.getReceiptByIdempotencyKey({
+      idempotencyKey: input.payload.idempotencyKey,
+    });
+    return { result, receipt };
   }
 }
