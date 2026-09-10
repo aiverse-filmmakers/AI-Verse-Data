@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; catalog/schema semantics implemented through Phase 1.5  
+**Status:** Protocol foundation implemented; catalog, schema, and direct record CRUD semantics implemented through Phase 1.6  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -98,7 +98,7 @@ Recommended conventions:
 ```text
 Data Space id: crm
 Entity id: deals
-Record id: deal_<ulid-or-similar>
+Record id: rec_<engine-generated-id>
 Event id: evt_<ulid-or-similar>
 Request id: req_<ulid-or-similar>
 Transaction id: txn_<ulid-or-similar>
@@ -217,15 +217,15 @@ Unsupported destructive changes return a migration-required error rather than ge
 }
 ```
 
-The engine:
+Phase 1.6 direct record execution:
 
-- loads current entity schema;
+- loads the current entity schema;
 - validates all fields;
 - applies defaults;
-- rejects unknown fields unless schema explicitly allows them;
-- checks idempotency;
-- inserts record and event transactionally;
-- returns record and receipt.
+- rejects unknown fields unless the schema explicitly allows them;
+- persists the canonical record with schema version, timestamps, and actor attribution.
+
+The public transport payload already reserves `idempotencyKey`. Persistent idempotency/replay lands in Task 11 / 41, while mutation events and receipts land in Task 12 / 41. Phase 1.6 does not falsely claim those later guarantees.
 
 ### `data.record.get`
 
@@ -240,7 +240,7 @@ The engine:
 
 ### `data.record.list`
 
-A convenience form of query with safe pagination.
+A convenience record-list operation. The protocol reserves bounded cursor pagination. The Phase 1.6 direct `DataRecords.list` surface implements bounded listing only; general cursor/query execution lands in Task 7 / 41.
 
 ```json
 {
@@ -635,4 +635,39 @@ Data Space and entity-schema execution is now implemented through `DataCatalog`.
 
 Direct safe updates currently execute `add_field`, `set_name`, and `set_description`. The protocol also recognizes `remove_field`, `replace_field`, and `rename_field`, but these return `SCHEMA_MIGRATION_REQUIRED` until the user-schema migration framework exists.
 
-Field defaults are validated against their declared type and constraints before schema persistence. Record operations described above remain protocol contracts only until Phase 1.6 and later tasks implement them.
+Field defaults are validated against their declared type and constraints before schema persistence. Phase 1.6 now implements direct schema-aware record create/get/list/update/soft-delete. Full transport dispatch plus idempotency, events, receipts, relation enforcement, and concurrency hardening remain later tasks.
+
+
+## 25. Phase 1.6 implementation note
+
+Direct record CRUD is now implemented through `DataRecords` and exported from:
+
+```text
+@ai-verse/data/records
+```
+
+Canonical records now carry:
+
+```text
+spaceId
+entity
+recordId
+schemaVersion
+version
+data
+createdAt
+updatedAt
+createdBy
+updatedBy
+deletedAt
+deletedReason
+deletedBy
+```
+
+Create validates against the current schema and applies valid defaults. Get/list hide soft-deleted rows unless `includeDeleted` is explicitly requested. Update validates the stored historical payload, merges the patch, validates against the current schema, applies newly introduced defaults where appropriate, advances the record version, and records the updating actor. Soft delete preserves the row and stores deletion attribution.
+
+Update/delete require a matching `expectedVersion` at the Phase 1.6 engine level. Task 10 / 41 remains responsible for race-safe atomic optimistic concurrency under competing writers, including dedicated concurrency tests.
+
+Reference/attachment fields validate identifier shape in Phase 1.6. Reference existence and relation indexing remain Task 8 / 41.
+
+The direct CRUD API does not yet execute the protocol's persistent idempotency semantics, append mutation events, or issue mutation receipts. Those remain Tasks 11 and 12.
