@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 7 / 41  
-**Latest completed:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine  
-**Next task:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions  
+**Completed implementation tasks:** 8 / 41  
+**Latest completed:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions  
+**Next task:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -81,9 +81,20 @@ Safe query + aggregate engine
   -> opaque query-bound cursors
   -> count/sum/min/max/avg
   -> SQL-looking values remain parameters
+
+Task 8 / 41 - COMPLETE
+Relations + bounded transactions
+  -> declared reference existence checks
+  -> normalized _record_relations index
+  -> inbound delete protection
+  -> atomic record/relation writes
+  -> cross-space references inside one workspace DB
+  -> max 50 operations per transaction
+  -> transaction-wide rollback
+  -> safe earlier clientRef resolution
 ```
 
-Data Spaces, entity schemas, record CRUD, safe queries, and aggregates are now implemented. Relations, bounded transactions, OS installation, and sibling-layer adapters remain later tasks.
+Data Spaces, entity schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions are now implemented. The Phase 1 integration gate is next; OS installation and sibling-layer adapters remain later phases.
 
 ## Public package surfaces
 
@@ -95,6 +106,7 @@ Data Spaces, entity schemas, record CRUD, safe queries, and aggregates are now i
 @ai-verse/data/catalog
 @ai-verse/data/records
 @ai-verse/data/query
+@ai-verse/data/transactions
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -179,20 +191,30 @@ Query results pass through the same historical-schema hydration and corruption c
 
 See [`docs/QUERY-AND-AGGREGATES-V0.1.md`](docs/QUERY-AND-AGGREGATES-V0.1.md).
 
+## Relations and bounded transactions
+
+Phase 1.8 enforces declared reference fields against real active target records and maintains a normalized `_record_relations` index atomically with canonical record mutations. Referenced targets cannot be soft-deleted while active inbound references remain.
+
+`@ai-verse/data/transactions` executes up to 50 create/update/delete operations atomically inside one workspace database. A later operation may reference a record created earlier in the same transaction using an explicit `clientRef` marker on a declared reference field. Any failed operation rolls back the whole transaction.
+
+Persistent idempotency, race-hardening, mutation events, and durable receipts remain Phase 2 tasks.
+
+See [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-V0.1.md).
+
 ### Latest verification
 
-Task 7 implementation CI run: `34516259373`
+Task 8 implementation CI run: `34517605246`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-90 tests
-90 passed
+102 tests
+102 passed
 0 failed
 ```
 
-The suite now also proves nested filters, schema-aware operator/value checks, wildcard escaping, sorting, projection, cursor pagination, cursor/query mismatch rejection, deleted-row behavior, aggregate math/type checks, server ceilings, and SQL-looking values remaining inert parameters.
+The suite now also proves declared-reference existence, normalized relation indexing, atomic relation replacement, inbound-delete protection, cross-space references inside one workspace database, safe transaction-local aliases, hard transaction limits, and full rollback after later-operation failure.
 
 ## Why Data is separate from Memory
 
@@ -294,6 +316,7 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md) - implemented Data Space and entity-schema catalog
 - [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md) - implemented schema-aware record CRUD contract
 - [`docs/QUERY-AND-AGGREGATES-V0.1.md`](docs/QUERY-AND-AGGREGATES-V0.1.md) - implemented safe query and aggregate contract
+- [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-V0.1.md) - implemented relation integrity and bounded transaction contract
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
@@ -304,4 +327,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 8 / 41, Phase 1.8 - Relations + bounded transactions.**
+**Next: Task 9 / 41, Phase 1.9 - Phase 1 integration gate.**
