@@ -335,7 +335,7 @@ Failures:            0
 
 Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
 
-Persistent idempotency, race-safe optimistic concurrency, events, and receipts remain Phase 2. No Phase 1.9 integration-gate work was introduced.
+At the Phase 1.8 boundary, persistent idempotency, race-safe optimistic concurrency, events, and receipts were deferred to Phase 2. Tasks 10 and 11 have since completed concurrency and idempotency; events and receipts remain Task 12. No Phase 1.9 integration-gate work was introduced early.
 
 **Task 1.8 gate: PASSED.**
 
