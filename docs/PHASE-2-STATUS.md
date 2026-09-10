@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 3 / 9  
-**Overall implementation tasks completed:** 12 / 41  
-**Next:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits
+**Implementation tasks completed:** 4 / 9  
+**Overall implementation tasks completed:** 13 / 41  
+**Next:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -293,12 +293,93 @@ Those remain later tasks. Task 13 / 41 is next.
 
 ---
 
+## Task 13 / 41 - Phase 2.4 Bulk-operation safety and limits
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.4 adds a bounded review-before-commit bulk layer without introducing a second mutation engine.
+
+Public surface:
+
+```text
+@ai-verse/data/bulk
+```
+
+Protocol operations:
+
+```text
+data.bulk.preview
+data.bulk.execute
+```
+
+Hard limits:
+
+```text
+50 operations
+256 KiB bulk payload
+```
+
+Core guarantees:
+
+- preview runs the real bounded transaction logic inside an intentional rollback;
+- preview commits no records, relations, idempotency rows, events, receipts, or event-sequence state;
+- temporary preview-generated create IDs are not exposed as canonical IDs;
+- preview returns a SHA-256 digest bound to actor, exact ordered operations, deterministic state summary, and all-or-nothing policy;
+- execute requires the exact preview digest and revalidates current state;
+- changed reviewed operations fail with `BULK_PREVIEW_STALE`;
+- stale expected versions/reference failures still fail through the normal lower-layer errors;
+- commit is always all-or-nothing;
+- there is no best-effort partial-success mode;
+- bulk outer idempotency protects retry of the complete operation set;
+- the underlying transaction keeps its own deterministic idempotency identity;
+- nested keys remain unique and separated from bulk/transaction keys;
+- replay is checked against the underlying transaction idempotency result and durable provenance receipt;
+- successful bulk commit reuses normal nested record events plus the final transaction event/receipt;
+- Phase 2.4 adds no new canonical SQLite table.
+
+### Verification
+
+```text
+GitHub Actions run: 34535289214
+Commit:              48cc437647fdf76e21b51b310eb6567f4a843d1f
+Node 22:             PASS
+Node 24:             PASS
+Tests:               153 / 153 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.4 does not implement:
+
+- best-effort partial bulk success;
+- unbounded/background batch jobs;
+- cross-workspace bulk writes;
+- bulk schema migrations;
+- backup creation;
+- backup restore;
+- export/import;
+- internal migration behavior.
+
+Those remain later tasks. Task 14 / 41 is next.
+
+### Task 2.4 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 13 / 41 | 2.4 | NEXT | Bulk-operation safety and limits |
-| 14 / 41 | 2.5 | NOT STARTED | Backup/export/import foundation |
+| 14 / 41 | 2.5 | NEXT | Backup/export/import foundation |
 | 15 / 41 | 2.6 | NOT STARTED | Internal migration framework |
 | 16 / 41 | 2.7 | NOT STARTED | User-schema migration framework |
 | 17 / 41 | 2.8 | NOT STARTED | Corruption/recovery behavior |
@@ -306,4 +387,4 @@ Those remain later tasks. Task 13 / 41 is next.
 
 ## Current boundary
 
-Do not begin Task 14 / 41 until Task 13 / 41 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 15 / 41 until Task 14 / 41 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
