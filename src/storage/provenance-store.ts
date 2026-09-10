@@ -64,6 +64,7 @@ export interface DataProvenanceStorage {
     receipt: StoredMutationReceipt,
   ): StoredDataEvent;
   listEvents(query: DataEventListQuery): readonly StoredDataEvent[];
+  getEvent(eventId: string): StoredDataEvent | null;
   getReceipt(receiptId: string): StoredMutationReceipt | null;
   getReceiptByEventId(eventId: string): StoredMutationReceipt | null;
   getReceiptByIdempotencyKey(
