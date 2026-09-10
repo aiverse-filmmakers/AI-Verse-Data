@@ -39,6 +39,10 @@
     "./transactions": {
       "types": "./dist/src/transactions/index.d.ts",
       "import": "./dist/src/transactions/index.js"
+    },
+    "./idempotency": {
+      "types": "./dist/src/idempotency/index.d.ts",
+      "import": "./dist/src/idempotency/index.js"
     }
   },
   "files": [
