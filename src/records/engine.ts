@@ -25,6 +25,7 @@ import type {
 import {
   mergeRecordPatch,
   normalizeRecordData,
+  validateExpectedRecordVersion,
   validateRecordActor,
   validateRecordLimit,
 } from "./validation.js";
@@ -230,6 +231,20 @@ export class DataRecords implements DataRecordsApi {
       );
     }
 
+    if (stored.version !== expectedVersion) {
+      throw new DataRecordError(
+        "RECORD_VERSION_CONFLICT",
+        `Expected record version ${expectedVersion}, current version is ${stored.version}.`,
+        {
+          spaceId: input.spaceId,
+          entity: input.entity,
+          recordId: input.recordId,
+          expectedVersion,
+          currentVersion: stored.version,
+        },
+      );
+    }
+
     const historicalSchema = this.catalog.getSchema(
       stored.spaceId,
       stored.entity,
@@ -265,6 +280,7 @@ export class DataRecords implements DataRecordsApi {
 
   update(input: RecordUpdateInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
+    const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
     const currentSchema = this.catalog.getSchema(input.spaceId, input.entity);
     const stored = this.store.getRecord(
       input.spaceId,
@@ -324,6 +340,7 @@ export class DataRecords implements DataRecordsApi {
 
   softDelete(input: RecordDeleteInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
+    const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
     this.catalog.getSchema(input.spaceId, input.entity);
     const stored = this.store.getRecord(
       input.spaceId,
@@ -340,6 +357,20 @@ export class DataRecords implements DataRecordsApi {
           spaceId: input.spaceId,
           entity: input.entity,
           recordId: input.recordId,
+        },
+      );
+    }
+
+    if (stored.version !== expectedVersion) {
+      throw new DataRecordError(
+        "RECORD_VERSION_CONFLICT",
+        `Expected record version ${expectedVersion}, current version is ${stored.version}.`,
+        {
+          spaceId: input.spaceId,
+          entity: input.entity,
+          recordId: input.recordId,
+          expectedVersion,
+          currentVersion: stored.version,
         },
       );
     }
