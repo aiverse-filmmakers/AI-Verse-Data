@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency and Phase 2.2 durable idempotency implemented
+**Implementation:** Phase 1 complete; Phase 2.1 optimistic concurrency, Phase 2.2 durable idempotency, and Phase 2.3 events/receipts/provenance implemented
 
 ## 1. Architectural position
 
@@ -245,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog, `_records`, `_record_relations`, and `_idempotency` portions of this model are now implemented. Event and migration tables remain later implementation tasks.
+The catalog, `_records`, `_record_relations`, `_idempotency`, `_events`, and `_mutation_receipts` portions of this model are now implemented. Migration tables remain later implementation tasks.
 
 ## 7. Record representation
 
@@ -469,6 +469,22 @@ The idempotency lookup, fresh canonical mutation, relation changes, and saved re
 Committed v0.1 entries do not automatically expire.
 
 Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
+
+## 13.3 Implemented events, receipts, and provenance
+
+Phase 2.3 adds an immutable audit layer inside the same canonical workspace database.
+
+Every fresh successful record mutation appends one event and one durable receipt. Every fresh successful bounded transaction retains its nested mutation provenance and appends one final `transaction.committed` event/receipt.
+
+Canonical record/relation changes, event/receipt rows, and idempotency state share the existing short SQLite write transaction. A failure rolls all of them back. An idempotent replay exits before provenance creation, so no duplicate audit facts are minted.
+
+Provenance writing is an engine-internal capability. The public `@ai-verse/data/provenance` surface is read-only and validates event/receipt digests plus receipt-event linkage.
+
+Events preserve bounded mutation metadata instead of copying full record payloads. They remain Data audit facts and are not automatic Memory.
+
+Fresh transactions additionally reject nested idempotency provenance committed outside the current transaction, preventing an old mutation from being represented as a new transaction child.
+
+Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
 
 ## 14.1 Implemented relation integrity
 
