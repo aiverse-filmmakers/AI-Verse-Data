@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 8 / 41  
-**Latest completed:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions  
-**Next task:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate  
+**Status:** Phase 1 Core Data Engine complete  
+**Completed implementation tasks:** 9 / 41  
+**Latest completed:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate  
+**Next task:** Task 10 / 41, Phase 2.1 - Optimistic concurrency  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -92,9 +92,19 @@ Relations + bounded transactions
   -> max 50 operations per transaction
   -> transaction-wide rollback
   -> safe earlier clientRef resolution
+
+Task 9 / 41 - COMPLETE
+Phase 1 integration gate
+  -> standalone end-to-end acceptance
+  -> native-ready workspace database acceptance
+  -> full catalog/schema/CRUD/query/aggregate/reference/transaction composition
+  -> exact committed-state recovery after reopen
+  -> two-workspace isolation proof
+  -> unsupported newer format fail-closed proof
+  -> 106-test full Phase 1 gate
 ```
 
-Data Spaces, entity schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions are now implemented. The Phase 1 integration gate is next; OS installation and sibling-layer adapters remain later phases.
+Phase 1 is complete. Data Spaces, entity schemas, record CRUD, safe queries, aggregates, declared relations, and bounded atomic transactions have passed the full integration gate. Phase 2 now hardens concurrency, retry safety, events, receipts, backup, migrations, and recovery.
 
 ## Public package surfaces
 
@@ -201,20 +211,28 @@ Persistent idempotency, race-hardening, mutation events, and durable receipts re
 
 See [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-V0.1.md).
 
+## Phase 1 acceptance
+
+Task 9 / 41 adds an integrated acceptance story rather than another feature layer. It proves the Phase 1 components operate correctly together in standalone and workspace-scoped modes and recover exactly committed state after close/reopen.
+
+During this audit, the testing plan was corrected so mutation events and durable receipts remain in their canonical Phase 2.3 task instead of being implemented early.
+
+See [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md).
+
 ### Latest verification
 
-Task 8 implementation CI run: `34517605246`
+Phase 1 integration CI run: `34520521012`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-102 tests
-102 passed
+106 tests
+106 passed
 0 failed
 ```
 
-The suite now also proves declared-reference existence, normalized relation indexing, atomic relation replacement, inbound-delete protection, cross-space references inside one workspace database, safe transaction-local aliases, hard transaction limits, and full rollback after later-operation failure.
+The suite now proves the complete Phase 1 acceptance story across trusted scope, SQLite, catalog, schemas, CRUD, queries, aggregates, references, transactions, close/reopen recovery, two-workspace isolation, and unsupported-format fail-closed behavior.
 
 ## Why Data is separate from Memory
 
@@ -322,9 +340,10 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
 - [`docs/BUILD-MAP.md`](docs/BUILD-MAP.md) - canonical 41-task implementation ledger
 - [`docs/PHASE-1-STATUS.md`](docs/PHASE-1-STATUS.md) - Phase 1 implementation evidence
+- [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md) - final Phase 1 integration gate and evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 9 / 41, Phase 1.9 - Phase 1 integration gate.**
+**Next: Task 10 / 41, Phase 2.1 - Optimistic concurrency.**
