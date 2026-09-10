@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 
+import { DataStorageError } from "./errors.js";
 import {
   AI_VERSE_DATA_IDEMPOTENCY_FINGERPRINT_VERSION,
   type DataIdempotencyStorage,
@@ -20,7 +21,8 @@ function mapEntry(row: IdempotencyRow): StoredIdempotencyEntry {
   if (
     row.fingerprint_version !== AI_VERSE_DATA_IDEMPOTENCY_FINGERPRINT_VERSION
   ) {
-    throw new Error(
+    throw new DataStorageError(
+      "DATABASE_CORRUPT",
       `Unsupported idempotency fingerprint version ${row.fingerprint_version}.`,
     );
   }
