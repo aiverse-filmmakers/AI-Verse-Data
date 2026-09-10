@@ -8,7 +8,7 @@ interface PackageMetadata {
   readonly version: string;
 }
 
-export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1.6 provides persistent schema-aware record CRUD. General queries, relations, transactions, idempotency, events, and receipts are added in later tasks.\n`;
+export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 1.7 provides schema-aware record CRUD plus bounded safe queries and aggregates. Relations, bounded transactions, idempotency, events, and receipts are added in later tasks.\n`;
 
 function packageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
