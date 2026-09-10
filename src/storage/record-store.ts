@@ -32,6 +32,6 @@ export interface DataRecordStorage {
     limit: number,
     includeDeleted?: boolean,
   ): readonly StoredRecord[];
-  updateRecord(record: StoredRecord): boolean;
-  softDeleteRecord(record: StoredRecord): boolean;
+  updateRecord(record: StoredRecord, expectedVersion: number): boolean;
+  softDeleteRecord(record: StoredRecord, expectedVersion: number): boolean;
 }
