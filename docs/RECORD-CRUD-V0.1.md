@@ -40,7 +40,7 @@ records.update(...)
 records.softDelete(...)
 ```
 
-The direct Phase 1.6 engine API is intentionally narrower than the complete transport protocol. General query execution, transaction routing, idempotency persistence, mutation events, receipts, and permission adapters remain later tasks.
+The original direct Phase 1.6 engine API was intentionally narrower than the complete transport protocol. Query execution, bounded transactions, persistent idempotency, mutation events, and durable receipts have since landed through Phase 2.3. Host permission adapters remain a later integration concern.
 
 ## 3. Canonical record shape
 
