@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 2.3 provenance boundary", () => {
+test("--help succeeds and identifies the Phase 2.4 bulk boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 2\.3 adds immutable mutation events/);
+  assert.match(result.stdout, /Phase 2\.4 adds bounded bulk preview and atomic bulk execution/);
   assert.equal(result.stderr, "");
 });
 
