@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 3 / 9  
-**Overall implementation tasks completed:** 3 / 41  
-**Next:** Task 4 / 41, Phase 1.4 - Scope and database identity
+**Implementation tasks completed:** 4 / 9  
+**Overall implementation tasks completed:** 4 / 41  
+**Next:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -186,12 +186,99 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 4 / 41 - Phase 1.4 Scope and database identity
+
+**Status:** COMPLETE
+
+### Implemented
+
+Public scope surface:
+
+```text
+@ai-verse/data/scope
+```
+
+Scope foundation:
+
+- `TrustedDataRoot.fromExistingDirectory(...)`;
+- canonical real-path normalization;
+- root existence/directory validation;
+- root revalidation before derived path resolution;
+- `createWorkspaceDataScope(...)`;
+- `createStandaloneDataScope(...)`;
+- `openScopedDataDatabase(...)`;
+- safe known-segment path derivation;
+- cross-platform filesystem-safe workspace ID validation;
+- existing child symbolic-link rejection;
+- no raw database path in normal scoped open calls.
+
+Database binding:
+
+```text
+bindingVersion = 1
+kind           = standalone | workspace
+workspaceId    = logical workspace identity
+```
+
+SQLite persists those values in `_aiverse_meta`. Absolute root paths and Dashboard `systemId` values are not persisted.
+
+An unbound AI-Verse Data database from the Phase 1.3 foundation may be bound exactly once. After binding, a workspace/kind mismatch returns `DATABASE_SCOPE_CONFLICT`. Partial binding metadata is treated as `DATABASE_CORRUPT`.
+
+### Isolation behavior
+
+Two separate trusted roots may both contain workspace `shared`. Their logical bindings can match, while their physical database paths remain distinct because root selection is host-side authority.
+
+The scope layer does not parse `WORKSPACE.yaml` yet. That native OS validation belongs to Phase 3 and is not falsely claimed here.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34511358818
+Node 22:             PASS
+Node 24:             PASS
+Tests:               37 / 37 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The new tests prove trusted-root canonicalization, missing/non-directory rejection, workspace and standalone path derivation, unsafe filesystem workspace-ID rejection, child-symlink escape rejection, durable scope binding across reopen, one-time binding of older unbound databases, conflicting workspace rejection, conflicting scope-kind rejection, partial-binding corruption rejection, and same-ID isolation across different trusted roots.
+
+Detailed contract: `docs/SCOPE-AND-IDENTITY-V0.1.md`.
+
+### Deliberately not implemented
+
+- AI-Verse OS compatibility detection;
+- `WORKSPACE.yaml` parsing;
+- workspace status checks;
+- directory initialization policy;
+- Data Spaces;
+- entity schemas;
+- records/CRUD;
+- query execution;
+- permissions;
+- extension registration;
+- sibling-layer adapters.
+
+### Task 1.4 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- a database cannot be reopened under conflicting workspace identity;
+- workspace/database binding survives reopen;
+- direct raw paths remain outside public record/query protocol operations;
+- Dashboard `systemId` is not canonical Data identity;
+- no Data Space/schema/record semantics were introduced early.
+
+---
+
 ## Remaining Phase 1 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 4 / 41 | 1.4 | NEXT | Scope and database identity |
-| 5 / 41 | 1.5 | NOT STARTED | Data Spaces and entity schemas |
+| 5 / 41 | 1.5 | NEXT | Data Spaces and entity schemas |
 | 6 / 41 | 1.6 | NOT STARTED | Record CRUD |
 | 7 / 41 | 1.7 | NOT STARTED | Safe query + aggregate engine |
 | 8 / 41 | 1.8 | NOT STARTED | Relations + bounded transactions |
@@ -199,4 +286,4 @@ Acceptance requirements are satisfied:
 
 ## Current boundary
 
-Do not begin Task 1.5 or later work while implementing Task 1.4. Task 1.4 binds storage safely to trusted standalone/native workspace identity. It must not introduce Data Space/schema/record semantics early.
+Do not begin Task 1.6 or later work while implementing Task 1.5. Task 1.5 introduces Data Spaces and entity schemas only; record CRUD remains Task 1.6.
