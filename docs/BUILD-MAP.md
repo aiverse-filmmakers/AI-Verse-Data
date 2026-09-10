@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-10  
 **Status:** Phase 1 in progress  
-**Implementation progress:** 3 / 41 tasks complete  
-**Next:** Task 4 / 41, Phase 1.4 - Scope and database identity
+**Implementation progress:** 4 / 41 tasks complete  
+**Next:** Task 5 / 41, Phase 1.5 - Data Spaces and entity schemas
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -17,14 +17,14 @@ The target is an installable local-first structured-data layer that can run stan
 
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
-Phase 1  Core Data Engine              [IN PROGRESS]    33%  (3/9)
+Phase 1  Core Data Engine              [IN PROGRESS]    44%  (4/9)
 Phase 2  Reliability + Agent Safety    [NOT STARTED]     0%
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **3 / 41 tasks complete**.
+Overall implementation: **4 / 41 tasks complete**.
 
 ---
 
@@ -55,7 +55,7 @@ Locked laws include: Data stays separate from Memory; v0.1 is workspace-first; o
 # Phase 1 - Core Data Engine
 
 **Status:** IN PROGRESS  
-**Progress:** 3 / 9 tasks complete
+**Progress:** 4 / 9 tasks complete
 
 Goal: produce a runnable host-neutral Data engine with one SQLite driver and the safe structured primitives required for useful local operation.
 
@@ -146,28 +146,43 @@ No Data Space/schema/record CRUD or workspace binding was introduced early.
 
 ## Task 4 / 41 - Phase 1.4 Scope and database identity
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Implement:
+Implemented:
 
-- trusted-root abstraction;
+- public `@ai-verse/data/scope` surface;
+- `TrustedDataRoot` canonical-root capability;
 - host-neutral standalone scope;
-- native-ready workspace/database identity metadata;
-- safe path-helper contracts;
-- database binding validation;
-- no Dashboard `systemId` dependency;
-- no public raw database-path record/query requests.
+- native-ready workspace scope;
+- safe derived database-path helpers;
+- cross-platform-safe filesystem workspace IDs;
+- existing child-symlink rejection;
+- persistent database scope binding v1;
+- one-time binding of older unbound AI-Verse Data databases;
+- fail-closed `DATABASE_SCOPE_CONFLICT` on workspace/kind mismatch;
+- fail-closed partial-binding corruption detection;
+- physical separation for matching workspace IDs under different trusted roots;
+- no Dashboard `systemId` or absolute root path in canonical binding.
 
-Acceptance:
+Verification:
 
-- a database cannot be reopened under conflicting workspace identity;
-- workspace/database binding survives reopen;
-- direct raw path remains outside public record/query protocol requests;
-- no Data Space/schema/record semantics are introduced early.
+```text
+GitHub Actions run: 34511358818
+Node 22:             PASS
+Node 24:             PASS
+Tests:               37 / 37 PASS
+Failures:            0
+```
+
+Detailed contract: `docs/SCOPE-AND-IDENTITY-V0.1.md`.
+
+No Data Space/schema/record semantics were introduced.
+
+**Task 1.4 gate: PASSED.**
 
 ## Task 5 / 41 - Phase 1.5 Data Spaces and entity schemas
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 Create/list/get Data Spaces and entity schemas, field validation, schema versions/digests, safe additive schema updates.
 
@@ -355,6 +370,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 4 / 41: Phase 1.4 - Scope and database identity.**
+**Task 5 / 41: Phase 1.5 - Data Spaces and entity schemas.**
 
-Do not begin Task 5 / 41 until Task 4 is implemented, tested, committed, and reported complete.
+Do not begin Task 6 / 41 until Task 5 is implemented, tested, committed, and reported complete.
