@@ -406,9 +406,28 @@ export class SqliteProvenanceStorage implements DataProvenanceStorage {
   ): readonly StoredMutationReceipt[] {
     const rows = this.database
       .prepare(
-        `${RECEIPT_SELECT}
-         WHERE transaction_id = ?
-         ORDER BY committed_at ASC, receipt_id ASC`,
+        `SELECT
+           r.receipt_id,
+           r.event_id,
+           r.operation,
+           r.request_id,
+           r.transaction_id,
+           r.scope_kind,
+           r.workspace_id,
+           r.idempotency_key,
+           r.space_id,
+           r.entity,
+           r.record_id,
+           r.before_version,
+           r.after_version,
+           r.actor_kind,
+           r.actor_id,
+           r.committed_at,
+           r.receipt_digest
+         FROM _mutation_receipts AS r
+         JOIN _events AS e ON e.event_id = r.event_id
+         WHERE r.transaction_id = ?
+         ORDER BY e.event_sequence ASC`,
       )
       .all(transactionId) as ReceiptRow[];
     return rows.map(mapReceipt);
