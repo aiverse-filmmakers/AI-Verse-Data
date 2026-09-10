@@ -1,6 +1,6 @@
 # AI-Verse Data Record CRUD v0.1
 
-**Status:** Implemented in Phase 1.6; reference integrity extended in Phase 1.8  
+**Status:** Implemented in Phase 1.6; reference integrity extended in Phase 1.8; race-safe optimistic concurrency extended in Phase 2.1  
 **Date:** 2026-09-10
 
 This document defines the first implemented canonical record layer for AI-Verse Data.
@@ -289,9 +289,7 @@ A stale version returns:
 RECORD_VERSION_CONFLICT
 ```
 
-Phase 1.6 provides the basic expected-version semantic check required by the public contract.
-
-Task 10 / 41 will harden this into race-safe atomic optimistic concurrency for competing writers and add dedicated concurrency/race tests. Phase 1.6 does not claim that later concurrency hardening is complete.
+Phase 2.1 hardens this contract at the canonical storage write itself. SQLite update/delete statements include `record_version = expectedVersion` in their `WHERE` clause, so a stale writer cannot commit even if another process changes the record between reads. Record write transactions use short immediate write intent to avoid WAL read-to-write snapshot races while preserving optimistic caller semantics.
 
 ## 13. Soft delete
 
@@ -361,6 +359,23 @@ record version: how many canonical state transitions has this record had?
 schema version: which entity definition was used for this stored payload?
 ```
 
+## 15.1 Phase 2.1 atomic concurrency extension
+
+The decisive version comparison now occurs in SQLite, not only in application code.
+
+Storage mutations require both the candidate row and the caller's `expectedVersion`:
+
+```text
+updateRecord(record, expectedVersion)
+softDeleteRecord(record, expectedVersion)
+```
+
+The SQL write matches `record_version = expectedVersion` and `deleted_at IS NULL`. If the row no longer matches, no canonical effect occurs.
+
+Competing record writers use a short immediate transaction. This lets one writer acquire SQLite write intent, commit version N+1, and forces a later stale writer to observe the new version and return `RECORD_VERSION_CONFLICT`.
+
+The full contract and multi-process race evidence are in `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`.
+
 ## 16. Failure atomicity
 
 Validation happens before record creation/update persistence.
@@ -396,7 +411,6 @@ These conditions return `DATABASE_CORRUPT` from the record layer rather than pre
 Phase 1.6 does not implement:
 
 - persistent idempotency keys/replay;
-- race-safe atomic cross-process optimistic update predicates;
 - mutation events;
 - mutation receipts;
 - bulk operations;
@@ -418,4 +432,4 @@ Those remain separate tasks in the canonical Build Map.
 7. Deleted records remain canonical until an explicit future purge contract exists.
 8. Actor attribution is stored with record state.
 9. Record and schema versions remain distinct.
-10. Reference integrity and bounded transactions are implemented; persistent idempotency, events, receipts, and concurrency hardening remain later tasks.
+10. Reference integrity, bounded transactions, and race-safe optimistic concurrency are implemented; persistent idempotency, events, and receipts remain later tasks.
