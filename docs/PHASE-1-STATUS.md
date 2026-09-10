@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 5 / 9  
-**Overall implementation tasks completed:** 5 / 41  
-**Next:** Task 6 / 41, Phase 1.6 - Record CRUD
+**Implementation tasks completed:** 6 / 9  
+**Overall implementation tasks completed:** 6 / 41  
+**Next:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -357,15 +357,114 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 6 / 41 - Phase 1.6 Record CRUD
+
+**Status:** COMPLETE
+
+### Implemented
+
+Public record surface:
+
+```text
+@ai-verse/data/records
+```
+
+The record engine now provides create/get/list/update/soft-delete on top of the storage-driver abstraction.
+
+SQLite persists canonical records in one fixed engine-owned table:
+
+```text
+_records
+```
+
+`_records` is STRICT and WITHOUT ROWID. It stores stable record identity, exact entity schema version, record version, canonical JSON, timestamps, actor attribution, and soft-delete metadata. Its schema-version foreign key points to the exact immutable schema version used for the persisted payload.
+
+### Validation and defaults
+
+- all first-release field types are validated;
+- required and nullable semantics are enforced;
+- string length and numeric range constraints are enforced;
+- date/datetime and enum values are validated;
+- reference/attachment IDs are shape-validated;
+- unknown fields fail unless the schema explicitly permits them;
+- schema defaults are deep-cloned and applied on create;
+- compatible new defaults can be applied when an old record is next updated under the current schema;
+- record-size ceilings are enforced after normalization/defaults.
+
+### Record state and provenance
+
+- engine-generated stable `rec_...` IDs;
+- record version begins at 1 and advances on update/delete;
+- stored `schemaVersion` remains distinct from record version;
+- `createdAt` and `updatedAt` persist across reopen;
+- `createdBy`, `updatedBy`, and `deletedBy` actor attribution persists;
+- soft delete preserves the canonical record, reason, and actor;
+- normal get/list hide deleted records;
+- `includeDeleted: true` explicitly exposes deleted rows.
+
+### Expected-version behavior
+
+Update and soft delete require a matching `expectedVersion` and reject stale callers with `RECORD_VERSION_CONFLICT`.
+
+This is the Phase 1 semantic check. Task 10 / 41 still owns race-safe atomic optimistic concurrency under competing writers and dedicated race tests.
+
+### Failure behavior
+
+Invalid creates/updates fail before canonical persistence. Stored record payloads are revalidated against their persisted historical schema version on read, and invalid stored canonical state fails closed as `DATABASE_CORRUPT`.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34514486550
+Node 22:             PASS
+Node 24:             PASS
+Tests:               71 / 71 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/RECORD-CRUD-V0.1.md`.
+
+### Deliberately not implemented
+
+- general query/filter/sort/cursor execution;
+- aggregate execution;
+- relation existence/index enforcement;
+- bounded multi-record transactions;
+- race-safe atomic concurrency hardening;
+- persistent idempotency;
+- mutation events and receipts;
+- permissions/capability enforcement;
+- OS extension installation;
+- sibling-layer adapters.
+
+### Task 1.6 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- create/get/list/update/soft-delete persist;
+- CRUD survives close/reopen;
+- invalid fields and missing required fields fail;
+- defaults are applied correctly;
+- record IDs/timestamps/schema versions are stable;
+- initial actor attribution persists;
+- stale expected versions fail without overwriting current state;
+- deleted records are hidden by normal reads unless explicitly requested;
+- no general Task 1.7 query/aggregate execution was introduced early.
+
+---
+
 ## Remaining Phase 1 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 6 / 41 | 1.6 | NEXT | Record CRUD |
-| 7 / 41 | 1.7 | NOT STARTED | Safe query + aggregate engine |
+| 7 / 41 | 1.7 | NEXT | Safe query + aggregate engine |
 | 8 / 41 | 1.8 | NOT STARTED | Relations + bounded transactions |
 | 9 / 41 | 1.9 | NOT STARTED | Phase 1 integration gate |
 
 ## Current boundary
 
-Do not begin Task 1.7 or later work while implementing Task 1.6. Task 1.6 introduces record CRUD only; general query/aggregate execution remains Task 1.7.
+Do not begin Task 1.8 or later work while implementing Task 1.7. Task 1.7 introduces general safe query and aggregate execution only; relations and bounded transactions remain Task 1.8.
