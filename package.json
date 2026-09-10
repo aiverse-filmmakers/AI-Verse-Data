@@ -1,0 +1,51 @@
+{
+  "name": "@ai-verse/data",
+  "version": "0.1.0-alpha.0",
+  "description": "Local-first structured-data layer for AI-Verse OS and compatible agent systems.",
+  "type": "module",
+  "bin": {
+    "ai-verse-data": "dist/src/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/src/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "clean": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "check": "npm run test",
+    "start": "node dist/src/cli.js"
+  },
+  "keywords": [
+    "ai",
+    "agents",
+    "structured-data",
+    "sqlite",
+    "local-first",
+    "ai-verse"
+  ],
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aiverse-filmmakers/AI-Verse-Data.git"
+  },
+  "homepage": "https://github.com/aiverse-filmmakers/AI-Verse-Data#readme",
+  "bugs": {
+    "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/issues"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "typescript": "5.8.3"
+  }
+}
