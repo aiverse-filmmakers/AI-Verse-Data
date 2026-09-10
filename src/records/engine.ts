@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { DataCatalog } from "../catalog/index.js";
+import { DataIdempotency } from "../idempotency/index.js";
 import type { EntitySchemaDefinition } from "../protocol/index.js";
 import type {
   DataRecordStorage,
@@ -28,6 +29,7 @@ import {
   normalizeRecordData,
   validateExpectedRecordVersion,
   validateRecordActor,
+  validateRecordIdempotencyKey,
   validateRecordLimit,
 } from "./validation.js";
 
@@ -39,67 +41,91 @@ export class DataRecords implements DataRecordsApi {
   private readonly catalog: DataCatalog;
   private readonly store: DataRecordStorage;
   private readonly relations: DataRelationStorage;
+  private readonly idempotency: DataIdempotency;
 
   constructor(private readonly database: DataStorageDatabase) {
     this.catalog = new DataCatalog(database);
     this.store = database.recordStorage();
     this.relations = database.relationStorage();
+    this.idempotency = new DataIdempotency(database);
     this.store.initialize();
     this.relations.initialize();
   }
 
   create(input: RecordCreateInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
-    const schema = this.catalog.getSchema(input.spaceId, input.entity);
-    const data = normalizeRecordData(schema, input.data, {
-      applyDefaults: true,
-    });
-    const now = new Date().toISOString();
+    const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
+    const request = {
+      spaceId: input.spaceId,
+      entity: input.entity,
+      data: input.data,
+      ...(input.clientRef === undefined ? {} : { clientRef: input.clientRef }),
+    };
 
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const stored: StoredRecord = {
-        spaceId: input.spaceId,
-        entity: input.entity,
-        recordId: recordId(),
-        schemaVersion: schema.schemaVersion,
-        version: 1,
-        dataJson: JSON.stringify(data),
-        createdAt: now,
-        updatedAt: now,
-        createdActorKind: actor.kind,
-        createdActorId: actor.id,
-        updatedActorKind: actor.kind,
-        updatedActorId: actor.id,
-        deletedAt: null,
-        deletedReason: null,
-        deletedActorKind: null,
-        deletedActorId: null,
-      };
+    return this.database.transaction(() => {
+      const prepared = this.idempotency.prepare<DataRecordSnapshot>(
+        idempotencyKey,
+        "data.record.create",
+        actor,
+        request,
+      );
+      if (prepared.kind === "replay") return prepared.value;
 
-      const created = this.database.transaction(() => {
+      const schema = this.catalog.getSchema(input.spaceId, input.entity);
+      const data = normalizeRecordData(schema, input.data, {
+        applyDefaults: true,
+      });
+      const now = new Date().toISOString();
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const stored: StoredRecord = {
+          spaceId: input.spaceId,
+          entity: input.entity,
+          recordId: recordId(),
+          schemaVersion: schema.schemaVersion,
+          version: 1,
+          dataJson: JSON.stringify(data),
+          createdAt: now,
+          updatedAt: now,
+          createdActorKind: actor.kind,
+          createdActorId: actor.id,
+          updatedActorKind: actor.kind,
+          updatedActorId: actor.id,
+          deletedAt: null,
+          deletedReason: null,
+          deletedActorKind: null,
+          deletedActorId: null,
+        };
+
         const relations = collectRecordRelations(
           this.relations,
           schema,
           stored.recordId,
           data,
         );
-        if (!this.store.createRecord(stored)) return false;
+        if (!this.store.createRecord(stored)) continue;
+
         this.relations.replaceSourceRelations(
           stored.spaceId,
           stored.entity,
           stored.recordId,
           relations,
         );
-        return true;
-      }, "immediate");
 
-      if (created) return hydrateStoredRecord(stored, schema);
-    }
+        const snapshot = hydrateStoredRecord(stored, schema);
+        return this.idempotency.complete(
+          idempotencyKey,
+          "data.record.create",
+          prepared.requestFingerprint,
+          snapshot,
+        );
+      }
 
-    throw new DataRecordError(
-      "INTERNAL_ERROR",
-      "Unable to allocate a unique record identifier after repeated attempts.",
-    );
+      throw new DataRecordError(
+        "INTERNAL_ERROR",
+        "Unable to allocate a unique record identifier after repeated attempts.",
+      );
+    }, "immediate");
   }
 
   get(input: RecordGetInput): DataRecordSnapshot {
@@ -158,10 +184,26 @@ export class DataRecords implements DataRecordsApi {
 
   update(input: RecordUpdateInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
+    const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
     const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
-    const currentSchema = this.catalog.getSchema(input.spaceId, input.entity);
+    const request = {
+      spaceId: input.spaceId,
+      entity: input.entity,
+      recordId: input.recordId,
+      expectedVersion,
+      patch: input.patch,
+    };
 
     return this.database.transaction(() => {
+      const prepared = this.idempotency.prepare<DataRecordSnapshot>(
+        idempotencyKey,
+        "data.record.update",
+        actor,
+        request,
+      );
+      if (prepared.kind === "replay") return prepared.value;
+
+      const currentSchema = this.catalog.getSchema(input.spaceId, input.entity);
       const stored = this.store.getRecord(
         input.spaceId,
         input.entity,
@@ -260,16 +302,38 @@ export class DataRecords implements DataRecordsApi {
         updated.recordId,
         relations,
       );
-      return hydrateStoredRecord(updated, currentSchema);
+      const snapshot = hydrateStoredRecord(updated, currentSchema);
+      return this.idempotency.complete(
+        idempotencyKey,
+        "data.record.update",
+        prepared.requestFingerprint,
+        snapshot,
+      );
     }, "immediate");
   }
 
   softDelete(input: RecordDeleteInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
+    const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
     const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
-    this.catalog.getSchema(input.spaceId, input.entity);
+    const request = {
+      spaceId: input.spaceId,
+      entity: input.entity,
+      recordId: input.recordId,
+      expectedVersion,
+      ...(input.reason === undefined ? {} : { reason: input.reason }),
+    };
 
     return this.database.transaction(() => {
+      const prepared = this.idempotency.prepare<DataRecordSnapshot>(
+        idempotencyKey,
+        "data.record.delete",
+        actor,
+        request,
+      );
+      if (prepared.kind === "replay") return prepared.value;
+
+      this.catalog.getSchema(input.spaceId, input.entity);
       const stored = this.store.getRecord(
         input.spaceId,
         input.entity,
@@ -377,7 +441,13 @@ export class DataRecords implements DataRecordsApi {
         stored.entity,
         stored.schemaVersion,
       );
-      return hydrateStoredRecord(deleted, historicalSchema);
+      const snapshot = hydrateStoredRecord(deleted, historicalSchema);
+      return this.idempotency.complete(
+        idempotencyKey,
+        "data.record.delete",
+        prepared.requestFingerprint,
+        snapshot,
+      );
     }, "immediate");
   }
 }
