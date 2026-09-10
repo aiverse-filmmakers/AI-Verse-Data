@@ -163,4 +163,28 @@ export class SqliteRelationStorage implements DataRelationStorage {
       .all(spaceId, entity, recordId) as RelationRow[];
     return rows.map(mapRelation);
   }
+  listInboundRelations(
+    spaceId: string,
+    entity: string,
+    recordId: string,
+  ): readonly StoredRecordRelation[] {
+    const rows = this.database
+      .prepare(
+        `SELECT
+           source_space_id,
+           source_entity_id,
+           source_record_id,
+           field_name,
+           target_space_id,
+           target_entity_id,
+           target_record_id
+         FROM _record_relations
+         WHERE target_space_id = ?
+           AND target_entity_id = ?
+           AND target_record_id = ?
+         ORDER BY source_space_id, source_entity_id, source_record_id, field_name`,
+      )
+      .all(spaceId, entity, recordId) as RelationRow[];
+    return rows.map(mapRelation);
+  }
 }
