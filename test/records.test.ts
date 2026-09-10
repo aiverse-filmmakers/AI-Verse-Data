@@ -49,6 +49,13 @@ function assertRecordError(
 }
 
 const human = { kind: "human", id: "local-operator" } as const;
+
+let idempotencySequence = 0;
+function nextIdempotencyKey(): string {
+  idempotencySequence += 1;
+  return `legacy-test:${idempotencySequence}`;
+}
+
 const bot = { kind: "bot", id: "sales-bot" } as const;
 
 function bootstrapCrm(catalog: DataCatalog): void {
@@ -130,6 +137,7 @@ test("create applies defaults and stores stable identity, timestamps, schema ver
     bootstrapCrm(catalog);
 
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: {
@@ -163,6 +171,7 @@ test("create rejects missing required fields atomically", () => {
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           data: { value: 10 },
@@ -182,6 +191,7 @@ test("create rejects unknown fields unless the entity explicitly permits them", 
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           data: { title: "A", surprise: 1 },
@@ -201,6 +211,7 @@ test("create rejects unknown fields unless the entity explicitly permits them", 
     });
 
     const note = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "notes",
       data: {
@@ -233,6 +244,7 @@ test("first-release field types and constraints are enforced on records", () => 
       assert.throws(
         () =>
           records.create({
+      idempotencyKey: nextIdempotencyKey(),
             spaceId: "crm",
             entity: "deals",
             data: data as never,
@@ -243,6 +255,7 @@ test("first-release field types and constraints are enforced on records", () => 
     }
 
     const company = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name: "Company 1" },
@@ -250,6 +263,7 @@ test("first-release field types and constraints are enforced on records", () => 
     });
 
     const valid = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: {
@@ -274,6 +288,7 @@ test("nullable fields accept null and non-nullable fields do not", () => {
     bootstrapCrm(catalog);
 
     const valid = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: {
@@ -290,6 +305,7 @@ test("nullable fields accept null and non-nullable fields do not", () => {
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           data: { title: null },
@@ -304,12 +320,14 @@ test("get and list return created records with a bounded list limit", () => {
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const first = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "First" },
       actor: human,
     });
     const second = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Second" },
@@ -346,6 +364,7 @@ test("update validates merged data, increments version, and changes only updated
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Campaign", value: 100 },
@@ -353,6 +372,7 @@ test("update validates merged data, increments version, and changes only updated
     });
 
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -380,6 +400,7 @@ test("stale update version fails without changing the record", () => {
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Campaign", value: 100 },
@@ -387,6 +408,7 @@ test("stale update version fails without changing the record", () => {
     });
 
     records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -398,6 +420,7 @@ test("stale update version fails without changing the record", () => {
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -423,6 +446,7 @@ test("invalid update patch leaves canonical record unchanged", () => {
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Campaign", value: 100 },
@@ -432,6 +456,7 @@ test("invalid update patch leaves canonical record unchanged", () => {
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -445,6 +470,7 @@ test("invalid update patch leaves canonical record unchanged", () => {
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -469,6 +495,7 @@ test("records advance to the current schema on update and receive new defaults",
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Campaign" },
@@ -502,6 +529,7 @@ test("records advance to the current schema on update and receive new defaults",
     assert.equal("owner" in beforeUpdate.data, false);
 
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -513,6 +541,7 @@ test("records advance to the current schema on update and receive new defaults",
     assert.equal(updated.data.owner, "unassigned");
 
     const fresh = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "New Deal" },
@@ -527,6 +556,7 @@ test("soft delete increments version, records deletion actor/reason, and hides n
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Duplicate" },
@@ -534,6 +564,7 @@ test("soft delete increments version, records deletion actor/reason, and hides n
     });
 
     const deleted = records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -581,12 +612,14 @@ test("stale delete version fails and leaves the record active", () => {
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Keep" },
       actor: human,
     });
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -598,6 +631,7 @@ test("stale delete version fails and leaves the record active", () => {
     assert.throws(
       () =>
         records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -621,12 +655,14 @@ test("deleted records cannot be updated or deleted again through normal mutation
   withRecords((catalog, records) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Gone" },
       actor: human,
     });
     records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -637,6 +673,7 @@ test("deleted records cannot be updated or deleted again through normal mutation
     assert.throws(
       () =>
         records.update({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -650,6 +687,7 @@ test("deleted records cannot be updated or deleted again through normal mutation
     assert.throws(
       () =>
         records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           recordId: created.recordId,
@@ -665,12 +703,14 @@ test("CRUD state and actor provenance survive database close and reopen", () => 
   withRecords((catalog, records, databasePath, close) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Persistent", value: 10 },
       actor: human,
     });
     const updated = records.update({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created.recordId,
@@ -710,6 +750,7 @@ test("invalid actors are rejected before a record is written", () => {
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "crm",
           entity: "deals",
           data: { title: "Bad actor" },
@@ -726,6 +767,7 @@ test("stored payload tampering that violates its persisted schema fails closed o
   withRecords((catalog, records, databasePath, close) => {
     bootstrapCrm(catalog);
     const created = records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: { title: "Untampered", seats: 2 },
@@ -788,6 +830,7 @@ test("record payloads are bounded after defaults and normalization", () => {
     assert.throws(
       () =>
         records.create({
+      idempotencyKey: nextIdempotencyKey(),
           spaceId: "content",
           entity: "items",
           data: { body: huge },
