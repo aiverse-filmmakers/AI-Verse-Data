@@ -775,6 +775,55 @@ export function validateSchemaUpdatePayload(
   return input as SchemaUpdatePayload;
 }
 
+export function validateQueryPayload(
+  input: unknown,
+  path = "$query",
+): QueryPayload {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    ["spaceId", "entity", "select", "where", "orderBy", "limit", "cursor", "includeDeleted"],
+    path,
+  );
+  requireSpaceEntity(value, path);
+  if (value.select !== undefined) {
+    if (
+      !Array.isArray(value.select) ||
+      value.select.length > DATA_PROTOCOL_LIMITS.maxSelectFields
+    ) {
+      fail(
+        `${path}.select`,
+        `must be an array of at most ${DATA_PROTOCOL_LIMITS.maxSelectFields}`,
+      );
+    }
+    value.select.forEach((item, index) =>
+      fieldName(item, `${path}.select[${index}]`),
+    );
+  }
+  if (value.where !== undefined) validateQueryFilter(value.where, `${path}.where`);
+  if (value.orderBy !== undefined) validateOrderBy(value.orderBy, `${path}.orderBy`);
+  if (value.limit !== undefined) {
+    positiveInt(value.limit, `${path}.limit`, DATA_PROTOCOL_LIMITS.maxQueryPageSize);
+  }
+  if (value.cursor !== undefined) validateCursor(value.cursor, `${path}.cursor`);
+  if (value.includeDeleted !== undefined) {
+    boolean(value.includeDeleted, `${path}.includeDeleted`);
+  }
+  return input as QueryPayload;
+}
+
+export function validateAggregatePayload(
+  input: unknown,
+  path = "$aggregate",
+): AggregatePayload {
+  const value = object(input, path);
+  keysOnly(value, ["spaceId", "entity", "where", "metrics"], path);
+  requireSpaceEntity(value, path);
+  if (value.where !== undefined) validateQueryFilter(value.where, `${path}.where`);
+  validateMetrics(value.metrics, `${path}.metrics`);
+  return input as AggregatePayload;
+}
+
 function validatePayload(operation: DataOperation, input: unknown): void {
   const path = "$.payload";
   const value = object(input, path);
@@ -882,42 +931,11 @@ function validatePayload(operation: DataOperation, input: unknown): void {
       return;
 
     case "data.query":
-      keysOnly(
-        value,
-        ["spaceId", "entity", "select", "where", "orderBy", "limit", "cursor", "includeDeleted"],
-        path,
-      );
-      requireSpaceEntity(value, path);
-      if (value.select !== undefined) {
-        if (
-          !Array.isArray(value.select) ||
-          value.select.length > DATA_PROTOCOL_LIMITS.maxSelectFields
-        ) {
-          fail(
-            `${path}.select`,
-            `must be an array of at most ${DATA_PROTOCOL_LIMITS.maxSelectFields}`,
-          );
-        }
-        value.select.forEach((item, index) =>
-          fieldName(item, `${path}.select[${index}]`),
-        );
-      }
-      if (value.where !== undefined) validateQueryFilter(value.where, `${path}.where`);
-      if (value.orderBy !== undefined) validateOrderBy(value.orderBy, `${path}.orderBy`);
-      if (value.limit !== undefined) {
-        positiveInt(value.limit, `${path}.limit`, DATA_PROTOCOL_LIMITS.maxQueryPageSize);
-      }
-      if (value.cursor !== undefined) validateCursor(value.cursor, `${path}.cursor`);
-      if (value.includeDeleted !== undefined) {
-        boolean(value.includeDeleted, `${path}.includeDeleted`);
-      }
+      validateQueryPayload(value, path);
       return;
 
     case "data.aggregate":
-      keysOnly(value, ["spaceId", "entity", "where", "metrics"], path);
-      requireSpaceEntity(value, path);
-      if (value.where !== undefined) validateQueryFilter(value.where, `${path}.where`);
-      validateMetrics(value.metrics, `${path}.metrics`);
+      validateAggregatePayload(value, path);
       return;
 
     case "data.transaction.execute":
