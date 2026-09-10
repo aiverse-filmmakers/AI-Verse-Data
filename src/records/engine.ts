@@ -3,6 +3,13 @@ import { randomUUID } from "node:crypto";
 import { DataCatalog } from "../catalog/index.js";
 import { DataIdempotency } from "../idempotency/index.js";
 import type { EntitySchemaDefinition } from "../protocol/index.js";
+import { DataProvenance } from "../provenance/index.js";
+import {
+  createRequestId,
+  validateRequestId,
+  validateTransactionId,
+} from "../provenance/identifiers.js";
+import { DataProvenanceWriter } from "../provenance/writer.js";
 import type {
   DataRecordStorage,
   DataRelationStorage,
@@ -16,6 +23,7 @@ import {
   collectRecordRelations,
 } from "./relations.js";
 import type {
+  DataRecordMutationWithReceipt,
   DataRecordSnapshot,
   DataRecordsApi,
   RecordCreateInput,
@@ -42,12 +50,16 @@ export class DataRecords implements DataRecordsApi {
   private readonly store: DataRecordStorage;
   private readonly relations: DataRelationStorage;
   private readonly idempotency: DataIdempotency;
+  private readonly provenance: DataProvenance;
+  private readonly provenanceWriter: DataProvenanceWriter;
 
   constructor(private readonly database: DataStorageDatabase) {
     this.catalog = new DataCatalog(database);
     this.store = database.recordStorage();
     this.relations = database.relationStorage();
     this.idempotency = new DataIdempotency(database);
+    this.provenance = new DataProvenance(database);
+    this.provenanceWriter = new DataProvenanceWriter(database);
     this.store.initialize();
     this.relations.initialize();
   }
@@ -55,6 +67,14 @@ export class DataRecords implements DataRecordsApi {
   create(input: RecordCreateInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
     const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
+    const requestId =
+      input.requestId === undefined
+        ? createRequestId()
+        : validateRequestId(input.requestId);
+    const transactionId =
+      input.transactionId === undefined
+        ? undefined
+        : validateTransactionId(input.transactionId);
     const request = {
       spaceId: input.spaceId,
       entity: input.entity,
@@ -113,6 +133,22 @@ export class DataRecords implements DataRecordsApi {
         );
 
         const snapshot = hydrateStoredRecord(stored, schema);
+        this.provenanceWriter.recordMutation({
+          operation: "data.record.create",
+          requestId,
+          ...(transactionId === undefined ? {} : { transactionId }),
+          idempotencyKey,
+          spaceId: stored.spaceId,
+          entity: stored.entity,
+          recordId: stored.recordId,
+          beforeVersion: null,
+          afterVersion: stored.version,
+          actor,
+          committedAt: now,
+          details: {
+            schemaVersion: stored.schemaVersion,
+          },
+        });
         return this.idempotency.complete(
           idempotencyKey,
           "data.record.create",
@@ -126,6 +162,16 @@ export class DataRecords implements DataRecordsApi {
         "Unable to allocate a unique record identifier after repeated attempts.",
       );
     }, "immediate");
+  }
+
+  createWithReceipt(
+    input: RecordCreateInput,
+  ): DataRecordMutationWithReceipt {
+    const record = this.create(input);
+    const receipt = this.provenance.getReceiptByIdempotencyKey({
+      idempotencyKey: input.idempotencyKey,
+    });
+    return { record, receipt };
   }
 
   get(input: RecordGetInput): DataRecordSnapshot {
@@ -185,6 +231,14 @@ export class DataRecords implements DataRecordsApi {
   update(input: RecordUpdateInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
     const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
+    const requestId =
+      input.requestId === undefined
+        ? createRequestId()
+        : validateRequestId(input.requestId);
+    const transactionId =
+      input.transactionId === undefined
+        ? undefined
+        : validateTransactionId(input.transactionId);
     const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
     const request = {
       spaceId: input.spaceId,
@@ -303,6 +357,22 @@ export class DataRecords implements DataRecordsApi {
         relations,
       );
       const snapshot = hydrateStoredRecord(updated, currentSchema);
+      this.provenanceWriter.recordMutation({
+        operation: "data.record.update",
+        requestId,
+        ...(transactionId === undefined ? {} : { transactionId }),
+        idempotencyKey,
+        spaceId: updated.spaceId,
+        entity: updated.entity,
+        recordId: updated.recordId,
+        beforeVersion: stored.version,
+        afterVersion: updated.version,
+        actor,
+        committedAt: now,
+        details: {
+          schemaVersion: updated.schemaVersion,
+        },
+      });
       return this.idempotency.complete(
         idempotencyKey,
         "data.record.update",
@@ -312,9 +382,27 @@ export class DataRecords implements DataRecordsApi {
     }, "immediate");
   }
 
+  updateWithReceipt(
+    input: RecordUpdateInput,
+  ): DataRecordMutationWithReceipt {
+    const record = this.update(input);
+    const receipt = this.provenance.getReceiptByIdempotencyKey({
+      idempotencyKey: input.idempotencyKey,
+    });
+    return { record, receipt };
+  }
+
   softDelete(input: RecordDeleteInput): DataRecordSnapshot {
     const actor = validateRecordActor(input.actor);
     const idempotencyKey = validateRecordIdempotencyKey(input.idempotencyKey);
+    const requestId =
+      input.requestId === undefined
+        ? createRequestId()
+        : validateRequestId(input.requestId);
+    const transactionId =
+      input.transactionId === undefined
+        ? undefined
+        : validateTransactionId(input.transactionId);
     const expectedVersion = validateExpectedRecordVersion(input.expectedVersion);
     const request = {
       spaceId: input.spaceId,
@@ -442,6 +530,23 @@ export class DataRecords implements DataRecordsApi {
         stored.schemaVersion,
       );
       const snapshot = hydrateStoredRecord(deleted, historicalSchema);
+      this.provenanceWriter.recordMutation({
+        operation: "data.record.delete",
+        requestId,
+        ...(transactionId === undefined ? {} : { transactionId }),
+        idempotencyKey,
+        spaceId: deleted.spaceId,
+        entity: deleted.entity,
+        recordId: deleted.recordId,
+        beforeVersion: stored.version,
+        afterVersion: deleted.version,
+        actor,
+        committedAt: now,
+        details: {
+          schemaVersion: deleted.schemaVersion,
+          reason: deleted.deletedReason,
+        },
+      });
       return this.idempotency.complete(
         idempotencyKey,
         "data.record.delete",
@@ -449,5 +554,15 @@ export class DataRecords implements DataRecordsApi {
         snapshot,
       );
     }, "immediate");
+  }
+
+  softDeleteWithReceipt(
+    input: RecordDeleteInput,
+  ): DataRecordMutationWithReceipt {
+    const record = this.softDelete(input);
+    const receipt = this.provenance.getReceiptByIdempotencyKey({
+      idempotencyKey: input.idempotencyKey,
+    });
+    return { record, receipt };
   }
 }
