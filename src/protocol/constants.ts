@@ -44,6 +44,7 @@ export const DATA_PROTOCOL_LIMITS = Object.freeze({
   defaultEventPageSize: 100,
   maxAttachmentMetadataBytes: 32 * 1024,
   maxAuthorizationCapabilityRefs: 64,
+  maxIdempotencyKeyLength: 256,
   maxIdLength: 128,
   maxEnumValues: 128,
   maxEnumValueLength: 128,
