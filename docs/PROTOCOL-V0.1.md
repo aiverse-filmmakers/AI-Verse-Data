@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; core execution, optimistic concurrency, durable idempotency, mutation events, receipts, and provenance queries implemented through Phase 2.3  
+**Status:** Protocol foundation implemented; core execution, optimistic concurrency, durable idempotency, mutation provenance, and bounded bulk preview/execute implemented through Phase 2.4  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -366,6 +366,66 @@ Example:
 Complex arbitrary expressions are deferred.
 
 ## 11. Transaction operation
+
+### `data.bulk.preview`
+
+Review a bounded set of record mutations without committing them:
+
+```json
+{
+  "operations": [
+    {
+      "operation": "data.record.update",
+      "payload": {
+        "spaceId": "crm",
+        "entity": "deals",
+        "recordId": "rec_...",
+        "expectedVersion": 3,
+        "idempotencyKey": "bulk-item-1",
+        "patch": {
+          "stage": "won"
+        }
+      }
+    }
+  ]
+}
+```
+
+Rules:
+
+- 1..50 operations;
+- maximum 256 KiB bulk payload;
+- only record create/update/delete operations;
+- real transaction semantics execute inside an intentional rollback;
+- no canonical/supporting mutation state persists;
+- preview returns an actor/operation/state-bound SHA-256 digest;
+- generated IDs from preview-created records are not exposed as canonical identity.
+
+### `data.bulk.execute`
+
+Commit exactly the reviewed operation set:
+
+```json
+{
+  "idempotencyKey": "bulk-commit-01",
+  "expectedPreviewDigest": "<64 lowercase hex chars>",
+  "operations": []
+}
+```
+
+The operation list must still contain 1..50 valid record mutations; the empty array above is only schematic.
+
+Execution:
+
+1. validates hard count/byte limits;
+2. validates key separation;
+3. re-runs current-state preview;
+4. requires its digest to equal `expectedPreviewDigest`;
+5. commits through the existing bounded transaction engine;
+6. returns the underlying transaction result and final transaction receipt;
+7. records durable bulk idempotency so matching retries replay exactly.
+
+Commit is always all-or-nothing. There is no v0.1 best-effort partial-success option.
 
 ### `data.transaction.execute`
 
@@ -753,3 +813,18 @@ Matching idempotent replay emits no additional event or receipt and receipt-retu
 `data.events.list` supports workspace-wide or progressively scoped event queries with bounded filter-bound opaque cursors.
 
 Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
+
+## 30. Phase 2.4 bulk implementation note
+
+Phase 2.4 adds `data.bulk.preview` and `data.bulk.execute` plus the public `@ai-verse/data/bulk` package surface.
+
+Preview uses the real `DataTransactions` engine inside an outer rollback-only transaction. This makes preview semantics exact while leaving no committed record, relation, idempotency, event, receipt, or event-sequence state.
+
+Bulk execute requires a SHA-256 preview digest bound to the trusted actor, exact ordered operations, deterministic preview state summary, and all-or-nothing policy. Fresh execution re-previews current state and fails with `BULK_PREVIEW_STALE` when that digest no longer matches.
+
+The hard limits are 50 operations and 256 KiB. Existing record/schema/reference/optimistic-concurrency/idempotency/provenance failures remain authoritative when more specific.
+
+Bulk commit reuses the normal bounded transaction provenance. It does not add a duplicate synthetic bulk event.
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
