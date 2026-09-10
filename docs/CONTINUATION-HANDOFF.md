@@ -10,34 +10,29 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  2 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  3 / 9
 
-Overall implementation: 11 / 41 tasks complete
+Overall implementation: 12 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 11 / 41 - Phase 2.2: Idempotent mutations**
+**Task 12 / 41 - Phase 2.3: Events, receipts, provenance**
 
-Final verified repository head at closeout:
-
-```text
-55d6aa08a511b9d4e8192a1fd58231d74255198a
-```
-
-Final exact-head CI:
+Behavioral implementation verification:
 
 ```text
-GitHub Actions run: 34524137374
+Commit: 911c5d51d605bd6234f35dc351eef76c68ac61e6
+GitHub Actions run: 34526163488
 Node 22: PASS
 Node 24: PASS
-Tests: 125 / 125 PASS
+Tests: 141 / 141 PASS
 Failures: 0
 Skipped: 0
 Cancelled: 0
 ```
 
-Implemented through Task 11:
+Implemented through Task 12:
 
 - protocol and validation foundation;
 - SQLite storage driver;
@@ -52,37 +47,43 @@ Implemented through Task 11:
 - deterministic SHA-256 request fingerprints;
 - exact committed-result replay;
 - conflicting-key rejection;
-- multi-process duplicate-delivery proof.
+- immutable record/transaction events;
+- durable mutation receipts;
+- actor/request/transaction/workspace provenance;
+- SHA-256 provenance integrity checks;
+- receipt-to-event linkage verification;
+- bounded opaque event queries;
+- transaction provenance-laundering protection.
+
+Documentation/log closeout commits occur after the behavioral verification above. A new session should trust the task status and NEXT section in this file, then verify the current repository HEAD CI before making new changes.
 
 ## NEXT
 
-**Task 12 / 41 - Phase 2.3: Events, receipts, provenance**
+**Task 13 / 41 - Phase 2.4: Bulk-operation safety and limits**
 
-Task 12 scope from the canonical Build Map:
+Task 13 scope from the canonical Build Map:
 
 ```text
-Append-oriented Data events
-Mutation receipts
-Actor attribution
-Transaction/event atomicity
-Event queries
+Bounded bulk operations
+Dry-run / preview
+Hard size/count ceilings
 ```
 
-Do not start Task 13 until Task 12 is fully implemented, tested, documented, committed, and its exact repository head has passing CI.
+Do not start Task 14 until Task 13 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 12 architectural laws
+## Task 13 architectural laws
 
 The implementation must preserve:
 
-1. Events are Data audit/change facts, not AI-Verse Memory.
-2. Event/receipt persistence must be atomic with the canonical mutation it describes.
-3. Idempotent replay must not create duplicate events or receipts.
-4. Replayed mutations must return the original committed mutation result/receipt contract, not generate a new mutation fact.
-5. Record create/update/delete and bounded transaction provenance must retain the trusted actor.
-6. Normal APIs must not expose raw SQL or canonical database paths.
-7. Workspace isolation stays enforced by the existing database/scope boundary.
+1. Bulk operations remain bounded by hard engine ceilings.
+2. Preview/dry-run must not mutate canonical Data, provenance, idempotency state, or relations.
+3. Actual bulk mutations must reuse existing schema, relation, optimistic-concurrency, idempotency, event, and receipt guarantees rather than bypassing them.
+4. Partial success semantics must be explicit. Do not silently mix atomic and best-effort behavior.
+5. Normal APIs still do not accept raw SQL or canonical database paths.
+6. Workspace isolation remains technically enforced.
+7. Data events remain audit facts, not automatic Memory.
 8. Data must not write sibling repo state.
-9. Task 12 must not implement Task 13 bulk-operation work early.
+9. Task 13 must not implement Task 14 backup/export/import behavior early.
 10. SQLite remains an implementation driver, not the public semantic contract.
 
 ## Canonical documents to read before continuing
@@ -94,9 +95,10 @@ Read these first in a new session:
 3. `docs/PHASE-2-STATUS.md`
 4. `docs/ARCHITECTURE.md`
 5. `docs/PROTOCOL-V0.1.md`
-6. `docs/IDEMPOTENCY-V0.1.md`
-7. `docs/SECURITY-AND-AUTHORITY.md`
-8. `docs/TESTING-AND-ACCEPTANCE.md`
+6. `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`
+7. `docs/IDEMPOTENCY-V0.1.md`
+8. `docs/SECURITY-AND-AUTHORITY.md`
+9. `docs/TESTING-AND-ACCEPTANCE.md`
 
 Then inspect the current implementation relevant to the next task.
 
