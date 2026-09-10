@@ -283,6 +283,16 @@ A fresh transaction cannot adopt an already-committed nested idempotency key fro
 
 Detailed provenance contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
 
+## 17.1 Phase 2.4 bulk composition
+
+Phase 2.4 does not add a second multi-record mutation engine. `DataBulk` reuses this bounded transaction engine for both preview and commit.
+
+Preview executes the same transaction path inside an outer rollback-only transaction, so relation, expectedVersion, idempotency, event, receipt, and `clientRef` behavior stays identical to real execution while all effects are rolled back.
+
+Bulk commit requires its reviewed preview digest and then calls `executeWithReceipt` normally. The final transaction receipt is returned as the bulk commit receipt, and no duplicate synthetic bulk event is created.
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## 18. Not implemented
 
 Phase 1.8 intentionally does not add:
