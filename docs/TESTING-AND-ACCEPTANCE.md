@@ -258,6 +258,46 @@ Cancelled:           0
 
 Detailed contract: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
 
+### Phase 2.4 bulk-operation safety evidence
+
+Task 13 / 41 adds a dedicated bulk acceptance suite.
+
+The suite proves:
+
+- rollback-only preview uses real transaction semantics;
+- preview commits no record rows;
+- preview commits no relation rows;
+- preview commits no idempotency rows;
+- preview commits no event or receipt rows;
+- preview does not advance durable SQLite event sequence;
+- preview safely validates transaction-local `clientRef` references;
+- preview-created IDs are not exposed as canonical IDs;
+- preview digest changes with trusted actor or changed operation set;
+- execute requires the exact reviewed digest;
+- changed operations fail before commit;
+- stale expected versions still prevent commit;
+- successful bulk commit is all-or-nothing;
+- matching bulk retry returns the original result without duplicate records/events;
+- bulk idempotency binds digest and operation set;
+- bulk/nested idempotency-key collisions fail before mutation;
+- empty, over-count, and over-byte bulk inputs fail before mutation;
+- protocol validation recognizes the new bulk operations and rejects malformed digests.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34535289214
+Commit:              48cc437647fdf76e21b51b310eb6567f4a843d1f
+Node 22:             PASS
+Node 24:             PASS
+Tests:               153 / 153 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
