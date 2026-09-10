@@ -268,7 +268,7 @@ See [`docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`](docs/RELATIONS-AND-TRANSACTIONS-
 
 Task 9 / 41 adds an integrated acceptance story rather than another feature layer. It proves the Phase 1 components operate correctly together in standalone and workspace-scoped modes and recover exactly committed state after close/reopen.
 
-During this audit, the testing plan was corrected so mutation events and durable receipts remain in their canonical Phase 2.3 task instead of being implemented early.
+During that Phase 1 audit, the testing plan was corrected so mutation events and durable receipts were kept in their canonical Phase 2.3 task instead of being implemented early. Phase 2.3 has since completed.
 
 See [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md).
 
@@ -439,6 +439,8 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/PHASE-1-ACCEPTANCE.md`](docs/PHASE-1-ACCEPTANCE.md) - final Phase 1 integration gate and evidence
 - [`docs/OPTIMISTIC-CONCURRENCY-V0.1.md`](docs/OPTIMISTIC-CONCURRENCY-V0.1.md) - implemented race-safe record concurrency contract
 - [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md) - implemented durable mutation retry/replay contract
+- [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md) - implemented immutable events, durable receipts, and provenance contract
+- [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md) - implemented bounded preview/execute bulk safety contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
