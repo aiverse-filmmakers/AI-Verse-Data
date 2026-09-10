@@ -277,7 +277,7 @@ Nested update/delete operations still require `expectedVersion`.
 
 Phase 1.8 preserves the existing semantic conflict checks.
 
-Race-safe optimistic-concurrency hardening under competing database writers remains Task 10 / 41.
+Phase 2.1 now hardens this behavior under competing database writers: update/delete version checks are atomic at the storage write and the outer bounded transaction uses short immediate write intent.
 
 ## 17. Events and receipts
 
