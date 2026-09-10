@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 1 / 41  
-**Latest completed:** Task 1 / 41, Phase 1.1 - Repository/package foundation  
-**Next task:** Task 2 / 41, Phase 1.2 - Protocol types and validators  
+**Completed implementation tasks:** 2 / 41  
+**Latest completed:** Task 2 / 41, Phase 1.2 - Protocol types and validators  
+**Next task:** Task 3 / 41, Phase 1.3 - Storage-driver contract + SQLite bootstrap  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -14,43 +14,120 @@ AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, 
 
 ## Current implementation
 
-Task 1.1 establishes the runnable package foundation only. No database, SQLite driver, schemas, records, queries, or CRUD operations exist yet.
+The repository now has a runnable TypeScript/Node package plus the first public storage-neutral protocol contract.
 
-The repository now includes:
+Implemented so far:
 
 ```text
-AI-Verse-Data/
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── cli.ts
-│   └── index.ts
-├── test/
-│   ├── cli.test.ts
-│   └── foundation.test.ts
-├── .github/workflows/ci.yml
-├── docs/
-└── README.md
+Task 1 / 41
+Repository/package foundation
+  -> TypeScript + Node 22+
+  -> CLI shell
+  -> strict build/test setup
+  -> Node 22 + Node 24 CI
+
+Task 2 / 41
+Protocol types and validators
+  -> operation request envelopes
+  -> success/failure response envelopes
+  -> workspace scope
+  -> actor model
+  -> authorization metadata
+  -> Data Space/schema/record types
+  -> query AST
+  -> aggregate types
+  -> bounded transaction types
+  -> first-release field types
+  -> stable error codes
+  -> runtime validation
+  -> hard request/query/schema/transaction limits
 ```
 
-Current CLI surface:
+No SQLite driver, persistent database, Data Spaces, schemas, records, CRUD execution, query execution, or OS installation behavior exists yet. Those begin in later tasks.
 
-```bash
-ai-verse-data --help
-ai-verse-data --version
+### Public package surfaces
+
+```text
+@ai-verse/data
+@ai-verse/data/protocol
 ```
 
-The package currently identifies itself as `@ai-verse/data` version `0.1.0-alpha.0` and requires Node.js 22+.
+The protocol is currently:
 
-### Task 1.1 verification
+```text
+ai-verse-data/0.1
+```
 
-- strict TypeScript build passes;
-- 5/5 foundation tests pass locally;
-- GitHub CI passes on Node 22 and Node 24;
-- CLI help/version behavior is tested;
-- unknown CLI arguments fail explicitly;
-- package dry-run contains only the intended distributable source outputs and package metadata;
-- no SQLite or CRUD implementation was introduced early.
+It is deliberately storage-driver neutral. Consumers address logical workspace/Data Space/entity/record identities rather than SQLite files.
+
+### Agent-safe protocol boundary
+
+Normal requests cannot include arbitrary SQL or database filesystem paths. Runtime validation rejects unknown envelope/payload fields and enforces bounded request shapes before a future storage engine receives them.
+
+Initial field types:
+
+```text
+string
+number
+integer
+boolean
+date
+datetime
+enum
+reference
+json
+attachment_ref
+```
+
+Initial query operators:
+
+```text
+eq
+neq
+lt
+lte
+gt
+gte
+in
+not_in
+contains
+starts_with
+is_null
+is_not_null
+```
+
+The implementation also bounds request bytes, schema fields, record bytes, filter depth/node count, `in` list size, sort keys, selected fields, aggregate metrics, transaction operations, event page size, authorization references, enum sizes, JSON depth, and array size.
+
+### Task 2 verification
+
+Latest verified GitHub Actions run: `34508602201`
+
+```text
+Node 22  PASS
+Node 24  PASS
+
+18 tests
+18 passed
+0 failed
+0 skipped
+0 cancelled
+```
+
+The test suite proves, among other things:
+
+- documented record-update envelopes validate;
+- wrong protocol versions fail explicitly;
+- unknown operations return `OPERATION_UNSUPPORTED`;
+- unknown request/payload fields are rejected;
+- path-like workspace/Data Space identifiers are rejected;
+- malformed field definitions and duplicate enum values fail;
+- schema field ceilings are enforced;
+- query recursion and `in` list sizes are bounded;
+- aggregate and transaction limits are enforced;
+- unsupported nested transaction operations fail;
+- non-finite and oversized record JSON fails;
+- response envelopes and error codes are validated;
+- raw SQL and database-path extras are rejected.
 
 ## Why Data is separate from Memory
 
@@ -120,25 +197,6 @@ workspaces/<workspace-id>/data/ai-verse-data.sqlite
 
 There will be one physical SQLite database per workspace, with multiple logical Data Spaces inside it. This keeps workspace isolation strong and avoids adding another top-level AI-Verse OS truth tree.
 
-## Agent-safe model
-
-Agents will not receive arbitrary SQL access by default. They will operate through validated capabilities such as:
-
-```text
-data.space.create
-data.schema.create
-data.record.create
-data.record.get
-data.record.list
-data.record.update
-data.record.delete
-data.query
-data.aggregate
-data.transaction.execute
-```
-
-The planned engine validates scope, schema, fields, limits, permissions, record versions, and idempotency before committing.
-
 ## Technology direction
 
 ```text
@@ -148,7 +206,7 @@ SQLite
 storage-driver abstraction
 ```
 
-TypeScript/Node implement the engine and APIs. SQLite is the first local canonical storage driver. The public Data contract will remain storage-driver-neutral so future hosted/team deployments can use another backend without rewriting Apps, Bots, or Dashboard clients.
+TypeScript/Node implement the engine and APIs. SQLite is the first local canonical storage driver. The public Data protocol remains storage-driver neutral so future hosted/team deployments can use another backend without rewriting Apps, Bots, or Dashboard clients.
 
 ## Native installation direction
 
@@ -158,23 +216,24 @@ Data will use AI-Verse OS's optional extension contract:
 .aiverse/extensions/registry.json
 ```
 
-Its software will live in an extension-owned location. Normal install/update/uninstall must not modify tracked AI-Verse OS files or sibling repo state. Installing the engine will not create databases in every workspace. Canonical workspace Data is created only when explicitly initialized or used, and uninstall must preserve it by default.
+Normal install/update/uninstall must not modify tracked AI-Verse OS files or sibling repo state. Installing the engine will not create databases in every workspace. Canonical workspace Data is created only when explicitly initialized or used, and uninstall must preserve it by default.
 
 ## Canonical documents
 
 - [`docs/PRD.md`](docs/PRD.md) - product requirements and first-release scope
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - technical architecture
 - [`docs/DATA-MEMORY-BOUNDARY.md`](docs/DATA-MEMORY-BOUNDARY.md) - Data vs Memory ownership law
-- [`docs/ECOSYSTEM-INTEGRATION.md`](docs/ECOSYSTEM-INTEGRATION.md) - integration with the wider AI-Verse ecosystem
+- [`docs/ECOSYSTEM-INTEGRATION.md`](docs/ECOSYSTEM-INTEGRATION.md) - wider AI-Verse integration
 - [`docs/INSTALLATION-AND-LIFECYCLE.md`](docs/INSTALLATION-AND-LIFECYCLE.md) - install/update/uninstall rules
-- [`docs/PROTOCOL-V0.1.md`](docs/PROTOCOL-V0.1.md) - protocol direction
+- [`docs/PROTOCOL-V0.1.md`](docs/PROTOCOL-V0.1.md) - public protocol design
 - [`docs/SECURITY-AND-AUTHORITY.md`](docs/SECURITY-AND-AUTHORITY.md) - security and permission model
 - [`docs/TESTING-AND-ACCEPTANCE.md`](docs/TESTING-AND-ACCEPTANCE.md) - test and release gates
 - [`docs/RESEARCH-AND-DECISIONS.md`](docs/RESEARCH-AND-DECISIONS.md) - research and locked decisions
 - [`docs/BUILD-MAP.md`](docs/BUILD-MAP.md) - canonical 41-task implementation ledger
+- [`docs/PHASE-1-STATUS.md`](docs/PHASE-1-STATUS.md) - Phase 1 implementation evidence
 
 ## Build rule
 
-Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository state records the result.
+Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next:** Task 2 / 41, Phase 1.2 - Protocol types and validators.
+**Next: Task 3 / 41, Phase 1.3 - Storage-driver contract + SQLite bootstrap.**
