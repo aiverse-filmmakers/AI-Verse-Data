@@ -15,6 +15,10 @@
       "types": "./dist/src/protocol/index.d.ts",
       "import": "./dist/src/protocol/index.js"
     },
+    "./storage": {
+      "types": "./dist/src/storage/index.d.ts",
+      "import": "./dist/src/storage/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,7 +52,11 @@
   "bugs": {
     "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/issues"
   },
+  "dependencies": {
+    "better-sqlite3": "13.0.3"
+  },
   "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
     "@types/node": "22.15.30",
     "typescript": "5.8.3"
   }
