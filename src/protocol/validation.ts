@@ -527,7 +527,7 @@ function requireSpaceEntity(value: Record<string, unknown>, path: string): void 
 }
 
 function validateIdempotency(value: unknown, path: string): void {
-  string(value, path, 1, 256);
+  string(value, path, 1, DATA_PROTOCOL_LIMITS.maxIdempotencyKeyLength);
 }
 
 function validateCursor(value: unknown, path: string): void {
