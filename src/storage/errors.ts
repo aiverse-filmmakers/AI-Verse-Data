@@ -8,15 +8,11 @@ export type DataStorageErrorCode =
 
 export class DataStorageError extends Error {
   readonly code: DataStorageErrorCode;
-  readonly cause?: unknown;
 
   constructor(code: DataStorageErrorCode, message: string, cause?: unknown) {
-    super(message);
+    super(message, cause === undefined ? undefined : { cause });
     this.name = "DataStorageError";
     this.code = code;
-    if (cause !== undefined) {
-      this.cause = cause;
-    }
   }
 }
 
