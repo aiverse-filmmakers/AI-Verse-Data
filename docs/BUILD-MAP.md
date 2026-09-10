@@ -385,7 +385,7 @@ Detailed acceptance evidence: `docs/PHASE-1-ACCEPTANCE.md`.
 
 # Phase 2 - Reliability + Agent Safety
 
-**Status:** NEXT
+**Status:** IN PROGRESS
 
 ## Task 10 / 41 - Phase 2.1 Optimistic concurrency
 
