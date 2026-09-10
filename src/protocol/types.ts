@@ -196,7 +196,18 @@ export type SchemaCreatePayload = EntitySchemaDefinition;
 export type SchemaChange =
   | { readonly op: "add_field"; readonly field: string; readonly definition: FieldDefinition }
   | { readonly op: "set_name"; readonly name: string }
-  | { readonly op: "set_description"; readonly description: string };
+  | { readonly op: "set_description"; readonly description: string }
+  | { readonly op: "remove_field"; readonly field: string }
+  | {
+      readonly op: "replace_field";
+      readonly field: string;
+      readonly definition: FieldDefinition;
+    }
+  | {
+      readonly op: "rename_field";
+      readonly field: string;
+      readonly newField: string;
+    };
 
 export interface SchemaUpdatePayload {
   readonly spaceId: DataSpaceId;
