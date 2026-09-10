@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 1 / 9  
-**Overall implementation tasks completed:** 10 / 41  
-**Next:** Task 11 / 41, Phase 2.2 - Idempotent mutations
+**Implementation tasks completed:** 2 / 9  
+**Overall implementation tasks completed:** 11 / 41  
+**Next:** Task 12 / 41, Phase 2.3 - Events, receipts, provenance
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -98,12 +98,126 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 11 / 41 - Phase 2.2 Idempotent mutations
+
+**Status:** COMPLETE
+
+### Implemented
+
+Durable retry-safe idempotency now applies to:
+
+```text
+data.record.create
+data.record.update
+data.record.delete
+data.transaction.execute
+```
+
+The direct public `DataRecords` create/update/soft-delete surface also requires an idempotency key.
+
+SQLite persists a workspace-database-global `_idempotency` table containing:
+
+- key;
+- operation;
+- fingerprint version;
+- canonical request SHA-256;
+- canonical original result JSON;
+- result SHA-256;
+- commit timestamp.
+
+Fingerprint version 1 binds the operation, trusted actor, and semantic request. Object property insertion order is normalized deterministically.
+
+### Replay semantics
+
+Matching committed key + fingerprint:
+
+```text
+return original committed result
+do not execute again
+```
+
+Replay happens before current record/version checks, allowing a genuine successful update retry to return its original result even after the record later advances.
+
+Different reuse returns:
+
+```text
+IDEMPOTENCY_CONFLICT
+```
+
+### Atomicity
+
+Fresh canonical mutation effects and their idempotency entry commit in the same short SQLite transaction.
+
+Failed mutations do not reserve keys.
+
+For bounded transactions, nested mutation idempotency entries and the outer transaction result all share the outer atomic transaction. Any failure rolls all of them back.
+
+### Persistence and corruption behavior
+
+Replay survives close/reopen.
+
+Stored result SHA-256 is verified before replay. Tampered replay state fails closed as `DATABASE_CORRUPT`.
+
+Committed v0.1 idempotency entries do not automatically expire.
+
+### Real duplicate-delivery proof
+
+Separate-process tests prove:
+
+1. four processes delivering the same key and same request create exactly one canonical record;
+2. every caller receives the same generated record ID and original timestamp;
+3. two processes racing with the same key but different payloads result in one commit and one `IDEMPOTENCY_CONFLICT`.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34523382398
+Node 22:             PASS
+Node 24:             PASS
+Tests:               125 / 125 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/IDEMPOTENCY-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.2 does not implement:
+
+- mutation events;
+- durable mutation receipts;
+- event/receipt IDs;
+- event queries;
+- idempotency auto-expiry/pruning;
+- external-system side-effect idempotency.
+
+Those remain later tasks, with events/receipts/provenance next in Task 12 / 41.
+
+### Task 2.2 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- committed duplicate delivery does not duplicate canonical state;
+- matching retries return the original successful result;
+- changed key reuse conflicts;
+- actor and operation are fingerprint-bound;
+- failed writes do not leave ghost reservations;
+- restart/reopen preserves replay;
+- transaction idempotency is atomic with nested effects;
+- real concurrent duplicate/conflicting deliveries behave deterministically;
+- no Task 2.3 events or receipts were introduced early.
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 11 / 41 | 2.2 | NEXT | Idempotent mutations |
-| 12 / 41 | 2.3 | NOT STARTED | Events, receipts, provenance |
+| 12 / 41 | 2.3 | NEXT | Events, receipts, provenance |
 | 13 / 41 | 2.4 | NOT STARTED | Bulk-operation safety and limits |
 | 14 / 41 | 2.5 | NOT STARTED | Backup/export/import foundation |
 | 15 / 41 | 2.6 | NOT STARTED | Internal migration framework |
@@ -113,4 +227,4 @@ Acceptance requirements are satisfied:
 
 ## Current boundary
 
-Do not begin Task 12 / 41 until Task 11 / 41 is implemented, verified, committed, and reported complete.
+Do not begin Task 13 / 41 until Task 12 / 41 is implemented, verified, committed, and reported complete.
