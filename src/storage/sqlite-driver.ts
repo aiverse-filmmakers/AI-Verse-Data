@@ -3,6 +3,7 @@ import { existsSync, statSync } from "node:fs";
 import Database from "better-sqlite3";
 
 import { DataStorageError, isDataStorageError } from "./errors.js";
+import { SqliteCatalogStorage } from "./sqlite-catalog-store.js";
 import {
   AI_VERSE_DATA_DATABASE_FORMAT_VERSION,
   AI_VERSE_DATA_MIN_SQLITE_VERSION,
@@ -489,6 +490,11 @@ class SqliteStorageDatabase implements DataStorageDatabase {
       ok: messages.length === 1 && messages[0]?.toLowerCase() === "ok",
       messages,
     };
+  }
+
+  catalogStorage(): SqliteCatalogStorage {
+    this.assertOpen();
+    return new SqliteCatalogStorage(this.database);
   }
 
   close(): void {
