@@ -60,6 +60,7 @@ Data Spaces and entity schemas
   -> field/default validation
   -> safe additive schema updates
   -> migration-required destructive changes
+
 Task 6 / 41 - COMPLETE
 Record CRUD
   -> fixed canonical _records table
@@ -144,6 +145,7 @@ Entity definitions are stored as validated structured JSON inside fixed engine-o
 Safe direct updates currently include adding compatible fields and changing entity name/description. Removing, replacing, or renaming fields returns `SCHEMA_MIGRATION_REQUIRED` until the dedicated migration framework exists.
 
 See [`docs/CATALOG-AND-SCHEMAS-V0.1.md`](docs/CATALOG-AND-SCHEMAS-V0.1.md).
+
 ## Record CRUD
 
 Phase 1.6 adds canonical schema-aware record storage behind `@ai-verse/data/records`.
