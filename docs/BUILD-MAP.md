@@ -362,7 +362,7 @@ Acceptance coverage:
 - two-workspace physical/logical isolation;
 - unsupported newer database format rejection.
 
-During the gate, `docs/TESTING-AND-ACCEPTANCE.md` was corrected because its original Phase 1 checklist incorrectly included mutation events and durable receipts. Those remain mandatory under Task 12 / 41, Phase 2.3, matching the canonical Build Map.
+During the gate, `docs/TESTING-AND-ACCEPTANCE.md` was corrected because its original Phase 1 checklist incorrectly included mutation events and durable receipts. Those requirements were intentionally deferred to Task 12 / Phase 2.3 and have since been implemented and verified.
 
 Verification:
 
