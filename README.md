@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 1 implementation in progress  
-**Completed implementation tasks:** 6 / 41  
-**Latest completed:** Task 6 / 41, Phase 1.6 - Record CRUD  
-**Next task:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine  
+**Completed implementation tasks:** 7 / 41  
+**Latest completed:** Task 7 / 41, Phase 1.7 - Safe query + aggregate engine  
+**Next task:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -73,7 +73,7 @@ Record CRUD
   -> deleted-record visibility controls
 ```
 
-Data Spaces, entity schemas, and record CRUD are now implemented. General query/aggregate execution, relations, OS installation, and sibling-layer adapters remain later tasks.
+Data Spaces, entity schemas, record CRUD, safe queries, and aggregates are now implemented. Relations, bounded transactions, OS installation, and sibling-layer adapters remain later tasks.
 
 ## Public package surfaces
 
@@ -84,6 +84,7 @@ Data Spaces, entity schemas, and record CRUD are now implemented. General query/
 @ai-verse/data/scope
 @ai-verse/data/catalog
 @ai-verse/data/records
+@ai-verse/data/query
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -160,14 +161,14 @@ See [`docs/RECORD-CRUD-V0.1.md`](docs/RECORD-CRUD-V0.1.md).
 
 ### Latest verification
 
-Task 6 implementation CI run: `34514486550`
+Task 7 implementation CI run: `34516259373`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-71 tests
-71 passed
+90 tests
+90 passed
 0 failed
 ```
 
@@ -282,4 +283,4 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 7 / 41, Phase 1.7 - Safe query + aggregate engine.**
+**Next: Task 8 / 41, Phase 1.8 - Relations + bounded transactions.**
