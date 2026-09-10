@@ -17,6 +17,13 @@ import { SqliteStorageDriver } from "../src/storage/index.js";
 
 const human = { kind: "human", id: "operator" } as const;
 
+let idempotencySequence = 0;
+function nextIdempotencyKey(): string {
+  idempotencySequence += 1;
+  return `legacy-test:${idempotencySequence}`;
+}
+
+
 function withQuery(
   run: (
     catalog: DataCatalog,
@@ -85,6 +92,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
 
   const companies = ["Acme", "Beta", "Real", "Other"].map((name) =>
     records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "companies",
       data: { name },
@@ -137,6 +145,7 @@ function bootstrap(catalog: DataCatalog, records: DataRecords) {
 
   return inputs.map((data) =>
     records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data,
@@ -397,6 +406,7 @@ test("deleted records are excluded unless includeDeleted is explicit", () => {
   withQuery((catalog, records, query) => {
     const created = bootstrap(catalog, records);
     records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created[1]!.recordId,
@@ -441,6 +451,7 @@ test("queries reject undeclared fields even when records allow unknown fields", 
       },
     });
     records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "flex",
       entity: "items",
       data: { title: "A", arbitrary: 123 },
@@ -549,6 +560,7 @@ test("SQL-looking values remain bound parameters rather than executable text", (
     bootstrap(catalog, records);
     const injection = "' OR 1=1 --";
     records.create({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       data: {
@@ -601,6 +613,7 @@ test("aggregate excludes soft-deleted records", () => {
   withQuery((catalog, records, query) => {
     const created = bootstrap(catalog, records);
     records.softDelete({
+      idempotencyKey: nextIdempotencyKey(),
       spaceId: "crm",
       entity: "deals",
       recordId: created[2]!.recordId,
