@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1, durable idempotency extended in Phase 2.2  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1, durable idempotency extended in Phase 2.2, immutable events/receipts extended in Phase 2.3  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -280,9 +280,32 @@ v0.1 does not automatically expire committed idempotency entries.
 
 Detailed semantics: `docs/IDEMPOTENCY-V0.1.md`.
 
+## Phase 2.3 provenance storage extension
+
+The storage boundary now exposes `DataProvenanceStorage`.
+
+SQLite creates two fixed engine-owned tables:
+
+```text
+_events
+_mutation_receipts
+```
+
+`_events` uses a monotonic local event sequence, opaque event ID, constrained event/operation values, request/transaction/scope/target/version/actor metadata, bounded JSON details, and a SHA-256 event digest.
+
+`_mutation_receipts` stores one durable receipt per event and one receipt per idempotency key, including the same core mutation provenance plus a SHA-256 receipt digest.
+
+Normal UPDATE/DELETE operations against both tables are blocked by SQLite triggers. Receipt-to-event linkage uses a foreign key and public hydration verifies both digests plus shared-field equality.
+
+Event listing is ordered by event sequence. Transaction receipt listing joins the linked event table and returns receipts in canonical event-sequence order.
+
+Fresh record/transaction mutation effects, provenance rows, and idempotency rows share the same existing SQLite transaction. Failed mutations leave no partial audit state.
+
+Detailed semantics: `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
-No event/receipt persistence.  
+
 No AI-Verse OS manifest/workspace validation.  
 No OS extension registration.  
 No Memory/Brain/Bot/Dashboard/App integration.
