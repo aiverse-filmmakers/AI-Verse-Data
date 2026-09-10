@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 in progress; scope, schema catalog, and record CRUD implemented
+**Implementation:** Phase 1 in progress; scope, schema catalog, record CRUD, queries, and aggregates implemented
 
 ## 1. Architectural position
 
@@ -356,6 +356,8 @@ The engine:
 7. returns bounded structured results.
 
 No user/model string concatenation should become SQL.
+
+Phase 1.7 implements the query path through `DataQueryStorage` and the SQLite `SqliteQueryStorage` driver. Query values and JSON field paths are bound parameters, cursors are opaque and bounded, and returned rows reuse canonical historical-schema hydration.
 
 ## 11. Safe mutation architecture
 
