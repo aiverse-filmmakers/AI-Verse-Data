@@ -5,7 +5,7 @@
 **Phase status:** COMPLETE  
 **Implementation tasks completed:** 9 / 9  
 **Overall implementation tasks completed:** 9 / 41  
-**Next:** Task 10 / 41, Phase 2.1 - Optimistic concurrency
+**Next overall:** Task 11 / 41, Phase 2.2 - Idempotent mutations
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -406,7 +406,7 @@ _records
 
 Update and soft delete require a matching `expectedVersion` and reject stale callers with `RECORD_VERSION_CONFLICT`.
 
-This is the Phase 1 semantic check. Task 10 / 41 still owns race-safe atomic optimistic concurrency under competing writers and dedicated race tests.
+At the Phase 1 boundary this was only the semantic check. Task 10 / 41 has since completed race-safe atomic optimistic concurrency under competing writers; see `docs/PHASE-2-STATUS.md`.
 
 ### Failure behavior
 
@@ -432,7 +432,7 @@ Detailed contract: `docs/RECORD-CRUD-V0.1.md`.
 - aggregate execution;
 - relation existence/index enforcement;
 - bounded multi-record transactions;
-- race-safe atomic concurrency hardening;
+- race-safe atomic concurrency hardening (completed later in Task 10 / Phase 2.1);
 - persistent idempotency;
 - mutation events and receipts;
 - permissions/capability enforcement;
@@ -613,7 +613,7 @@ Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
 - cross-workspace references/transactions;
 - arbitrary joins/relation traversal;
 - persistent idempotent replay;
-- race-safe concurrency hardening under competing writers;
+- race-safe concurrency hardening under competing writers (completed later in Task 10 / Phase 2.1);
 - mutation events;
 - durable receipts;
 - hard delete;
@@ -726,4 +726,4 @@ None. Phase 1 is complete.
 
 ## Current boundary
 
-Phase 1 is complete. Task 10 / 41 is the next canonical task. Do not begin Task 11 / 41 until Task 10 is complete.
+Phase 1 remains complete. Task 10 / 41 has since completed in Phase 2.1. The next canonical task is Task 11 / 41, Phase 2.2.
