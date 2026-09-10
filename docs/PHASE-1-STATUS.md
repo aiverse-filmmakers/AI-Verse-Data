@@ -3,9 +3,9 @@
 **Updated:** 2026-09-10  
 **Phase:** 1 - Core Data Engine  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 7 / 9  
-**Overall implementation tasks completed:** 7 / 41  
-**Next:** Task 8 / 41, Phase 1.8 - Relations + bounded transactions
+**Implementation tasks completed:** 8 / 9  
+**Overall implementation tasks completed:** 8 / 41  
+**Next:** Task 9 / 41, Phase 1.9 - Phase 1 integration gate
 
 This document records concrete implementation evidence for Phase 1. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -545,13 +545,103 @@ Acceptance requirements are satisfied:
 
 ---
 
+## Task 8 / 41 - Phase 1.8 Relations + bounded transactions
+
+**Status:** COMPLETE
+
+### Implemented
+
+Declared reference integrity now applies to ordinary record create/update as well as transaction operations.
+
+SQLite maintains:
+
+```text
+_record_relations
+```
+
+as a STRICT normalized relation index with source and target foreign keys.
+
+Reference rules:
+
+- target record must exist;
+- target record must be active;
+- target Data Space/entity must match the schema declaration;
+- omitted reference `spaceId` means current Data Space;
+- declared cross-space references are allowed inside the same workspace database;
+- invalid references fail without partial canonical writes;
+- referenced target records cannot be soft-deleted while inbound references remain;
+- source deletion removes outgoing relation index rows atomically.
+
+Public transaction surface:
+
+```text
+@ai-verse/data/transactions
+```
+
+Transactions accept only record create/update/delete operations and remain bounded to 50 operations.
+
+Every nested mutation reuses the normal `DataRecords` path. Transaction execution therefore does not bypass schema validation, expected-version checks, reference integrity, actor attribution, or soft-delete rules.
+
+A create may expose a transaction-local `clientRef`. A later declared reference field may use the exact marker:
+
+```json
+{ "$ref": "clientRef" }
+```
+
+Only earlier-created aliases resolve. Forward references and duplicate aliases fail.
+
+### Atomicity proof
+
+The whole transaction runs under the storage transaction boundary. A failure in any later operation rolls back earlier creates, updates, deletes, and relation-index changes.
+
+### Verification evidence
+
+```text
+GitHub Actions run: 34517605246
+Node 22:             PASS
+Node 24:             PASS
+Tests:               102 / 102 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
+
+### Deliberately not implemented
+
+- cross-workspace references/transactions;
+- arbitrary joins/relation traversal;
+- persistent idempotent replay;
+- race-safe concurrency hardening under competing writers;
+- mutation events;
+- durable receipts;
+- hard delete;
+- permission/capability enforcement.
+
+### Task 1.8 gate
+
+**PASSED.**
+
+Acceptance requirements are satisfied:
+
+- declared references point only to real active targets;
+- invalid references prevent commit;
+- relation index and records stay transactionally synchronized;
+- dangling deletes are prevented;
+- transaction operation count is bounded;
+- safe intra-transaction references work only backward to earlier creates;
+- failed transactions leave no required partial state;
+- no Task 1.9 integration-gate work was introduced early.
+
+---
+
 ## Remaining Phase 1 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 8 / 41 | 1.8 | NEXT | Relations + bounded transactions |
-| 9 / 41 | 1.9 | NOT STARTED | Phase 1 integration gate |
+| 9 / 41 | 1.9 | NEXT | Phase 1 integration gate |
 
 ## Current boundary
 
-Do not begin Task 1.9 or later work while implementing Task 1.8. Task 1.8 introduces relations and bounded transactions only; the Phase 1 integration gate remains Task 1.9.
+Do not begin Task 10 / 41 until Task 9 / 41 completes the full Phase 1 integration gate.
