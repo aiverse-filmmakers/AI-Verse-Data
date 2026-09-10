@@ -32,6 +32,8 @@ const OPERATIONS = [
   "data.transaction.execute",
 ] as const;
 
+const SAFE_ACTOR_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]*$/;
+
 type MutationOperation = (typeof OPERATIONS)[number];
 
 const EVENT_OPERATION: Readonly<Record<DataEventType, MutationOperation>> = {
@@ -55,7 +57,10 @@ function actor(kind: string, id: string): DataActor {
   if (
     !(ACTOR_KINDS as readonly string[]).includes(kind) ||
     id.length < 1 ||
-    id.length > 128
+    id.length > 128 ||
+    id === "." ||
+    id === ".." ||
+    !SAFE_ACTOR_ID_RE.test(id)
   ) {
     corrupt("Stored provenance actor is invalid.");
   }
@@ -70,7 +75,7 @@ function validOperation(value: string): MutationOperation {
 }
 
 function validEventType(value: string): DataEventType {
-  if (!(value in EVENT_OPERATION)) {
+  if (!Object.prototype.hasOwnProperty.call(EVENT_OPERATION, value)) {
     corrupt("Stored provenance event type is invalid.");
   }
   return value as DataEventType;
