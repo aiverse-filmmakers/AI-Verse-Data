@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import Database from "better-sqlite3";
+
 import { DataCatalog } from "../src/catalog/index.js";
 import { DataQuery } from "../src/query/index.js";
 import { DataRecordError, DataRecords } from "../src/records/index.js";
@@ -470,7 +472,6 @@ test("Phase 1 scoped reopen rejects an unsupported newer database format", () =>
 
     // Existing lower-level storage tests mutate durable format metadata directly.
     // This gate verifies the scoped open path propagates the same fail-closed error.
-    const Database = (await import("better-sqlite3")).default;
     const sqlite = new Database(scope.databasePath());
     sqlite
       .prepare("UPDATE _aiverse_meta SET value = ? WHERE key = 'format_version'")
