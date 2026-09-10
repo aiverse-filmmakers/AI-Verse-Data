@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7  
+**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8  
 **Date:** 2026-09-10
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -225,6 +225,24 @@ The query driver implements bounded page reads plus count/sum/min/max/avg aggreg
 
 Detailed query semantics: `docs/QUERY-AND-AGGREGATES-V0.1.md`.
 
+## Phase 1.8 relation and transaction extension
+
+The storage boundary now exposes `DataRelationStorage` plus a generic same-database transaction boundary.
+
+SQLite creates:
+
+```text
+_record_relations
+```
+
+as a fixed STRICT, WITHOUT ROWID normalized relation index. It references canonical `_records` rows for both source and target identity and maintains an inbound-target index.
+
+The relation index is changed in the same SQLite transaction as canonical record mutations. It supports target existence checks, source relation replacement/removal, and inbound-reference lookup.
+
+`DataStorageDatabase.transaction(...)` supplies the atomic boundary used by both relation-aware CRUD and bounded multi-record transactions. This does not expose SQLite transaction objects or SQL to public consumers.
+
+Detailed semantics: `docs/RELATIONS-AND-TRANSACTIONS-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
 No relations.  
@@ -259,3 +277,7 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 16. Query storage accepts structured plans rather than caller SQL.
 17. Query values and JSON field paths are bound parameters.
 18. Query and aggregate execution remain schema-validated above the storage layer.
+
+19. Declared reference relationships are indexed in one fixed engine-owned `_record_relations` table.
+20. Relation-index writes and their canonical record mutation share one transaction boundary.
+21. Multi-record transactions use the storage abstraction rather than exposing SQLite transaction handles.
