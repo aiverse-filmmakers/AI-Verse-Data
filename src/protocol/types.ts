@@ -134,12 +134,19 @@ export interface DataSpaceDefinition {
 }
 
 export interface DataRecord {
+  readonly spaceId: DataSpaceId;
+  readonly entity: EntityId;
   readonly recordId: RecordId;
+  readonly schemaVersion: number;
   readonly version: number;
   readonly data: JsonObject;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly createdBy: DataActor;
+  readonly updatedBy: DataActor;
   readonly deletedAt: string | null;
+  readonly deletedReason: string | null;
+  readonly deletedBy: DataActor | null;
 }
 
 export interface QueryCondition {
