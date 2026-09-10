@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 in progress; scope and schema catalog implemented
+**Implementation:** Phase 1 in progress; scope, schema catalog, and record CRUD implemented
 
 ## 1. Architectural position
 
@@ -245,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog portion of this model is now implemented. Record/event/idempotency/migration tables remain later implementation tasks.
+The catalog and `_records` portions of this model are now implemented. Event/idempotency/migration tables remain later implementation tasks.
 
 ## 7. Record representation
 
