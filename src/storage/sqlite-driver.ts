@@ -20,6 +20,7 @@ import {
   type StorageDatabaseMetadata,
   type StorageDiagnostics,
   type StorageOpenOptions,
+  type StorageTransactionMode,
 } from "./types.js";
 
 const META_TABLE = "_aiverse_meta";
@@ -515,9 +516,13 @@ class SqliteStorageDatabase implements DataStorageDatabase {
     return new SqliteRelationStorage(this.database);
   }
 
-  transaction<T>(operation: () => T): T {
+  transaction<T>(
+    operation: () => T,
+    mode: StorageTransactionMode = "deferred",
+  ): T {
     this.assertOpen();
-    return this.database.transaction(operation)();
+    const wrapped = this.database.transaction(operation);
+    return mode === "immediate" ? wrapped.immediate() : wrapped.deferred();
   }
 
   close(): void {
