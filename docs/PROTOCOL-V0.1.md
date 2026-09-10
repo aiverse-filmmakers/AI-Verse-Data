@@ -1,6 +1,6 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; catalog, schema, and direct record CRUD semantics implemented through Phase 1.6  
+**Status:** Protocol foundation implemented; catalog, schema, record CRUD, query, and aggregate semantics implemented through Phase 1.7  
 **Date:** 2026-09-10
 
 ## 1. Purpose
@@ -671,3 +671,18 @@ Update/delete require a matching `expectedVersion` at the Phase 1.6 engine level
 Reference/attachment fields validate identifier shape in Phase 1.6. Reference existence and relation indexing remain Task 8 / 41.
 
 The direct CRUD API does not yet execute the protocol's persistent idempotency semantics, append mutation events, or issue mutation receipts. Those remain Tasks 11 and 12.
+
+
+## 26. Phase 1.7 implementation note
+
+`data.query` and `data.aggregate` now execute through `DataQuery`, exported from `@ai-verse/data/query`.
+
+The query engine validates the structural protocol payload and then validates field/operator/value semantics against the current entity schema. Undeclared fields are not filter, sort, selection, or aggregate targets, even when an entity allows flexible unknown record fields.
+
+SQLite compilation is parameterized. User values and JSON field paths are bound parameters; only fixed engine-controlled operator, sort-direction, and aggregate tokens become SQL syntax. `contains` and `starts_with` escape SQL LIKE wildcard characters.
+
+Query pages use opaque base64url cursors containing a bounded offset and SHA-256 fingerprint of the query shape. The current page-size ceiling is 200 and the first cursor implementation caps offset at 100000. A cursor cannot be reused with a different query shape.
+
+Supported aggregates are count, sum, min, max, and avg with schema-aware type rules. Normal queries and aggregates exclude soft-deleted rows unless the query operation explicitly sets `includeDeleted`; aggregate v0.1 has no deleted-row override and therefore excludes them.
+
+Query rows pass through the same historical-schema hydration and corruption checks as ordinary record reads. Relations, cross-entity joins, and bounded multi-record transactions remain Phase 1.8.
