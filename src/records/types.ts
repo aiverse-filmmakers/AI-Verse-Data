@@ -46,6 +46,7 @@ export interface RecordUpdateInput {
   readonly spaceId: string;
   readonly entity: string;
   readonly recordId: string;
+  readonly expectedVersion: number;
   readonly patch: JsonObject;
   readonly actor: DataActor;
 }
@@ -54,6 +55,7 @@ export interface RecordDeleteInput {
   readonly spaceId: string;
   readonly entity: string;
   readonly recordId: string;
+  readonly expectedVersion: number;
   readonly actor: DataActor;
   readonly reason?: string;
 }
