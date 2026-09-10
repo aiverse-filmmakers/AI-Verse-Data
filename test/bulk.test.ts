@@ -102,6 +102,18 @@ function assertBulkError(
   return true;
 }
 
+function eventSequence(databasePath: string): number {
+  const raw = new Database(databasePath, { readonly: true });
+  try {
+    const row = raw.prepare(
+      "SELECT seq FROM sqlite_sequence WHERE name = '_events'",
+    ).get() as { seq: number } | undefined;
+    return row?.seq ?? 0;
+  } finally {
+    raw.close();
+  }
+}
+
 function tableCounts(databasePath: string): Record<string, number> {
   const raw = new Database(databasePath, { readonly: true });
   try {
@@ -143,6 +155,7 @@ test("bulk preview uses exact mutation semantics but leaves zero committed effec
     });
 
     const beforeCounts = tableCounts(fixture.databasePath);
+    const beforeEventSequence = eventSequence(fixture.databasePath);
     const beforeEvents = fixture.provenance.listEvents().items;
     const beforeDeal = fixture.records.get({
       spaceId: "crm",
@@ -205,6 +218,7 @@ test("bulk preview uses exact mutation semantics but leaves zero committed effec
     ]);
 
     assert.deepEqual(tableCounts(fixture.databasePath), beforeCounts);
+    assert.equal(eventSequence(fixture.databasePath), beforeEventSequence);
     assert.deepEqual(fixture.provenance.listEvents().items, beforeEvents);
     assert.deepEqual(
       fixture.records.get({
