@@ -297,7 +297,7 @@ function validateFieldDefaultCompatibility(
     }
 
     case "integer": {
-      if (!Number.isSafeInteger(value)) {
+      if (typeof value !== "number" || !Number.isSafeInteger(value)) {
         fail(defaultPath, "must be a safe integer");
       }
       if (typeof definition.min === "number" && value < definition.min) {
