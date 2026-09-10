@@ -6,11 +6,8 @@ import test from "node:test";
 
 import Database from "better-sqlite3";
 
-import {
-  DataCatalog,
-  DataCatalogError,
-  schemaDigest,
-} from "../src/catalog/index.js";
+import { DataCatalog, DataCatalogError } from "../src/catalog/index.js";
+import { schemaDigest } from "../src/catalog/canonical.js";
 import type {
   EntitySchemaDefinition,
   SchemaUpdatePayload,
