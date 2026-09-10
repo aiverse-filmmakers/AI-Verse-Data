@@ -635,7 +635,7 @@ Data Space and entity-schema execution is now implemented through `DataCatalog`.
 
 Direct safe updates currently execute `add_field`, `set_name`, and `set_description`. The protocol also recognizes `remove_field`, `replace_field`, and `rename_field`, but these return `SCHEMA_MIGRATION_REQUIRED` until the user-schema migration framework exists.
 
-Field defaults are validated against their declared type and constraints before schema persistence. Phase 1.6 now implements direct schema-aware record create/get/list/update/soft-delete. Full transport dispatch plus idempotency, events, receipts, relation enforcement, and concurrency hardening remain later tasks.
+Field defaults are validated against their declared type and constraints before schema persistence. Direct schema-aware record CRUD, relation enforcement, and race-safe optimistic concurrency are now implemented. Full transport dispatch plus persistent idempotency, events, and receipts remain later tasks.
 
 
 ## 25. Phase 1.6 implementation note
@@ -666,7 +666,7 @@ deletedBy
 
 Create validates against the current schema and applies valid defaults. Get/list hide soft-deleted rows unless `includeDeleted` is explicitly requested. Update validates the stored historical payload, merges the patch, validates against the current schema, applies newly introduced defaults where appropriate, advances the record version, and records the updating actor. Soft delete preserves the row and stores deletion attribution.
 
-Update/delete require a matching `expectedVersion` at the Phase 1.6 engine level. Task 10 / 41 remains responsible for race-safe atomic optimistic concurrency under competing writers, including dedicated concurrency tests.
+Update/delete require a matching `expectedVersion`. Phase 2.1 now enforces that version atomically at the canonical storage write and includes dedicated separate-process concurrency tests.
 
 Reference/attachment fields validate identifier shape in Phase 1.6. Reference existence and relation indexing remain Task 8 / 41.
 
@@ -698,4 +698,4 @@ SQLite maintains the normalized `_record_relations` index. Record and relation-i
 
 The transaction-local `clientRef` mechanism is deliberately narrow. A record created earlier in the same transaction may expose a unique alias. Later create/update data may use `{ "$ref": "alias" }` only in a schema-declared reference field. The alias is replaced with the canonical generated record ID before normal record validation.
 
-Protocol idempotency keys are structurally accepted but persistent replay semantics remain Task 11 / 41. Race-safe optimistic concurrency hardening remains Task 10 / 41. Mutation events and durable receipts remain Task 12 / 41.
+Protocol idempotency keys are structurally accepted but persistent replay semantics remain Task 11 / 41. Race-safe optimistic concurrency is implemented in Task 10 / 41. Mutation events and durable receipts remain Task 12 / 41.
