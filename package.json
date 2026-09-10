@@ -11,6 +11,10 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./protocol": {
+      "types": "./dist/src/protocol/index.d.ts",
+      "import": "./dist/src/protocol/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
