@@ -1,4 +1,4 @@
-import { existsSync, rmSync, statSync } from "node:fs";
+import { closeSync, existsSync, openSync, rmSync, statSync } from "node:fs";
 
 import Database from "better-sqlite3";
 
@@ -508,16 +508,31 @@ class SqliteStorageDatabase implements DataStorageDatabase {
         "SQLite backup destination must be a non-empty filesystem path without NUL.",
       );
     }
-    if (existsSync(location)) {
-      throw new DataStorageError(
-        "DATABASE_UNAVAILABLE",
-        "SQLite backup destination already exists; backups never overwrite files.",
-      );
-    }
     if (this.database.inTransaction) {
       throw new DataStorageError(
         "DATABASE_UNAVAILABLE",
         "SQLite backup cannot begin while the source connection has an active transaction.",
+      );
+    }
+
+    let reservation: number | undefined;
+    try {
+      reservation = openSync(location, "wx", 0o600);
+      closeSync(reservation);
+      reservation = undefined;
+    } catch (error) {
+      if (reservation !== undefined) {
+        try {
+          closeSync(reservation);
+        } catch {
+          // Continue cleanup of the file reserved by this operation.
+        }
+        rmSync(location, { force: true });
+      }
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite backup destination already exists or cannot be reserved safely.",
+        error,
       );
     }
 
