@@ -14,7 +14,7 @@ export const AI_VERSE_DATA_EXTENSION_ENGINE_PATH =
 export const AI_VERSE_DATA_EXTENSION_MANIFEST_PATH =
   ".aiverse/extensions/ai-verse-data/extension.json" as const;
 
-export type JsonObject = Record<string, unknown>;
+export type AiVerseDataExtensionJsonObject = Record<string, unknown>;
 
 export type AiVerseDataExtensionInstallStatus =
   | "installed"
@@ -36,8 +36,8 @@ export interface AiVerseDataExtensionInstallPlan {
   readonly registryRelativePath: ".aiverse/extensions/registry.json";
   readonly registryLockRelativePath: typeof AI_VERSE_OS_EXTENSION_REGISTRY_LOCK_PATH;
   readonly extensionRootRelativePath: typeof AI_VERSE_DATA_EXTENSION_ROOT;
-  readonly currentEntry: Readonly<JsonObject> | null;
-  readonly nextEntry: Readonly<JsonObject>;
+  readonly currentEntry: Readonly<AiVerseDataExtensionJsonObject> | null;
+  readonly nextEntry: Readonly<AiVerseDataExtensionJsonObject>;
   readonly ownedFiles: readonly AiVerseDataOwnedFilePlan[];
   readonly registryExists: boolean;
   readonly registryRequiresWrite: boolean;
