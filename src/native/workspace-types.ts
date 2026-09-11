@@ -4,7 +4,7 @@ import type { StorageDatabaseMetadata } from "../storage/index.js";
 
 export const AI_VERSE_WORKSPACE_SUPPORTED_SCHEMA_MAJOR = 2 as const;
 export const AI_VERSE_WORKSPACE_MANIFEST = "WORKSPACE.yaml" as const;
-export const AI_VERSE_WORKSPACE_MAX_MANIFEST_BYTES = 1024 * 1024 as const;
+export const AI_VERSE_WORKSPACE_MAX_MANIFEST_BYTES = 1_048_576 as const;
 
 export type AiVerseWorkspaceStatus = "active" | "paused" | "archived";
 
