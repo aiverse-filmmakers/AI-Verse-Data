@@ -649,7 +649,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
         before.binding,
         options.expectedBinding,
       );
-      configureConnection(database);
 
       const result = await migrateSqliteDatabase(
         database,
