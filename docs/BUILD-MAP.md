@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 16 / 41 tasks complete  
-**Next:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior
+**Implementation progress:** 17 / 41 tasks complete  
+**Next:** Task 18 / 41, Phase 2.9 - Phase 2 gate
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    78%  (7/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    89%  (8/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **16 / 41 tasks complete**.
+Overall implementation: **17 / 41 tasks complete**.
 
 ---
 
@@ -725,11 +725,56 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 ## Task 17 / 41 - Phase 2.8 Corruption/recovery behavior
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Corruption detection, fail-closed writes, recovery reporting, no silent empty replacement.
+Implemented:
+
+- public `@ai-verse/data/recovery` surface;
+- durable engine-owned quarantine marker beside the canonical database;
+- physical SQLite corruption and semantic AI-Verse Data corruption distinction;
+- malformed/unsafe quarantine evidence fails closed;
+- normal open rejects quarantined databases;
+- already-open catalog/record/relation/idempotency/provenance/transaction writes recheck quarantine;
+- internal migration execution cannot bypass quarantine while read-only migration inspection remains available;
+- existing zero-byte/uninitialized files are never silently bootstrapped as fresh canonical Data;
+- existing databases pass physical integrity verification before first binding/WAL writes;
+- unrelated valid SQLite remains `unrecognized`, not corruption;
+- migration-required/incomplete states remain distinct from corruption;
+- read-only original-source diagnosis with SQLite integrity + foreign-key checks;
+- deep semantic verification on a consistent temporary SQLite online-backup snapshot;
+- semantic verification checks schema history/digests, records, relations, idempotency, provenance, binding, and committed references;
+- lost canonical record storage is detected from surviving event/idempotency evidence;
+- confirmed corruption persists quarantine and blocks unsafe writes;
+- verified same-binding recovery staging from Phase 2.5 SQLite backup artifacts;
+- verified same-binding recovery staging from Phase 2.5 portable exports;
+- recovery destination must be a distinct empty physical path;
+- staged candidate must re-verify healthy;
+- original corrupt canonical database and quarantine evidence remain untouched;
+- no automatic repair, overwrite, promotion, quarantine clearing, or cross-workspace remapping;
+- no Task 18 Phase 2 gate behavior implemented early.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34598198275
+Behavioral commit:   1ff0e683603ae4a6da9967a0f2bbc199b526c119
+Node 22:             PASS
+Node 24:             PASS
+Tests:               199 / 199 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+**Task 2.8 gate: PASSED.**
 
 ## Task 18 / 41 - Phase 2.9 Phase 2 gate
+
+**Status:** NEXT
+
 Run the full reliability/adversarial suite.
 
 ---
@@ -849,6 +894,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 17 / 41: Phase 2.8 - Corruption/recovery behavior.**
+**Task 18 / 41: Phase 2.9 - Phase 2 reliability/adversarial gate.**
 
-Do not begin Task 18 / 41 until Task 17 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Phase 3 until Task 18 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
