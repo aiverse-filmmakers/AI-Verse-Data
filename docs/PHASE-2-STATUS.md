@@ -686,6 +686,19 @@ Cancelled:           0
 
 Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       8b425df4875ddaacd39da6d7e5d116b89f40f9c0
+GitHub Actions run:  34598581199
+Node 22:             PASS
+Node 24:             PASS
+Tests:               199 / 199 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 2.8 does not implement:
