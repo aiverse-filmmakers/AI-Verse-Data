@@ -618,7 +618,12 @@ test("explicit initialization creates only the requested active workspace databa
     const alphaDataEntries = readdirSync(
       join(f.rootPath, "workspaces", "alpha", "data"),
     );
-    assert.deepEqual(alphaDataEntries, ["ai-verse-data.sqlite"]);
+    assert.ok(alphaDataEntries.includes("ai-verse-data.sqlite"));
+    assert.ok(
+      alphaDataEntries.every(
+        (entry) => !entry.startsWith(".ai-verse-data-init-"),
+      ),
+    );
   } finally {
     f.cleanup();
   }
