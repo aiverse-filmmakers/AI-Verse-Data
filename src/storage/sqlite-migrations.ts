@@ -1092,12 +1092,33 @@ export async function migrateSqliteDatabase(
     };
   }
 
+  if (
+    status.state === "incomplete" &&
+    metadata.formatVersion === AI_VERSE_DATA_DATABASE_FORMAT_VERSION
+  ) {
+    throw new DataStorageError(
+      "DATABASE_MIGRATION_INCOMPLETE",
+      "Current-format database has incomplete migration ledger state and cannot be resumed as an older-format migration.",
+    );
+  }
+
   const path = requiredMigrationPath(metadata.formatVersion);
   const backup = await createMigrationBackup(
     database,
     metadata,
     backupDirectory,
   );
+
+  database.pragma("foreign_keys = ON");
+  const foreignKeys = database.pragma("foreign_keys", { simple: true });
+  if (foreignKeys !== 1) {
+    throw new DataStorageError(
+      "DATABASE_MIGRATION_FAILED",
+      "SQLite foreign-key enforcement could not be enabled for migration execution.",
+    );
+  }
+  database.pragma("synchronous = NORMAL");
+  database.pragma("busy_timeout = 5000");
 
   const executed: string[] = [];
   for (const migration of path) {
@@ -1134,6 +1155,42 @@ export async function migrateSqliteDatabase(
         error,
       );
     }
+  }
+
+  const integrityRows = database.pragma("integrity_check") as IntegrityRow[];
+  const integrityMessages = integrityRows.map((row) =>
+    String(row.integrity_check ?? Object.values(row)[0] ?? "unknown"),
+  );
+  if (
+    integrityMessages.length !== 1 ||
+    integrityMessages[0]?.toLowerCase() !== "ok"
+  ) {
+    const finalMigration = executed.at(-1);
+    if (finalMigration !== undefined) {
+      try {
+        database.transaction(() => {
+          database.prepare(
+            `UPDATE ${MIGRATION_TABLE}
+             SET state = 'failed',
+                 completed_at = NULL,
+                 failed_at = ?,
+                 failure_message = ?
+             WHERE migration_id = ?`,
+          ).run(
+            new Date().toISOString(),
+            `Post-migration SQLite integrity check failed: ${integrityMessages.join("; ")}`.slice(0, 1000),
+            finalMigration,
+          );
+        }).immediate();
+      } catch {
+        // Preserve the primary integrity failure. A malformed ledger remains
+        // fail-closed during normal open.
+      }
+    }
+    throw new DataStorageError(
+      "DATABASE_MIGRATION_FAILED",
+      `Migrated database failed SQLite integrity verification: ${integrityMessages.join("; ")}`,
+    );
   }
 
   return {
