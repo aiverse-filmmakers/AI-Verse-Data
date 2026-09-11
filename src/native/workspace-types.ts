@@ -68,6 +68,7 @@ export interface AiVerseNativeWorkspaceApi {
   initialize(
     input: AiVerseWorkspaceResolveInput,
   ): Promise<AiVerseWorkspaceInitializationResult>;
+}
 
 export type AiVerseWorkspaceErrorCode =
   | "AI_VERSE_OS_NOT_FOUND"
