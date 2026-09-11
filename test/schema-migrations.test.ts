@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
 import Database from "better-sqlite3";
 
+import { DataBackup } from "../src/backup/index.js";
 import { DataCatalog } from "../src/catalog/index.js";
 import {
   DATA_PROTOCOL_LIMITS,
@@ -19,6 +20,11 @@ import {
   DataSchemaMigrationError,
   DataSchemaMigrations,
 } from "../src/schema-migrations/index.js";
+import {
+  TrustedDataRoot,
+  createWorkspaceDataScope,
+  openScopedDataDatabase,
+} from "../src/scope/index.js";
 import { SqliteStorageDriver } from "../src/storage/index.js";
 
 const human = { kind: "human", id: "owner" } as const;
@@ -874,5 +880,243 @@ test("mid-commit provenance failure rolls schema, records, idempotency, and audi
     );
   } finally {
     cleanup(f);
+  }
+});
+
+
+test("rewritten-state byte ceiling rejects large backfill expansion before mutation", () => {
+  const f = fixture();
+  try {
+    const store = f.database.recordStorage();
+    store.initialize();
+    const now = new Date().toISOString();
+
+    for (let index = 0; index < 72; index += 1) {
+      assert.equal(
+        store.createRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: `rec_rewrite_${String(index).padStart(4, "0")}`,
+          schemaVersion: 1,
+          version: 1,
+          dataJson: JSON.stringify({ title: `Deal ${index}` }),
+          createdAt: now,
+          updatedAt: now,
+          createdActorKind: human.kind,
+          createdActorId: human.id,
+          updatedActorKind: human.kind,
+          updatedActorId: human.id,
+          deletedAt: null,
+          deletedReason: null,
+          deletedActorKind: null,
+          deletedActorId: null,
+        }),
+        true,
+      );
+    }
+
+    const largeValue = "x".repeat(120_000);
+    assert.throws(
+      () =>
+        f.migrations.preview({
+          actor: bot,
+          payload: {
+            spaceId: "crm",
+            entity: "deals",
+            expectedSchemaVersion: 1,
+            changes: [
+              {
+                op: "add_field",
+                field: "migration_blob",
+                definition: { type: "string" },
+              },
+            ],
+            backfills: [
+              {
+                field: "migration_blob",
+                mode: "set_if_missing",
+                value: largeValue,
+              },
+            ],
+            owner: human,
+          },
+        }),
+      (error) =>
+        assertMigrationError(error, "SCHEMA_MIGRATION_LIMIT_EXCEEDED"),
+    );
+
+    assert.equal(f.catalog.getSchema("crm", "deals").schemaVersion, 1);
+    assert.ok(
+      f.records
+        .list({ spaceId: "crm", entity: "deals", limit: 200 })
+        .every((record) => record.version === 1),
+    );
+  } finally {
+    cleanup(f);
+  }
+});
+
+test("schema migration idempotency and provenance survive portable export/import", async () => {
+  const driver = new SqliteStorageDriver();
+  const sourceRoot = mkdtempSync(
+    join(tmpdir(), "ai-verse-data-schema-migration-portable-source-"),
+  );
+  const destinationRoot = mkdtempSync(
+    join(tmpdir(), "ai-verse-data-schema-migration-portable-destination-"),
+  );
+  const artifactRoot = mkdtempSync(
+    join(tmpdir(), "ai-verse-data-schema-migration-portable-artifact-"),
+  );
+
+  try {
+    mkdirSync(join(sourceRoot, "workspaces", "sales", "data"), {
+      recursive: true,
+    });
+    const sourceScope = createWorkspaceDataScope(
+      TrustedDataRoot.fromExistingDirectory(sourceRoot),
+      "sales",
+    );
+    const source = openScopedDataDatabase(driver, sourceScope);
+    let originalResult;
+    let originalReceipt;
+    let executePayload;
+
+    try {
+      const catalog = new DataCatalog(source.database);
+      catalog.createSpace({
+        spaceId: "crm",
+        name: "CRM",
+        authority: "local_canonical",
+      });
+      catalog.createSchema({
+        spaceId: "crm",
+        entity: "deals",
+        name: "Deals",
+        fields: {
+          title: { type: "string", required: true },
+        },
+      });
+
+      const records = new DataRecords(source.database);
+      records.create({
+        spaceId: "crm",
+        entity: "deals",
+        idempotencyKey: "portable:seed",
+        data: { title: "Portable" },
+        actor: human,
+      });
+
+      const migrations = new DataSchemaMigrations(source.database);
+      const migration = {
+        spaceId: "crm",
+        entity: "deals",
+        expectedSchemaVersion: 1,
+        changes: [
+          {
+            op: "add_field" as const,
+            field: "owner",
+            definition: {
+              type: "string" as const,
+              required: true,
+            },
+          },
+        ],
+        backfills: [
+          {
+            field: "owner",
+            mode: "set_if_missing" as const,
+            value: "portable-owner",
+          },
+        ],
+        owner: human,
+      };
+      const preview = migrations.preview({ actor: bot, payload: migration });
+      executePayload = {
+        ...migration,
+        idempotencyKey: "portable:schema-migration",
+        expectedPreviewDigest: preview.previewDigest,
+      };
+      const executed = migrations.executeWithReceipt({
+        actor: bot,
+        requestId: "req_portable_schema_migration",
+        payload: executePayload,
+      });
+      originalResult = executed.result;
+      originalReceipt = executed.receipt;
+
+      const exportDirectory = join(artifactRoot, "export");
+      await new DataBackup(driver).createPortableExport({
+        source,
+        destinationDirectory: exportDirectory,
+      });
+
+      const destinationScope = createWorkspaceDataScope(
+        TrustedDataRoot.fromExistingDirectory(destinationRoot),
+        "sales",
+      );
+      await new DataBackup(driver).importPortableExport({
+        artifactDirectory: exportDirectory,
+        destination: destinationScope,
+      });
+
+      const imported = openScopedDataDatabase(driver, destinationScope, {
+        mode: "open-existing",
+      });
+      try {
+        const importedCatalog = new DataCatalog(imported.database);
+        assert.equal(
+          importedCatalog.getSchema("crm", "deals").schemaVersion,
+          2,
+        );
+
+        const importedRecords = new DataRecords(imported.database).list({
+          spaceId: "crm",
+          entity: "deals",
+        });
+        assert.equal(importedRecords.length, 1);
+        assert.equal(importedRecords[0]!.data.owner, "portable-owner");
+
+        const provenance = new DataProvenance(imported.database);
+        const beforeReplayCount = provenance.listEvents({ limit: 200 }).items
+          .length;
+        const replay = new DataSchemaMigrations(
+          imported.database,
+        ).executeWithReceipt({
+          actor: bot,
+          requestId: "req_portable_schema_migration_retry",
+          payload: executePayload,
+        });
+
+        assert.deepEqual(replay.result, originalResult);
+        assert.deepEqual(replay.receipt, originalReceipt);
+        assert.equal(
+          provenance.listEvents({ limit: 200 }).items.length,
+          beforeReplayCount,
+        );
+
+        const migrationEvent = provenance
+          .listEvents({ limit: 200 })
+          .items.find(
+            (event) =>
+              event.eventType === "transaction.committed" &&
+              event.details.requestedOperation ===
+                "data.schema.migration.execute",
+          );
+        assert.ok(migrationEvent !== undefined);
+        assert.deepEqual(
+          (migrationEvent.details as Record<string, unknown>)
+            .schemaMigrationOwner,
+          human,
+        );
+      } finally {
+        imported.database.close();
+      }
+    } finally {
+      source.database.close();
+    }
+  } finally {
+    rmSync(sourceRoot, { recursive: true, force: true });
+    rmSync(destinationRoot, { recursive: true, force: true });
+    rmSync(artifactRoot, { recursive: true, force: true });
   }
 });
