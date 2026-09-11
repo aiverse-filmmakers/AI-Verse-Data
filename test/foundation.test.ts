@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes all implemented Phase 2.8 public subpaths", () => {
+test("package metadata exposes all implemented Phase 2 public subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -44,12 +44,12 @@ test("package metadata exposes all implemented Phase 2.8 public subpaths", () =>
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 2.8 corruption recovery safety", () => {
+test("foundation surface reports completed Phase 2 reliability acceptance", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.8");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.9");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "2.8",
+    phase: "2.9",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -74,5 +74,6 @@ test("foundation surface reports Phase 2.8 corruption recovery safety", () => {
     corruptionRecoveryAvailable: true,
     quarantineWriteBlockingAvailable: true,
     stagedRecoveryAvailable: true,
+    phase2AcceptanceVerified: true,
   });
 });
