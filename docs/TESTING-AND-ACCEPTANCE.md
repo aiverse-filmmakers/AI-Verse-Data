@@ -373,6 +373,47 @@ The suite proves:
 
 Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
 
+## 5.8 Phase 2.8 corruption/recovery verification
+
+Task 17 adds fail-closed corruption quarantine and staged-recovery acceptance coverage.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34598198275
+Behavioral commit:   1ff0e683603ae4a6da9967a0f2bbc199b526c119
+Node 22:             PASS
+Node 24:             PASS
+Tests:               199 / 199 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The suite proves:
+
+- an already-existing zero-byte/uninitialized file is never silently bootstrapped;
+- healthy canonical Data reports writable health plus a verified semantic summary;
+- physical corruption creates physical quarantine without replacing original bytes;
+- semantic provenance corruption creates semantic quarantine;
+- quarantine blocks catalog/record writes on handles opened before corruption detection;
+- corruption discovered during normal open persists quarantine for subsequent attempts;
+- malformed quarantine evidence fails closed;
+- lost canonical record storage is detected from surviving committed provenance/idempotency evidence;
+- unrelated valid SQLite remains unrecognized rather than corrupt/quarantined;
+- migration-required state remains distinct and creates no corruption marker;
+- migration-incomplete state remains distinct and creates no corruption marker;
+- read-only migration inspection remains available while quarantined;
+- internal migration execution cannot bypass quarantine;
+- a verified SQLite backup can stage a healthy same-binding recovery candidate;
+- a verified portable export can stage a healthy same-binding recovery candidate;
+- staged recovery rejects cross-workspace binding changes;
+- staged recovery rejects the same canonical physical destination;
+- the original corrupt canonical source and quarantine remain unchanged after staging;
+- Node 22 and Node 24 pass the complete repository suite.
+
+Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
@@ -401,7 +442,11 @@ Must prove:
 - user-schema migrations require a reviewed state-bound preview before execution;
 - destructive user-schema migrations require explicit approval metadata;
 - active record rewrites and relation indexes commit atomically with the new immutable schema version;
-- user-schema migration retry cannot duplicate schema versions, record rewrites, or provenance.
+- user-schema migration retry cannot duplicate schema versions, record rewrites, or provenance;
+- existing unrecognized/empty canonical paths are never silently bootstrapped;
+- confirmed corruption creates durable quarantine and blocks unsafe writes;
+- physical and semantic corruption remain distinguishable from migration/scope/format failures;
+- staged recovery uses only verified same-binding backup/export artifacts and never overwrites the corrupt canonical source.
 
 ## 7. Phase 3 Native Installation gate
 
