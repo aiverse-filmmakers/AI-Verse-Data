@@ -50,6 +50,8 @@ export interface AiVerseDataExtensionInstallPlan {
 export interface AiVerseDataExtensionInstallResult
   extends AiVerseDataExtensionInstallPlan {
   readonly status: AiVerseDataExtensionInstallStatus;
+  readonly materializedPaths: readonly string[];
+  readonly registryWritten: boolean;
 }
 
 export interface AiVerseDataExtensionInstallerApi {
