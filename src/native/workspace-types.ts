@@ -1,8 +1,5 @@
 import type { DataRecoveryReport, DataRecoveryState } from "../recovery/index.js";
-import type {
-  DataDatabaseScope,
-  ScopedDatabaseHandle,
-} from "../scope/index.js";
+import type { DataDatabaseScope } from "../scope/index.js";
 import type { StorageDatabaseMetadata } from "../storage/index.js";
 
 export const AI_VERSE_WORKSPACE_SUPPORTED_SCHEMA_MAJOR = 2 as const;
@@ -36,12 +33,18 @@ export interface AiVerseWorkspaceResolution {
   readonly scope: DataDatabaseScope;
 }
 
+export type AiVerseWorkspaceDatabaseState =
+  | DataRecoveryState
+  | "unbound"
+  | "residue";
+
 export interface AiVerseWorkspaceDatabaseDiscovery {
   readonly workspace: AiVerseWorkspaceResolution;
-  readonly state: DataRecoveryState;
+  readonly state: AiVerseWorkspaceDatabaseState;
   readonly recovery: DataRecoveryReport;
   readonly auxiliaryResidue: readonly string[];
   readonly cleanMissing: boolean;
+  readonly exactBinding: boolean;
 }
 
 export type AiVerseWorkspaceInitializationStatus =
@@ -55,11 +58,6 @@ export interface AiVerseWorkspaceInitializationResult {
   readonly metadata: StorageDatabaseMetadata;
 }
 
-export interface AiVerseWorkspaceOpenResult {
-  readonly workspace: AiVerseWorkspaceResolution;
-  readonly handle: ScopedDatabaseHandle;
-}
-
 export interface AiVerseNativeWorkspaceApi {
   resolve(
     input: AiVerseWorkspaceResolveInput,
@@ -70,10 +68,6 @@ export interface AiVerseNativeWorkspaceApi {
   initialize(
     input: AiVerseWorkspaceResolveInput,
   ): Promise<AiVerseWorkspaceInitializationResult>;
-  openExisting(
-    input: AiVerseWorkspaceResolveInput,
-  ): AiVerseWorkspaceOpenResult;
-}
 
 export type AiVerseWorkspaceErrorCode =
   | "AI_VERSE_OS_NOT_FOUND"
