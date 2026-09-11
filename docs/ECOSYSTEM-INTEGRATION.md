@@ -60,7 +60,7 @@ AI-Verse OS is the native host and owns:
 - extension discovery;
 - user-owned versus system-owned versus derived placement.
 
-AI-Verse Data should integrate through the existing local extension contract:
+Phase 3.2 integrates AI-Verse Data through the existing local extension contract:
 
 ```text
 .aiverse/extensions/registry.json
@@ -85,11 +85,19 @@ plus its registry entry and the canonical Data databases explicitly created in u
 
 ### Native Data scope
 
+Phase 3.3 implements the native workspace scope boundary.
+
 The OS root is trusted configuration. Workspace identity comes from the actual workspace manifest.
 
-A caller may request `workspaceId`, but the adapter resolves it under the trusted OS root and verifies the matching `WORKSPACE.yaml` before opening Data.
+A caller requests only `workspaceId`. The adapter resolves exactly `workspaces/<id>/` under the trusted OS root, verifies the matching `WORKSPACE.yaml`, and derives the canonical Data path internally.
+
+Fresh Data initialization is allowed only for an active workspace with a current enabled Data extension installation. Paused/archived workspaces remain resolvable for diagnosis.
+
+Existing database discovery preserves migration, quarantine, unsupported, scope-conflict, residue, and unbound states rather than silently repairing or replacing them.
 
 No model/user-supplied raw filesystem path becomes authority.
+
+Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
 
 ## 4. AI-Verse Memory integration
 
