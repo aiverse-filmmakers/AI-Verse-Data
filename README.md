@@ -325,22 +325,33 @@ The bulk layer does not create a second synthetic audit event. Successful execut
 
 See [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md).
 
+## Backup, export, import, and restore
+
+Phase 2.5 adds `@ai-verse/data/backup`. Physical backup uses SQLite's online backup API. Portable export first captures the same kind of consistent SQLite snapshot, then produces deterministic canonical JSON containing Data Spaces, every schema version, active and deleted records, relation indexes, idempotency state, events, receipts, and event sequence.
+
+Each artifact contains a manifest, payload SHA-256, deterministic logical-state digest, and artifact receipt. Verification checks file integrity, database identity, trusted binding, SQLite integrity, historical schemas, relations, idempotency integrity, provenance digests, and receipt/event linkage.
+
+Restore and import require the same trusted binding, refuse existing canonical destinations, use staged materialization, and verify the installed canonical state again. Phase 2.5 does not add database migrations or cross-workspace remapping.
+
+See [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md).
+
 ### Latest verification
 
-Task 13 behavioral CI run: `34535289214`
+Task 14 behavioral CI run: `34588281966`  
+Behavioral commit: `ce03b101c3560825b0e994ca4b30a269c4e3c4a3`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-153 tests
-153 passed
+162 tests
+162 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite now additionally proves exact rollback-only bulk preview, zero durable preview effects including SQLite event-sequence state, hard count/byte ceilings, actor-bound preview digests, all-or-nothing commit, stale preview rejection, safe clientRef preview, bulk idempotent replay, and key-separation enforcement.
+The suite now additionally proves exact backup/restore state equality, portable export/import equality, schema-history and tombstone preservation, record and bulk replay after transfer, provenance preservation, tamper rejection, binding rejection, no-overwrite behavior, and preservation of valid pre-binding provenance.
 
 ## Why Data is separate from Memory
 
