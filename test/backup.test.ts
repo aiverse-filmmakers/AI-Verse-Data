@@ -7,6 +7,7 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -30,6 +31,7 @@ import {
   type ScopedDatabaseHandle,
 } from "../src/scope/index.js";
 import {
+  DataStorageError,
   SqliteStorageDriver,
   type DataStorageDatabase,
 } from "../src/storage/index.js";
@@ -393,6 +395,7 @@ test("backup verification fails closed after payload tampering", async () => {
   try {
     const artifactDirectory = join(artifactParent, "backup");
     const backup = new DataBackup(driver);
+    const sourceDigest = portableStateDigest(collectPortableState(source.database));
     await backup.createBackup({
       source: source.handle,
       destinationDirectory: artifactDirectory,
@@ -406,7 +409,7 @@ test("backup verification fails closed after payload tampering", async () => {
     );
     assert.equal(
       portableStateDigest(collectPortableState(source.database)),
-      portableStateDigest(collectPortableState(source.database)),
+      sourceDigest,
     );
   } finally {
     cleanupFixture(source);
@@ -571,5 +574,92 @@ test("artifact creation never overwrites an existing directory", async () => {
   } finally {
     cleanupFixture(source);
     rmSync(artifactParent, { recursive: true, force: true });
+  }
+});
+
+
+test("bound databases preserve legitimate provenance committed before first trusted binding", async () => {
+  const driver = new SqliteStorageDriver();
+  const { rootPath, scope } = newWorkspaceRoot();
+  const artifactParent = mkdtempSync(join(tmpdir(), "ai-verse-data-prebinding-"));
+
+  try {
+    mkdirSync(join(rootPath, "workspaces", "sales", "data"), {
+      recursive: true,
+    });
+    const raw = driver.open({ location: scope.databasePath() });
+    const catalog = new DataCatalog(raw);
+    catalog.createSpace({
+      spaceId: "crm",
+      name: "CRM",
+      authority: "local_canonical",
+    });
+    catalog.createSchema({
+      spaceId: "crm",
+      entity: "items",
+      name: "Items",
+      fields: {
+        name: { type: "string", required: true },
+      },
+    });
+    new DataRecords(raw).create({
+      spaceId: "crm",
+      entity: "items",
+      idempotencyKey: "prebinding:create",
+      data: { name: "Before binding" },
+      actor: human,
+    });
+    raw.close();
+
+    const bound = openScopedDataDatabase(driver, scope, {
+      mode: "open-existing",
+    });
+    try {
+      const events = new DataProvenance(bound.database).listEvents().items;
+      assert.equal(events.length, 1);
+      assert.equal(events[0]!.scopeKind, "unbound");
+      assert.equal(events[0]!.workspaceId, null);
+
+      const backup = new DataBackup(driver);
+      const exportDirectory = join(artifactParent, "export");
+      const result = await backup.createPortableExport({
+        source: bound,
+        destinationDirectory: exportDirectory,
+      });
+      assert.equal(result.manifest.source.binding.workspaceId, "sales");
+      assert.equal(result.manifest.state.eventCount, 1);
+      await backup.verifyPortableExport({
+        artifactDirectory: exportDirectory,
+        expectedBinding: scope.binding,
+      });
+    } finally {
+      bound.database.close();
+    }
+  } finally {
+    rmSync(rootPath, { recursive: true, force: true });
+    rmSync(artifactParent, { recursive: true, force: true });
+  }
+});
+
+test("low-level SQLite backup reserves its destination and never overwrites an existing file", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "ai-verse-data-backup-reserve-"));
+  const databasePath = join(directory, "source.sqlite");
+  const destinationPath = join(directory, "existing.sqlite");
+  const database = new SqliteStorageDriver().open({ location: databasePath });
+
+  try {
+    writeFileSync(destinationPath, "sentinel", "utf8");
+    await assert.rejects(
+      () => database.backupTo(destinationPath),
+      (error) => {
+        assert.ok(error instanceof DataStorageError);
+        assert.equal(error.code, "DATABASE_UNAVAILABLE");
+        return true;
+      },
+    );
+    assert.equal(readFileSync(destinationPath, "utf8"), "sentinel");
+  } finally {
+    database.close();
+    rmSync(directory, { recursive: true, force: true });
   }
 });
