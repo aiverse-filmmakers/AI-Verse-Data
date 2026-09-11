@@ -11,126 +11,118 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   NEXT
+Phase 3  Native AI-Verse Integration   IN PROGRESS  1 / 8
 
-Overall implementation: 18 / 41 tasks complete
+Overall implementation: 19 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 18 / 41 - Phase 2.9: Phase 2 reliability/adversarial gate**
+**Task 19 / 41 - Phase 3.1: AI-Verse OS compatibility detector**
 
-Behavioral integration verification:
+Behavioral implementation verification:
 
 ```text
-Behavioral commit:   d173e822d5a851051bdd1c3c9c9b4642ec1d58bc
-GitHub Actions run:  34600296642
+Behavioral commit:   6b1f6757bd24492376754bdb0508b35233883193
+GitHub Actions run:  34602056368
 Node 22:             PASS
 Node 24:             PASS
-Tests:               204 / 204 PASS
+Tests:               216 / 216 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Phase 2.9 machine-readable/public-status verification:
+Implemented through Task 19:
 
-```text
-Phase 2.9 head:      7a0925db3e8924f2137931cf0e8a1484b196ea83
-GitHub Actions run:  34600518720
-Node 22:             PASS
-Node 24:             PASS
-Tests:               204 / 204 PASS
-Failures:            0
-Skipped:             0
-Cancelled:           0
-```
+- all Phase 1 and Phase 2 host-neutral Data engine/reliability capabilities;
+- public `@ai-verse/data/native` package surface;
+- read-only `AiVerseOsCompatibilityDetector`;
+- explicit `compatible`, `no-os`, and `incompatible` states;
+- supported AI-Verse OS schema major 2 detection;
+- exact `unified-workspace` architecture detection;
+- bounded top-level manifest identity parsing;
+- unambiguous supported schema-version key aliases;
+- unknown additive manifest metadata tolerance;
+- safe `AGENTS.md`, `operator/`, and `workspaces/` host checks;
+- safe `system/extensions/README.md` extension-contract check;
+- required `.aiverse/extensions/registry.json` runtime-hook reference;
+- existing extension-registry path safety without content parsing/mutation;
+- root/path/symlink validation using the existing trusted-root boundary;
+- strong partial-host fail-closed behavior;
+- ordinary non-AI-Verse projects remain `no-os`;
+- exact fixture-tree read-only preservation proof;
+- no extension materialization/registration or workspace Data initialization.
 
-Task 18 adds the cross-feature integration gate while retaining all dedicated Phase 2 adversarial suites.
+Detailed Task 19 contract:
 
-The final gate proves composition across:
+`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`
 
-- race-safe optimistic concurrency;
-- durable exact idempotent replay;
-- immutable events, receipts, and provenance;
-- bounded bulk preview/execute;
-- consistent physical backup;
-- portable export/import verification;
-- explicit internal database-format migration;
-- governed state-bound user-schema migration;
-- corruption quarantine;
-- verified same-binding staged recovery;
-- restart/reopen durability;
-- preservation of replay/provenance through migration and recovery;
-- distinct stale/conflict/migration/corruption failure classes;
-- no silent empty replacement or destructive recovery overwrite.
+Phase status:
 
-Detailed acceptance:
-
-`docs/PHASE-2-ACCEPTANCE.md`
+`docs/PHASE-3-STATUS.md`
 
 Documentation closeout candidate verification:
 
 ```text
-Closeout head:       3a730282dfbebc15d3124b2e76882d50c198f5ac
-GitHub Actions run:  34600879830
+Closeout head:       39cd933a4bd1e814ad4364a66efe740a33c2df89
+GitHub Actions run:  34602503877
 Node 22:             PASS
 Node 24:             PASS
-Tests:               204 / 204 PASS
+Tests:               216 / 216 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Phase 2 is now **9 / 9 complete**.
-
-The behavioral implementation, Phase 2.9 status boundary, and documentation closeout candidate are verified. The final Task 18 report must still verify the resulting exact branch head and then the exact merged `main` head before Phase 2 is declared fully closed in the user-facing report.
+The behavioral implementation and documentation closeout candidate are verified. The final Task 19 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 19 fully closed.
 
 ## NEXT
 
-**Task 19 / 41 - Phase 3.1: AI-Verse OS compatibility detector**
+**Task 20 / 41 - Phase 3.2: Hardened extension materialization/registration**
 
-Canonical Task 19 scope:
+Canonical Build Map scope:
 
 ```text
-AI-Verse OS v2 / unified-workspace detection
-extension-contract verification
-safe trusted-root/path checks
-explicit compatible / no-os / incompatible results
+Install extension-owned files
+Register only ai-verse-data
+Preserve unknown registry state and disabled state
+Lock -> re-read -> atomic write
+No tracked OS edits
 ```
 
-Do not begin Task 20 until Task 19 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Do not start Task 21 until Task 20 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
-## Task 19 architectural laws
+## Task 20 architectural laws
 
-Task 19 must preserve:
+Task 20 must preserve:
 
-1. Compatibility detection is read-only. Detection must not install, register, initialize Data, or mutate an OS repository.
-2. The detector must distinguish at least `compatible`, `no-os`, and `incompatible`; absence must never be silently treated as compatibility.
-3. Native integration must target the actual AI-Verse OS v2/unified-workspace contract, not a guessed directory shape.
-4. The detector must validate the specific extension contract Data needs before reporting compatibility.
-5. Unsupported OS major/schema/architecture state must fail visibly rather than falling back to standalone and masking the incompatibility.
-6. Trusted-root and path validation must reject symlink/path escape before any later native lifecycle operation can rely on the result.
-7. Detection must preserve unknown/unrelated OS state and must not read sibling repositories as canonical Data authority.
-8. Dashboard `systemId`, Brain state, Memory state, Multiple Bots state, and Skills registry are not Data workspace identity.
-9. Task 19 must not materialize extension files or edit `.aiverse/extensions/registry.json`; that belongs to Task 20.
-10. Task 19 must not initialize workspace databases; that belongs to Task 21.
-11. Standalone Data behavior must remain available when no AI-Verse OS is present, but it must not hide an explicitly incompatible OS.
-12. No sibling repository modifications are permitted without separate explicit approval.
+1. Native mutation may begin only after Task 19 reports the host `compatible`; `no-os` and `incompatible` must not be silently treated as native-install targets.
+2. Data may materialize normal extension runtime only inside `.aiverse/extensions/ai-verse-data/`.
+3. Registry mutation may change only the `ai-verse-data` registration and required registry envelope state; unrelated extension entries must remain byte/semantic-equivalent according to the OS registry contract.
+4. Unknown supported top-level registry fields and unknown fields on the existing Data entry must be preserved.
+5. Existing `enabled: false` must survive reinstall/update unless the operator explicitly requests a state change in a later lifecycle operation.
+6. Registry schema/version must be validated before mutation. Malformed or unsupported registry state fails closed.
+7. Shared registry writes require exclusive mutation protection, re-read inside the lock, and atomic replacement so concurrent extension writers cannot cause lost updates.
+8. Path traversal, absolute extension paths, symlink escape, unsafe extension-owned directories, and unsafe registry paths must be rejected before any write.
+9. Normal materialization/registration must not modify tracked host files such as `AI-VERSE.yaml`, `AGENTS.md`, `CLAUDE.md`, `skills/registry.yaml`, or `system/`.
+10. Task 20 installs capability/runtime only. It must not initialize Data databases in every workspace or resolve workspace manifests; that belongs to Task 21.
+11. Reinstall/update of compatible existing Data extension state must be idempotent and must not delete unknown safe state.
+12. Task 20 must not modify sibling repositories.
 
-## Canonical documents to read before Task 19
+## Canonical documents to read before Task 20
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
-3. `docs/PHASE-2-ACCEPTANCE.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/ECOSYSTEM-INTEGRATION.md`
-6. `docs/INSTALLATION-AND-LIFECYCLE.md`
-7. `docs/SCOPE-AND-IDENTITY-V0.1.md`
+3. `docs/PHASE-3-STATUS.md`
+4. `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`
+5. `docs/INSTALLATION-AND-LIFECYCLE.md`
+6. `docs/ECOSYSTEM-INTEGRATION.md`
+7. `docs/ARCHITECTURE.md`
 8. `docs/SECURITY-AND-AUTHORITY.md`
 9. `docs/TESTING-AND-ACCEPTANCE.md`
 
-Then inspect current native-integration placeholders and fixture expectations before introducing the detector. Do not implement Task 20 registration/materialization early.
+Then inspect current package/runtime materialization needs and the documented registry contract before writing registry code. Do not implement Task 21 workspace initialization early.
 
 ## Closeout rule for every future task
 
@@ -140,7 +132,7 @@ A task is not complete until all of the following are updated and committed:
 - task-specific contract or acceptance document when appropriate;
 - `README.md`;
 - `docs/BUILD-MAP.md`;
-- active phase status file;
+- active phase status file, currently `docs/PHASE-3-STATUS.md`;
 - `docs/CONTINUATION-HANDOFF.md`;
 - any older docs that would otherwise contradict the new implementation state.
 

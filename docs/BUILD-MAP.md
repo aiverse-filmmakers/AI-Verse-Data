@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-11  
-**Status:** Phase 2 complete, Phase 3 next  
-**Implementation progress:** 18 / 41 tasks complete  
-**Next:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector
+**Status:** Phase 3 in progress  
+**Implementation progress:** 19 / 41 tasks complete  
+**Next:** Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    13%  (1/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **18 / 41 tasks complete**.
+Overall implementation: **19 / 41 tasks complete**.
 
 ---
 
@@ -385,7 +385,8 @@ Detailed acceptance evidence: `docs/PHASE-1-ACCEPTANCE.md`.
 
 # Phase 2 - Reliability + Agent Safety
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE  
+**Progress:** 9 / 9 tasks complete
 
 ## Task 10 / 41 - Phase 2.1 Optimistic concurrency
 
@@ -811,10 +812,49 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 # Phase 3 - Native AI-Verse Integration
 
-**Status:** NEXT
+**Status:** IN PROGRESS  
+**Progress:** 1 / 8 tasks complete
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
-v2/unified-workspace detection, extension-contract verification, safe path checks, explicit compatible/no-os/incompatible results.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- public `@ai-verse/data/native` surface;
+- explicit `compatible`, `no-os`, and `incompatible` compatibility results;
+- AI-Verse OS schema major 2 verification;
+- exact `unified-workspace` architecture verification;
+- safe `AI-VERSE.yaml`, `AGENTS.md`, `operator/`, and `workspaces/` contract checks;
+- `system/extensions/README.md` extension-contract verification;
+- required reference to `.aiverse/extensions/registry.json`;
+- existing registry path safety without parsing or modifying registry contents;
+- existing `TrustedDataRoot` path-containment and symlink rules reused;
+- root/manifest/AGENTS/extension-contract/registry symlink rejection;
+- bounded manifest/contract file reads;
+- unknown additive manifest metadata tolerated;
+- strong partial-host evidence prevents unsafe standalone fallback;
+- ordinary projects without sufficient AI-Verse evidence remain `no-os`;
+- complete fixture-tree read-only preservation proof;
+- no extension registration/materialization or workspace initialization introduced early.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34602056368
+Behavioral commit:   6b1f6757bd24492376754bdb0508b35233883193
+Node 22:             PASS
+Node 24:             PASS
+Tests:               216 / 216 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.1 gate: PASSED.**
 
 ## Task 20 / 41 - Phase 3.2 Hardened extension materialization/registration
 Install extension-owned files and register only `ai-verse-data`; preserve unknown registry state and disabled state; lock/re-read/atomic-write; no tracked OS edits.

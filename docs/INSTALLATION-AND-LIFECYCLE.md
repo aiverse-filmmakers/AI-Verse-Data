@@ -41,20 +41,34 @@ A registry entry is not evidence that a workspace database exists or is healthy.
 
 ## 3. Native AI-Verse OS compatibility gate
 
-A native host is compatible only when the installer can verify the required AI-Verse OS v2 contract, including at minimum:
+Phase 3.1 implements this gate through the public `@ai-verse/data/native` compatibility detector.
+
+A native host is compatible only when the detector verifies the required AI-Verse OS v2 contract:
 
 - `AI-VERSE.yaml` exists as a regular safe file;
 - major schema version is 2;
 - architecture is `unified-workspace`;
-- `AGENTS.md` exists;
-- `operator/` exists;
-- `workspaces/` exists;
+- `AGENTS.md` exists as a regular safe file;
+- `operator/` exists as a safe directory;
+- `workspaces/` exists as a safe directory;
 - `system/extensions/README.md` exposes the local extension registry contract;
 - the runtime contract references `.aiverse/extensions/registry.json`.
 
+Detection is read-only and returns one of:
+
+```text
+compatible
+no-os
+incompatible
+```
+
 Unsafe, malformed, unsupported, or incomplete AI-Verse layouts fail closed.
 
-The installer must not silently fall back to standalone mode when it detects an AI-Verse host that is present but incompatible.
+A missing/ordinary non-AI-Verse project remains `no-os`. Strong AI-Verse partial-host evidence without a valid manifest is `incompatible`, so later install logic must not silently fall back to standalone mode and mask a broken native host.
+
+Task 19 path-checks an existing extension-registry location but deliberately does not parse or mutate registry contents. Hardened registry validation/materialization belongs to Task 20.
+
+Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
 
 ## 4. Native extension placement
 

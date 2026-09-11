@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies completed Phase 2 acceptance", () => {
+test("--help succeeds and identifies the Phase 3.1 compatibility boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 2 is complete through the Phase 2\.9 reliability\/adversarial acceptance gate/);
+  assert.match(result.stdout, /Phase 3\.1 adds read-only AI-Verse OS v2 compatibility detection/);
   assert.equal(result.stderr, "");
 });
 

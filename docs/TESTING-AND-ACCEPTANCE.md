@@ -471,6 +471,40 @@ Task 18 adds `test/phase2-integration.test.ts` to compose these guarantees acros
 
 **Phase 2 gate result: PASSED.**
 
+## 6.1 Phase 3.1 native compatibility verification
+
+Task 19 begins Phase 3 with read-only native host compatibility detection.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34602056368
+Behavioral commit:   6b1f6757bd24492376754bdb0508b35233883193
+Node 22:             PASS
+Node 24:             PASS
+Tests:               216 / 216 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The Task 19 suite proves:
+
+- compatible AI-Verse OS schema-major-2 / `unified-workspace` fixture detection;
+- explicit `compatible`, `no-os`, and `incompatible` results;
+- missing root and ordinary project remain `no-os`;
+- strong partial-host evidence without a manifest is incompatible;
+- unsupported schema major and architecture remain distinct;
+- required `AGENTS.md`, `operator/`, `workspaces/`, and extension-contract state is verified;
+- extension contract must reference `.aiverse/extensions/registry.json`;
+- root/manifest/required-path symlinks fail closed;
+- existing registry location is path-safety checked without parsing/mutation;
+- unknown additive manifest metadata is tolerated;
+- host contract reads are bounded;
+- compatible-host fixture tree is unchanged before/after detection.
+
+Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
+
 ## 7. Phase 3 Native Installation gate
 
 Must prove against real fixture repositories:
