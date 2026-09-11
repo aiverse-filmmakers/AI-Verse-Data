@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 2 Reliability + Agent Safety complete  
-**Completed implementation tasks:** 18 / 41  
-**Latest completed:** Task 18 / 41, Phase 2.9 - Phase 2 reliability/adversarial gate  
-**Next task:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector  
+**Status:** Phase 3 Native AI-Verse Integration in progress  
+**Completed implementation tasks:** 19 / 41  
+**Latest completed:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector  
+**Next task:** Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -225,9 +225,25 @@ Phase 2 reliability/adversarial gate
   -> failure classes remain distinct with no silent substitute
   -> complete repository suite passes Node 22 + Node 24
   -> Phase 2 acceptance matrix recorded in docs/PHASE-2-ACCEPTANCE.md
+
+Task 19 / 41 - COMPLETE
+AI-Verse OS compatibility detector
+  -> public @ai-verse/data/native surface
+  -> explicit compatible / no-os / incompatible results
+  -> AI-Verse OS schema major 2 validation
+  -> unified-workspace architecture validation
+  -> AGENTS.md + operator/ + workspaces/ host checks
+  -> system/extensions/README.md contract verification
+  -> .aiverse/extensions/registry.json hook verification
+  -> trusted-root + symlink/path safety
+  -> partial-host fail-closed behavior
+  -> unknown additive manifest metadata tolerated
+  -> existing registry contents untouched
+  -> read-only fixture-tree equality proof
+  -> no install, registration, or workspace initialization yet
 ```
 
-Phase 1 and Phase 2 are complete. Phase 2.1 through 2.9 add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, explicit internal database-format migrations, governed user-schema migrations, fail-closed corruption quarantine/recovery staging, and the full reliability/adversarial integration gate. Phase 3 native AI-Verse integration is next.
+Phase 1 and Phase 2 are complete. Phase 3 has started with a read-only AI-Verse OS v2 compatibility detector that verifies the unified-workspace host and local extension contract before any installation mutation is allowed. Hardened extension materialization/registration is next.
 
 ## Public package surfaces
 
@@ -246,6 +262,7 @@ Phase 1 and Phase 2 are complete. Phase 2.1 through 2.9 add race-safe optimistic
 @ai-verse/data/backup
 @ai-verse/data/schema-migrations
 @ai-verse/data/recovery
+@ai-verse/data/native
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -430,29 +447,31 @@ Normal storage open now refuses to initialize any already-existing unrecognized 
 
 See [`docs/CORRUPTION-AND-RECOVERY-V0.1.md`](docs/CORRUPTION-AND-RECOVERY-V0.1.md).
 
-## Phase 2 acceptance gate
+## Native AI-Verse OS compatibility
 
-Task 18 adds the final Phase 2 integration suite and requirement-to-test acceptance matrix. It composes the reliability layers rather than replacing their dedicated adversarial suites.
+Phase 3.1 adds `@ai-verse/data/native` with a read-only detector for the documented AI-Verse OS v2 host contract.
 
-See [`docs/PHASE-2-ACCEPTANCE.md`](docs/PHASE-2-ACCEPTANCE.md).
+A compatible host requires schema major 2, `architecture: unified-workspace`, safe `AGENTS.md`, `operator/`, `workspaces/`, and a safe `system/extensions/README.md` that references `.aiverse/extensions/registry.json`. The detector returns explicit `compatible`, `no-os`, or `incompatible` state and never installs, registers, initializes Data, or edits the host.
+
+See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md).
 
 ### Latest verification
 
-Task 18 behavioral CI run: `34600296642`  
-Behavioral commit: `d173e822d5a851051bdd1c3c9c9b4642ec1d58bc`
+Task 19 behavioral CI run: `34602056368`  
+Behavioral commit: `6b1f6757bd24492376754bdb0508b35233883193`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-204 tests
-204 passed
+216 tests
+216 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The gate proves the combined lifecycle from durable mutation replay through bulk and schema migration, backup/export, restart/reopen, internal format migration, corruption quarantine, verified staged recovery, recovered replay/provenance preservation, and distinct adversarial failure classes. The complete repository suite remains the authoritative Phase 2 acceptance surface.
+The suite additionally proves read-only fixture preservation, partial-host fail-closed behavior, schema/architecture incompatibility separation, required host-contract checks, symlink rejection, bounded manifest reads, and non-mutation/non-parsing of existing extension-registry contents.
 
 ## Why Data is separate from Memory
 
@@ -572,9 +591,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/CORRUPTION-AND-RECOVERY-V0.1.md`](docs/CORRUPTION-AND-RECOVERY-V0.1.md) - implemented corruption quarantine, diagnosis, and staged recovery contract
 - [`docs/PHASE-2-ACCEPTANCE.md`](docs/PHASE-2-ACCEPTANCE.md) - final Phase 2 reliability/adversarial acceptance gate
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
+- [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md) - implemented native OS compatibility detector contract
+- [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector.**
+**Next: Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration.**
