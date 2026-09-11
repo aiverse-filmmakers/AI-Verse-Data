@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 Native AI-Verse Integration in progress  
-**Completed implementation tasks:** 19 / 41  
-**Latest completed:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector  
-**Next task:** Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration  
+**Completed implementation tasks:** 20 / 41  
+**Latest completed:** Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration  
+**Next task:** Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -241,9 +241,28 @@ AI-Verse OS compatibility detector
   -> existing registry contents untouched
   -> read-only fixture-tree equality proof
   -> no install, registration, or workspace initialization yet
+
+Task 20 / 41 - COMPLETE
+Hardened extension materialization/registration
+  -> public AiVerseDataExtensionInstaller
+  -> exact AI-Verse OS registry schema 1.0 validation
+  -> Data-owned .aiverse/extensions/ai-verse-data/ materialization
+  -> INSTRUCTIONS.md + engine.mjs + extension.json
+  -> register only extensions["ai-verse-data"]
+  -> preserve unknown top-level + unrelated extension state
+  -> preserve unknown Data-entry fields + enabled:false
+  -> exclusive registry.json.lock without stale-lock stealing
+  -> compatibility recheck + registry reread inside lock
+  -> expected-raw lost-update detection
+  -> same-directory temp + atomic registry replacement
+  -> atomic owned-file writes + pre-commit rollback
+  -> symlink/traversal/absolute/UNC/NUL rejection
+  -> byte-stable idempotent reinstall
+  -> no tracked OS edits
+  -> no workspace Data initialization
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 has started with a read-only AI-Verse OS v2 compatibility detector that verifies the unified-workspace host and local extension contract before any installation mutation is allowed. Hardened extension materialization/registration is next.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution and explicit Data initialization are next.
 
 ## Public package surfaces
 
@@ -447,31 +466,46 @@ Normal storage open now refuses to initialize any already-existing unrecognized 
 
 See [`docs/CORRUPTION-AND-RECOVERY-V0.1.md`](docs/CORRUPTION-AND-RECOVERY-V0.1.md).
 
-## Native AI-Verse OS compatibility
+## Native AI-Verse integration
 
 Phase 3.1 adds `@ai-verse/data/native` with a read-only detector for the documented AI-Verse OS v2 host contract.
 
-A compatible host requires schema major 2, `architecture: unified-workspace`, safe `AGENTS.md`, `operator/`, `workspaces/`, and a safe `system/extensions/README.md` that references `.aiverse/extensions/registry.json`. The detector returns explicit `compatible`, `no-os`, or `incompatible` state and never installs, registers, initializes Data, or edits the host.
+A compatible host requires schema major 2, `architecture: unified-workspace`, safe `AGENTS.md`, `operator/`, `workspaces/`, and a safe `system/extensions/README.md` that references `.aiverse/extensions/registry.json`. The detector returns explicit `compatible`, `no-os`, or `incompatible` state.
 
-See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md).
+Phase 3.2 adds `AiVerseDataExtensionInstaller`. It materializes only:
+
+```text
+.aiverse/extensions/ai-verse-data/
+├── INSTRUCTIONS.md
+├── engine.mjs
+└── extension.json
+```
+
+and registers only `extensions["ai-verse-data"]` in the OS schema-`1.0` local registry. Unknown registry state, unrelated extensions, unknown Data-entry fields, and an existing `enabled: false` are preserved.
+
+Shared registry mutation uses `registry.json.lock`, an in-lock registry re-read, exact raw-text lost-update detection, same-directory temporary staging, and atomic replacement. Data-owned file updates are verified and rolled back if registry commit fails before the commit boundary.
+
+Task 20 does not edit tracked OS files and does not create any workspace Data database.
+
+See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md) and [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md).
 
 ### Latest verification
 
-Task 19 behavioral CI run: `34602056368`  
-Behavioral commit: `6b1f6757bd24492376754bdb0508b35233883193`
+Task 20 behavioral CI run: `34606467549`  
+Behavioral commit: `1e88ba758dcc1151b4de6f60e8c3b2a9822afad7`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-216 tests
-216 passed
+229 tests
+229 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite additionally proves read-only fixture preservation, partial-host fail-closed behavior, schema/architecture incompatibility separation, required host-contract checks, symlink rejection, bounded manifest reads, and non-mutation/non-parsing of existing extension-registry contents.
+The Task 20 suite proves read-only planning, fresh registration, unknown-state preservation, disabled-state preservation, idempotent reinstall, malformed-registry fail-closed behavior, lock ownership, symlink/path rejection, expected-raw competing-writer detection, pre-commit owned-file rollback, and no workspace initialization.
 
 ## Why Data is separate from Memory
 
@@ -537,7 +571,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding and safe path identity are now implemented. Phase 3 later adds actual AI-Verse OS manifest/workspace validation and initialization lifecycle.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, and local extension installation are implemented. Task 21 adds native workspace manifest resolution and explicit Data initialization.
 
 ## Technology direction
 
@@ -550,15 +584,15 @@ stable storage-driver abstraction
 
 A future team/hosted edition can add another sanctioned storage backend without forcing Apps/Bots/Dashboard consumers to rewrite against a new API.
 
-## Native installation direction
+## Native installation
 
-Data will later use AI-Verse OS's optional extension contract under:
+Phase 3.2 now uses AI-Verse OS's optional local extension contract under:
 
 ```text
 .aiverse/extensions/registry.json
 ```
 
-Normal install/update/uninstall must not modify tracked OS files or sibling repo state. Installing Data will not initialize every workspace automatically, and uninstall must preserve canonical workspace Data by default.
+Programmatic materialization/registration is implemented with hardened shared-registry mutation. Native CLI lifecycle commands remain Task 23. Installing Data does not initialize every workspace automatically, and future uninstall must preserve canonical workspace Data by default.
 
 ## Canonical documents
 
@@ -592,10 +626,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/PHASE-2-ACCEPTANCE.md`](docs/PHASE-2-ACCEPTANCE.md) - final Phase 2 reliability/adversarial acceptance gate
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 - [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md) - implemented native OS compatibility detector contract
+- [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md) - implemented hardened local extension installation contract
 - [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration.**
+**Next: Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization.**

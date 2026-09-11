@@ -505,6 +505,48 @@ The Task 19 suite proves:
 
 Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
 
+## 6.2 Phase 3.2 extension materialization/registration verification
+
+Task 20 adds hardened local extension installation and registry mutation coverage.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34606467549
+Behavioral commit:   1e88ba758dcc1151b4de6f60e8c3b2a9822afad7
+Node 22:             PASS
+Node 24:             PASS
+Tests:               229 / 229 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The Task 20 suite proves:
+
+- installation planning is read-only;
+- fresh native installation creates only Data-owned local extension files and the Data registry entry;
+- registry schema `1.0` is enforced;
+- package and extension versions remain aligned;
+- unknown top-level registry fields survive;
+- unrelated extension entries survive;
+- unknown fields on the existing Data entry survive;
+- existing `enabled: false` survives;
+- unknown files in the Data-owned extension directory survive;
+- current reinstall is byte-stable for persistent registry/owned-file state;
+- invalid JSON, unsupported registry schema, and invalid envelope fail closed;
+- malformed existing Data entry fails closed;
+- existing registry lock produces `EXTENSION_REGISTRY_BUSY` and is not stolen;
+- unsafe relative paths, traversal, absolute paths, drive paths, UNC paths, and NULs are rejected;
+- symlinked extension roots and owned files are rejected;
+- exact raw registry comparison detects a competing writer before replacement;
+- pre-commit materialization can be rolled back while preserving the competing registry;
+- no-OS/incompatible hosts cannot create native install state;
+- tracked OS contract bytes remain unchanged;
+- workspace fixture state remains unchanged and no `ai-verse-data.sqlite` is created.
+
+Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
+
 ## 7. Phase 3 Native Installation gate
 
 Must prove against real fixture repositories:

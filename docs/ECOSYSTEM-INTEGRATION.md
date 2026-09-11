@@ -399,13 +399,13 @@ When another layer appears later, it discovers Data through the OS/extension/int
 
 ## 13. Extension registration identity
 
-The Data extension entry should be named:
+Phase 3.2 now registers the Data extension under the exact key:
 
 ```text
 ai-verse-data
 ```
 
-Conceptual registry entry:
+Registry entry:
 
 ```json
 {
@@ -421,9 +421,11 @@ Conceptual registry entry:
 }
 ```
 
-Unknown registry fields, other extension entries, and unknown fields on the existing Data entry must be preserved according to the OS extension contract.
+Phase 3.2 preserves unknown registry fields, other extension entries, and unknown fields on the existing Data entry according to the OS extension contract.
 
-Existing `enabled: false` must survive reinstall/update unless an explicit operator action changes it.
+Existing `enabled: false` survives reinstall/update. Task 20 exposes no implicit enable override.
+
+Shared registry mutation uses the OS schema-`1.0` envelope, exclusive lock, in-lock re-read, exact raw-text lost-update detection, and atomic replacement.
 
 ## 14. No tracked-runtime-adapter writes by default
 

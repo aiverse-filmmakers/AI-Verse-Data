@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native AI-Verse OS compatibility detection implemented
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection and Phase 3.2 hardened local extension materialization/registration implemented
 
 ## 1. Architectural position
 
@@ -85,9 +85,11 @@ Future adapters
 
 No consumer should need to know SQLite file layout to use Data.
 
-Phase 3.1 now implements the first AI-Verse adapter boundary: a read-only compatibility detector verifies the OS v2 `unified-workspace` manifest, required native host structure, trusted path safety, and the local extension registry contract before any later native mutation is allowed. It returns explicit `compatible`, `no-os`, or `incompatible` state.
+Phase 3.1 implements the first AI-Verse adapter boundary: a read-only compatibility detector verifies the OS v2 `unified-workspace` manifest, required native host structure, trusted path safety, and the local extension registry contract before native mutation is allowed. It returns explicit `compatible`, `no-os`, or `incompatible` state.
 
-The detector does not register Data, write the extension registry, or initialize workspace databases. Those remain later Phase 3 responsibilities.
+Phase 3.2 builds on that result with hardened local extension materialization and registration. It owns only `.aiverse/extensions/ai-verse-data/` and the `ai-verse-data` registry entry, preserves unrelated/unknown registry state, serializes shared writes with the OS registry lock, detects lost updates, and never initializes workspace databases.
+
+Native workspace resolution and explicit database initialization remain Task 21.
 
 ## 3. Canonical storage placement
 

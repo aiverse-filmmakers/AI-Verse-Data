@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   AI_VERSE_DATA_FOUNDATION_PHASE,
   AI_VERSE_DATA_PACKAGE,
+  AI_VERSE_DATA_EXTENSION_VERSION,
   getFoundationStatus,
 } from "../src/index.js";
 
@@ -22,12 +23,13 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes all implemented Phase 3.1 public subpaths", () => {
+test("package metadata exposes all implemented Phase 3.2 public subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
   assert.equal(packageJson.engines.node, ">=22.0.0");
   assert.match(packageJson.version, /^0\.1\.0-alpha\.0$/);
+  assert.equal(AI_VERSE_DATA_EXTENSION_VERSION, packageJson.version);
   assert.ok("./protocol" in packageJson.exports);
   assert.ok("./storage" in packageJson.exports);
   assert.ok("./scope" in packageJson.exports);
@@ -45,12 +47,12 @@ test("package metadata exposes all implemented Phase 3.1 public subpaths", () =>
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 3.1 native compatibility detection", () => {
+test("foundation surface reports Phase 3.2 native extension installation", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "3.1");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "3.2");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "3.1",
+    phase: "3.2",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -77,5 +79,8 @@ test("foundation surface reports Phase 3.1 native compatibility detection", () =
     stagedRecoveryAvailable: true,
     phase2AcceptanceVerified: true,
     nativeCompatibilityAvailable: true,
+    nativeExtensionMaterializationAvailable: true,
+    nativeExtensionRegistrationAvailable: true,
+    registryConcurrencySafetyAvailable: true,
   });
 });

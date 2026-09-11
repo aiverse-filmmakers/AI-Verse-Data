@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 3.1 compatibility boundary", () => {
+test("--help succeeds and identifies the Phase 3.2 installation boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 3\.1 adds read-only AI-Verse OS v2 compatibility detection/);
+  assert.match(result.stdout, /Phase 3\.2 adds hardened AI-Verse OS extension materialization/);
   assert.equal(result.stderr, "");
 });
 
