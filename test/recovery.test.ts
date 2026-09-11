@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -32,6 +33,13 @@ import {
 } from "../src/storage/index.js";
 
 const human = { kind: "human", id: "operator" } as const;
+const MIGRATION_ID = "sqlite-0001-v1-to-v2";
+const MIGRATION_DIGEST = createHash("sha256")
+  .update(
+    "ai-verse-data/sqlite migration 1->2: internal migration ledger framework v1",
+    "utf8",
+  )
+  .digest("hex");
 
 function newWorkspaceRoot(workspaceId = "sales"): {
   readonly rootPath: string;
@@ -273,6 +281,107 @@ test("lost canonical record storage is detected from surviving committed evidenc
     assert.equal(
       readQuarantineMarker(fixture.scope.databasePath())?.category,
       "semantic",
+    );
+  } finally {
+    rmSync(fixture.rootPath, { recursive: true, force: true });
+  }
+});
+
+test("corruption detected during normal open persists semantic quarantine before any retry", () => {
+  const driver = new SqliteStorageDriver();
+  const fixture = newWorkspaceRoot();
+  const handle = seed(driver, fixture.scope);
+  handle.database.close();
+
+  const raw = new Database(fixture.scope.databasePath());
+  try {
+    raw.prepare(
+      "UPDATE _aiverse_meta SET value = 'invalid' WHERE key = 'format_version'",
+    ).run();
+  } finally {
+    raw.close();
+  }
+
+  try {
+    assert.throws(
+      () =>
+        openScopedDataDatabase(driver, fixture.scope, {
+          mode: "open-existing",
+        }),
+      (error) => assertStorageError(error, "DATABASE_CORRUPT"),
+    );
+
+    const marker = readQuarantineMarker(fixture.scope.databasePath());
+    assert.equal(marker?.category, "semantic");
+
+    assert.throws(
+      () =>
+        openScopedDataDatabase(driver, fixture.scope, {
+          mode: "open-existing",
+        }),
+      (error) => assertStorageError(error, "DATABASE_QUARANTINED"),
+    );
+  } finally {
+    rmSync(fixture.rootPath, { recursive: true, force: true });
+  }
+});
+
+test("current-format incomplete migration state remains distinct from corruption quarantine", async () => {
+  const driver = new SqliteStorageDriver();
+  const fixture = newWorkspaceRoot();
+  const handle = seed(driver, fixture.scope);
+  handle.database.close();
+
+  const raw = new Database(fixture.scope.databasePath());
+  try {
+    raw.prepare(
+      `INSERT INTO _schema_migrations (
+         migration_id,
+         definition_digest,
+         from_version,
+         to_version,
+         state,
+         attempt,
+         backup_artifact_id,
+         backup_payload_sha256,
+         backup_manifest_sha256,
+         started_at,
+         completed_at,
+         failed_at,
+         failure_message
+       ) VALUES (?, ?, 1, 2, 'in_progress', 1, ?, ?, ?, ?, NULL, NULL, NULL)`,
+    ).run(
+      MIGRATION_ID,
+      MIGRATION_DIGEST,
+      "recovery_incomplete",
+      "a".repeat(64),
+      "b".repeat(64),
+      new Date().toISOString(),
+    );
+  } finally {
+    raw.close();
+  }
+
+  try {
+    const report = await new DataRecovery(driver).inspect({
+      source: fixture.scope,
+    });
+    assert.equal(report.state, "migration_incomplete");
+    assert.equal(report.corruption, null);
+    assert.equal(report.quarantine, null);
+    assert.equal(report.migration?.state, "incomplete");
+    assert.equal(
+      existsSync(quarantineMarkerPath(fixture.scope.databasePath())),
+      false,
+    );
+
+    assert.throws(
+      () =>
+        openScopedDataDatabase(driver, fixture.scope, {
+          mode: "open-existing",
+        }),
+      (error) =>
+        assertStorageError(error, "DATABASE_MIGRATION_INCOMPLETE"),
     );
   } finally {
     rmSync(fixture.rootPath, { recursive: true, force: true });
