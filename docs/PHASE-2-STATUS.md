@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 7 / 9  
-**Overall implementation tasks completed:** 16 / 41  
-**Next:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior
+**Implementation tasks completed:** 8 / 9  
+**Overall implementation tasks completed:** 17 / 41  
+**Next:** Task 18 / 41, Phase 2.9 - Phase 2 gate
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -632,9 +632,78 @@ Task 2.7 does not implement:
 - recovery selection/restoration policy;
 - Task 17 corruption/recovery behavior.
 
-Task 17 / 41 is next.
+At the Task 2.7 boundary, Task 17 / 41 was next. Task 17 / Phase 2.8 has since completed corruption/recovery behavior; only the Phase 2 gate remains.
 
 ### Task 2.7 gate
+
+**PASSED.**
+
+---
+
+## Task 17 / 41 - Phase 2.8 Corruption/recovery behavior
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.8 adds fail-closed corruption quarantine, diagnosis, and verified staged recovery without automatic destructive repair.
+
+Core guarantees:
+
+- public `@ai-verse/data/recovery` surface;
+- normal open never bootstraps an already-existing empty/unrecognized file;
+- existing canonical databases pass physical integrity before first trusted binding/WAL writes;
+- physical and semantic corruption are distinguished;
+- confirmed corruption creates durable `.quarantine.json` evidence;
+- malformed/unsafe quarantine evidence itself fails closed;
+- quarantine blocks normal open and all canonical write boundaries on already-open handles;
+- read-only migration inspection remains possible while quarantined;
+- migration execution remains blocked while quarantined;
+- unrelated SQLite, migration-required, migration-incomplete, unsupported, scope-conflict, missing, and unavailable states remain distinct;
+- diagnosis opens the original canonical database read-only;
+- deep semantic validation runs on a consistent temporary online-backup snapshot;
+- snapshot verification reuses Phase 2.5 schema/record/relation/idempotency/provenance integrity logic;
+- committed record-targeted provenance/idempotency results cannot point to missing canonical records;
+- Phase 2.5 backup/export artifacts are the supported recovery sources;
+- staged recovery requires exact source/destination workspace binding equality;
+- staged recovery requires a different empty physical destination;
+- staged backup and portable-export recovery candidates are re-verified healthy;
+- original corrupt canonical bytes/state are not overwritten or promoted automatically;
+- quarantine remains until a future separately designed explicit promotion/clearance contract.
+
+### Behavioral verification
+
+```text
+GitHub Actions run: 34598198275
+Behavioral commit:   1ff0e683603ae4a6da9967a0f2bbc199b526c119
+Node 22:             PASS
+Node 24:             PASS
+Tests:               199 / 199 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.8 does not implement:
+
+- automatic SQLite repair;
+- automatic semantic repair;
+- in-place overwrite restore;
+- automatic staged-candidate promotion;
+- deletion/truncation/renaming of the corrupt canonical database;
+- quarantine clearing;
+- cross-workspace recovery;
+- arbitrary salvage SQL;
+- Task 18 Phase 2 gate;
+- sibling-repository modifications.
+
+Task 18 / 41 is next.
+
+### Task 2.8 gate
 
 **PASSED.**
 
@@ -644,9 +713,8 @@ Task 17 / 41 is next.
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 17 / 41 | 2.8 | NEXT | Corruption/recovery behavior |
-| 18 / 41 | 2.9 | NOT STARTED | Phase 2 gate |
+| 18 / 41 | 2.9 | NEXT | Phase 2 gate |
 
 ## Current boundary
 
-Task 17 / 41 is next. Do not begin Task 18 / 41 until Task 17 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 18 / 41 is next. Do not begin Phase 3 until the complete Phase 2 reliability/adversarial gate is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
