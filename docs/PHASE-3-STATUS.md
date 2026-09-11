@@ -70,6 +70,19 @@ Cancelled:           0
 
 Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       39cd933a4bd1e814ad4364a66efe740a33c2df89
+GitHub Actions run:  34602503877
+Node 22:             PASS
+Node 24:             PASS
+Tests:               216 / 216 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 3.1 does not implement:
