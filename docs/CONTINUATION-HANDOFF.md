@@ -69,7 +69,20 @@ Detailed Task 17 contract:
 
 `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
 
-The behavioral implementation is complete. The final Task 17 report must still verify the documentation-closeout branch head and then the exact merged `main` head before declaring Task 17 fully closed.
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       8b425df4875ddaacd39da6d7e5d116b89f40f9c0
+GitHub Actions run:  34598581199
+Node 22:             PASS
+Node 24:             PASS
+Tests:               199 / 199 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The behavioral implementation and documentation closeout candidate are verified. The final Task 17 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 17 fully closed.
 
 ## NEXT
 
