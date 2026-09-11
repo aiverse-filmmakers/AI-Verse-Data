@@ -63,7 +63,16 @@ Implemented through Task 13:
 - all-or-nothing bulk commit;
 - bulk replay verification against underlying transaction idempotency + provenance.
 
-Documentation/log closeout commits occur after the behavioral verification above. A new session should trust the task status and NEXT section in this file, then verify the current repository HEAD CI before making new changes.
+Documentation/log closeout candidate verification:
+
+```text
+Closeout head:       f9fd9e32eaabb0f516a7550524b418bfcadcebed
+GitHub Actions run:  34584742493
+Node 22:             PASS
+Node 24:             PASS
+```
+
+This handoff commit records that verified closeout candidate. The final report must still verify the resulting current repository HEAD before Task 13 is declared fully closed.
 
 ## NEXT
 
