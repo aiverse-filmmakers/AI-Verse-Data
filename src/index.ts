@@ -14,7 +14,7 @@ export * from "./backup/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.5" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.6" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -37,12 +37,13 @@ export interface FoundationStatus {
   readonly consistentBackupAvailable: true;
   readonly portableExportAvailable: true;
   readonly portableImportAvailable: true;
+  readonly internalMigrationsAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, and verified portable export/import exist through Phase 2.5.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, and explicit internal database-format migrations exist through Phase 2.6.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -66,5 +67,6 @@ export function getFoundationStatus(): FoundationStatus {
     consistentBackupAvailable: true,
     portableExportAvailable: true,
     portableImportAvailable: true,
+    internalMigrationsAvailable: true,
   };
 }
