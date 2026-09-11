@@ -669,22 +669,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
         options.expectedBinding,
       );
 
-      const integrityRows = database.pragma("integrity_check") as Array<
-        Record<string, unknown>
-      >;
-      const integrityMessages = integrityRows.map((row) =>
-        String(row.integrity_check ?? Object.values(row)[0] ?? "unknown"),
-      );
-      if (
-        integrityMessages.length !== 1 ||
-        integrityMessages[0]?.toLowerCase() !== "ok"
-      ) {
-        throw new DataStorageError(
-          "DATABASE_MIGRATION_FAILED",
-          `Migrated database failed SQLite integrity verification: ${integrityMessages.join("; ")}`,
-        );
-      }
-
       return result;
     } catch (error) {
       if (isDataStorageError(error)) throw error;
