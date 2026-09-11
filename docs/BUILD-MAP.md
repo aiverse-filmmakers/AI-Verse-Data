@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-11  
-**Status:** Phase 2 in progress  
-**Implementation progress:** 17 / 41 tasks complete  
-**Next:** Task 18 / 41, Phase 2.9 - Phase 2 gate
+**Status:** Phase 2 complete, Phase 3 next  
+**Implementation progress:** 18 / 41 tasks complete  
+**Next:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    89%  (8/9)
+Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **17 / 41 tasks complete**.
+Overall implementation: **18 / 41 tasks complete**.
 
 ---
 
@@ -773,15 +773,45 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 ## Task 18 / 41 - Phase 2.9 Phase 2 gate
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Run the full reliability/adversarial suite.
+Implemented:
+
+- dedicated `test/phase2-integration.test.ts` cross-feature gate;
+- integrated lifecycle covering replay, OCC, bulk, user-schema migration, backup/export, reopen, and health;
+- corruption -> quarantine -> verified same-binding staged recovery lifecycle;
+- recovered state preserves idempotent record replay and user-schema migration replay without duplicate provenance;
+- adversarial failure-class matrix keeps OCC/idempotency/bulk/schema-migration failures distinct;
+- internal format migration preserves idempotency/provenance and allows post-migration writes;
+- reporting keeps unrecognized, migration-required, and quarantined corruption states distinct;
+- all dedicated Phase 2 adversarial suites remain part of the authoritative gate;
+- final Phase 2 acceptance matrix recorded in `docs/PHASE-2-ACCEPTANCE.md`;
+- complete repository suite passes Node 22 and Node 24.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34600296642
+Behavioral commit:   d173e822d5a851051bdd1c3c9c9b4642ec1d58bc
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed acceptance record: `docs/PHASE-2-ACCEPTANCE.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+**Task 2.9 gate: PASSED.**  
+**Phase 2 gate: PASSED.**
 
 ---
 
 # Phase 3 - Native AI-Verse Integration
 
-**Status:** NOT STARTED
+**Status:** NEXT
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
 v2/unified-workspace detection, extension-contract verification, safe path checks, explicit compatible/no-os/incompatible results.
