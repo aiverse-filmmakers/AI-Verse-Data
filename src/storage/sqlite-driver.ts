@@ -669,6 +669,12 @@ export class SqliteStorageDriver implements DataStorageDriver {
         fileMustExist: true,
       });
       ensureSupportedSqlite(database);
+      if (!hasMetaTable(database)) {
+        throw new DataStorageError(
+          "DATABASE_FORMAT_UNRECOGNIZED",
+          "Existing SQLite file is not an initialized AI-Verse Data database.",
+        );
+      }
       const metadata = readMetadata(database);
       this.assertMigrationExpectedBinding(
         metadata.binding,
@@ -712,6 +718,12 @@ export class SqliteStorageDriver implements DataStorageDriver {
     try {
       database = new Database(location, { fileMustExist: true });
       ensureSupportedSqlite(database);
+      if (!hasMetaTable(database)) {
+        throw new DataStorageError(
+          "DATABASE_FORMAT_UNRECOGNIZED",
+          "Existing SQLite file is not an initialized AI-Verse Data database.",
+        );
+      }
       const before = readMetadata(database);
       this.assertMigrationExpectedBinding(
         before.binding,
