@@ -549,7 +549,7 @@ Task 2.6 does not implement:
 - corruption repair/recovery;
 - arbitrary model-generated SQL migrations.
 
-At the Task 2.6 boundary, Task 16 / 41 was next. Task 16 / Phase 2.7 subsequently completed the governed user-schema migration framework, and Task 17 / Phase 2.8 has since completed corruption/recovery behavior. Only the Phase 2 gate remains.
+At the Task 2.6 boundary, Task 16 / 41 was next. Task 16 / Phase 2.7 subsequently completed the governed user-schema migration framework, Task 17 / Phase 2.8 completed corruption/recovery behavior, and Task 18 / Phase 2.9 has since passed the final Phase 2 gate.
 
 ### Task 2.6 gate
 
@@ -632,7 +632,7 @@ Task 2.7 does not implement:
 - recovery selection/restoration policy;
 - Task 17 corruption/recovery behavior.
 
-At the Task 2.7 boundary, Task 17 / 41 was next. Task 17 / Phase 2.8 has since completed corruption/recovery behavior; only the Phase 2 gate remains.
+At the Task 2.7 boundary, Task 17 / 41 was next. Task 17 / Phase 2.8 subsequently completed corruption/recovery behavior, and Task 18 / Phase 2.9 has since passed the final Phase 2 gate.
 
 ### Task 2.7 gate
 
@@ -714,7 +714,7 @@ Task 2.8 does not implement:
 - Task 18 Phase 2 gate;
 - sibling-repository modifications.
 
-Task 18 / 41 is next.
+At the Task 2.8 boundary, Task 18 / 41 was next. Task 18 / Phase 2.9 has since passed the final Phase 2 reliability/adversarial gate.
 
 ### Task 2.8 gate
 
