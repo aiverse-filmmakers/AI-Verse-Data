@@ -438,7 +438,7 @@ function validateOrBootstrap(
 
   const metadata = readMetadata(database);
   assertSqliteFormatCurrent(database, metadata);
-  return ensureExpectedBinding(database, metadata, expectedBinding);
+  return metadata;
 }
 
 function runIntegrityCheck(
@@ -809,7 +809,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
         mode,
         options.expectedBinding,
       );
-      configureConnection(database);
       let integrity: IntegrityCheckResult;
       try {
         integrity = runIntegrityCheck(database, 1);
@@ -829,10 +828,16 @@ export class SqliteStorageDriver implements DataStorageDriver {
         markDatabaseQuarantined(location, {
           category: "physical",
           message,
-          binding: metadata.binding,
+          binding: metadata.binding ?? options.expectedBinding ?? null,
         });
         throw new DataStorageError("DATABASE_CORRUPT", message);
       }
+      metadata = ensureExpectedBinding(
+        database,
+        metadata,
+        options.expectedBinding,
+      );
+      configureConnection(database);
       return new SqliteStorageDatabase(database, metadata, location);
     } catch (error) {
       if (database !== undefined) {
