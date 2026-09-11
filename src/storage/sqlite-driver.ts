@@ -648,6 +648,7 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
+    assertNotQuarantined(location);
     if (!existsSync(location)) {
       throw new DataStorageError(
         "DATABASE_NOT_FOUND",
@@ -688,7 +689,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
 
   async migrate(options: StorageMigrationOptions): Promise<StorageMigrationResult> {
     const location = options.location;
-    assertNotQuarantined(location);
     if (location.length === 0) {
       throw new DataStorageError(
         "DATABASE_UNAVAILABLE",
@@ -759,8 +759,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
   open(options: StorageOpenOptions): DataStorageDatabase {
     const mode = options.mode ?? "create-or-open";
     const location = options.location;
-    assertNotQuarantined(location);
-    const existedBeforeOpen = existsSync(location);
 
     if (location.length === 0) {
       throw new DataStorageError(
@@ -768,6 +766,9 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
+
+    assertNotQuarantined(location);
+    const existedBeforeOpen = existsSync(location);
 
     if (existedBeforeOpen && !statSync(location).isFile()) {
       throw new DataStorageError(
@@ -796,7 +797,20 @@ export class SqliteStorageDriver implements DataStorageDriver {
         options.expectedBinding,
       );
       configureConnection(database);
-      const integrity = runIntegrityCheck(database, 1);
+      let integrity: IntegrityCheckResult;
+      try {
+        integrity = runIntegrityCheck(database, 1);
+      } catch (error) {
+        markDatabaseQuarantined(location, {
+          category: "physical",
+          message:
+            error instanceof Error
+              ? error.message
+              : "SQLite integrity check failed unexpectedly.",
+          binding: metadata.binding,
+        });
+        throw error;
+      }
       if (!integrity.ok) {
         const message = `SQLite integrity check failed: ${integrity.messages.join("; ")}`;
         markDatabaseQuarantined(location, {
