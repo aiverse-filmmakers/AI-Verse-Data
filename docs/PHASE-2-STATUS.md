@@ -523,6 +523,19 @@ Cancelled:           0
 
 Detailed contract: `docs/INTERNAL-MIGRATIONS-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       2ce1cf3ce4d459885bb12552b6abb694806b803a
+GitHub Actions run:  34591037137
+Node 22:             PASS
+Node 24:             PASS
+Tests:               173 / 173 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 2.6 does not implement:
