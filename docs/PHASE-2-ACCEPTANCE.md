@@ -198,6 +198,19 @@ Skipped:             0
 Cancelled:           0
 ```
 
+Phase 2.9 public-status verification:
+
+```text
+Phase 2.9 head:      7a0925db3e8924f2137931cf0e8a1484b196ea83
+GitHub Actions run:  34600518720
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 The final documentation/ledger head and merged `main` head must each receive their own exact-head CI pass before Task 18 and Phase 2 are declared fully closed.
 
 ## Phase 2 result
