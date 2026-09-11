@@ -325,19 +325,31 @@ Data should expose effect/risk metadata so the OS/Brain/host approval policy can
 
 The Data engine should not create a second independent human-approval system when the host already owns that concern.
 
-## 16. Database integrity
+## 16. Database integrity and recovery
 
-`doctor` should use safe SQLite integrity facilities and Data metadata validation.
+Phase 2.8 implements safe integrity diagnosis behind `@ai-verse/data/recovery`.
 
-On detected corruption:
+On confirmed corruption:
 
-- stop writes;
-- report `DATABASE_CORRUPT`;
-- do not silently recreate an empty database at the same path;
-- do not claim success with an empty query result;
-- provide recovery/backup guidance through explicit commands.
+- persist durable quarantine evidence;
+- block normal open and canonical writes;
+- distinguish physical SQLite corruption from semantic AI-Verse Data corruption;
+- never silently initialize an already-existing empty/unrecognized file;
+- never turn corruption into an empty query result;
+- diagnose the original source read-only;
+- run deep semantic verification on a consistent temporary snapshot;
+- keep migration-required/incomplete state distinct from corruption;
+- preserve trusted workspace binding;
+- recover only from verified Phase 2.5 backup/export artifacts into a different empty same-binding destination;
+- keep the corrupt canonical source untouched during staging.
 
-Automatic destructive repair is not a safe default.
+Malformed quarantine evidence itself fails closed.
+
+Internal migration execution cannot bypass quarantine, although read-only migration inspection remains allowed for diagnosis.
+
+Automatic destructive repair, canonical overwrite, quarantine clearing, or staged-candidate promotion is not a Phase 2.8 capability.
+
+Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
 
 ## 17. SQLite configuration safety
 
