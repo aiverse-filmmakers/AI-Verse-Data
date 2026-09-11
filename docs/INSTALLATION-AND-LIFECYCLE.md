@@ -155,49 +155,77 @@ Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
 
 Installing Data does **not** create databases in every workspace.
 
-Installation makes the capability available.
+Phase 3.3 implements explicit programmatic workspace resolution and initialization through `AiVerseDataWorkspaceManager`.
 
-A workspace database is created only when Data is explicitly initialized or first used through a deliberate creation path.
+The caller supplies only:
 
-Preferred command shape:
-
-```bash
-ai-verse-data init --root /path/to/AI-Verse-OS --workspace <id>
+```text
+rootPath
+workspaceId
 ```
 
-or equivalent native runtime invocation.
-
-The engine resolves the workspace from the trusted OS root, validates `WORKSPACE.yaml`, and creates:
+The manager validates the AI-Verse OS `WORKSPACE.yaml` contract and derives:
 
 ```text
 workspaces/<id>/data/ai-verse-data.sqlite
 ```
 
-The database metadata binds itself to that workspace ID.
+Fresh initialization requires:
 
-Reopening a database whose embedded workspace ID conflicts with the actual workspace must fail closed.
+- valid AI-Verse OS v2 host;
+- exact valid workspace manifest identity;
+- workspace status `active`;
+- current enabled Task 20 Data extension installation;
+- a clean missing canonical database state.
+
+The database is staged in the workspace's own `data/` directory, bound to the exact workspace, integrity/reopen verified, then published with atomic no-overwrite semantics.
+
+Repeated initialization of a healthy exact-binding database returns `already_initialized`.
+
+Paused/archived workspaces can be resolved and diagnosed but do not receive a fresh database.
+
+The later Task 23 CLI may expose a command shape such as:
+
+```bash
+ai-verse-data init --root /path/to/AI-Verse-OS --workspace <id>
+```
+
+The Phase 3.3 public API itself does not require a CLI.
 
 ## 7. Existing database discovery
 
-On reinstall/update, Data should discover existing canonical workspace databases only through validated workspace roots.
+Phase 3.3 implements exact one-workspace discovery.
 
-It must not recursively scan the user's entire home directory.
+It never recursively scans the user's home directory or guesses among workspaces.
 
-Discovery may inspect:
+Discovery inspects only:
 
 ```text
-<trusted OS root>/workspaces/<authorized-id>/data/ai-verse-data.sqlite
+<trusted OS root>/workspaces/<requested-id>/data/ai-verse-data.sqlite
 ```
 
-and validate:
+and preserves distinct states including:
 
-- regular-file status;
-- no symlink escape;
-- database format metadata;
-- workspace binding;
-- engine compatibility;
-- migration state;
-- integrity status when requested.
+```text
+healthy
+missing
+unbound
+residue
+migration_required
+migration_incomplete
+quarantined
+unsupported
+scope_conflict
+unavailable
+```
+
+A healthy but unbound legacy Data database is reported `unbound` and is not silently adopted.
+
+If the main DB is missing but `-wal`, `-shm`, or quarantine evidence remains, discovery reports `residue` and fresh initialization is blocked.
+
+Discovery never silently migrates, repairs, replaces, truncates, or rebinds canonical Data.
+
+Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
 
 ## 8. Standalone mode
 
