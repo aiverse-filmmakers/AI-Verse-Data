@@ -96,6 +96,20 @@ function migrationReport(
   migration: StorageMigrationStatus,
   quarantine: ReturnType<typeof readQuarantineMarker>,
 ): DataRecoveryReport | null {
+  if (quarantine !== null) {
+    return baseReport("quarantined", {
+      binding: migration.binding,
+      databaseFormatVersion: migration.databaseFormatVersion,
+      migration,
+      quarantine,
+      corruption: {
+        category: quarantine.category,
+        code: quarantine.code,
+        message: quarantine.message,
+      },
+    });
+  }
+
   if (migration.state === "required") {
     return baseReport("migration_required", {
       binding: migration.binding,
