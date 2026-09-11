@@ -432,25 +432,25 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 13. Incomplete/failed migration state blocks normal open.
 14. Migration preserves trusted scope binding and canonical user Data.
 
-11. Agent-defined schemas are persisted through fixed engine-owned catalog tables rather than arbitrary generated SQL.
-12. Schema version snapshots are immutable and digest-verified.
+15. Agent-defined schemas are persisted through fixed engine-owned catalog tables rather than arbitrary generated SQL.
+16. Schema version snapshots are immutable and digest-verified.
 
-13. Canonical records use one fixed engine-owned `_records` table rather than generated per-entity SQL tables.
-14. Every record persists the exact entity schema version used for its canonical payload.
-15. Soft deletion preserves the canonical row and deletion attribution.
+17. Canonical records use one fixed engine-owned `_records` table rather than generated per-entity SQL tables.
+18. Every record persists the exact entity schema version used for its canonical payload.
+19. Soft deletion preserves the canonical row and deletion attribution.
 
-16. Query storage accepts structured plans rather than caller SQL.
-17. Query values and JSON field paths are bound parameters.
-18. Query and aggregate execution remain schema-validated above the storage layer.
+20. Query storage accepts structured plans rather than caller SQL.
+21. Query values and JSON field paths are bound parameters.
+22. Query and aggregate execution remain schema-validated above the storage layer.
 
-19. Declared reference relationships are indexed in one fixed engine-owned `_record_relations` table.
-20. Relation-index writes and their canonical record mutation share one transaction boundary.
-21. Multi-record transactions use the storage abstraction rather than exposing SQLite transaction handles.
+23. Declared reference relationships are indexed in one fixed engine-owned `_record_relations` table.
+24. Relation-index writes and their canonical record mutation share one transaction boundary.
+25. Multi-record transactions use the storage abstraction rather than exposing SQLite transaction handles.
 
-22. Mutable record writes require an atomic expected-version predicate.
-23. Record and bounded transaction mutation paths may request immediate write intent through the storage abstraction.
-24. SQLite writer serialization does not replace caller-visible optimistic version checks.
+26. Mutable record writes require an atomic expected-version predicate.
+27. Record and bounded transaction mutation paths may request immediate write intent through the storage abstraction.
+28. SQLite writer serialization does not replace caller-visible optimistic version checks.
 
-25. Durable idempotency entries use one fixed engine-owned `_idempotency` table.
-26. Canonical mutation effects and their idempotency replay result commit or roll back together.
-27. Committed idempotency entries do not automatically expire in v0.1.
+29. Durable idempotency entries use one fixed engine-owned `_idempotency` table.
+30. Canonical mutation effects and their idempotency replay result commit or roll back together.
+31. Committed idempotency entries do not automatically expire in v0.1.
