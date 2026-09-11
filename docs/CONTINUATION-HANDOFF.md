@@ -69,9 +69,22 @@ Detailed acceptance:
 
 `docs/PHASE-2-ACCEPTANCE.md`
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       3a730282dfbebc15d3124b2e76882d50c198f5ac
+GitHub Actions run:  34600879830
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 Phase 2 is now **9 / 9 complete**.
 
-The final Task 18 report must still verify the documentation-closeout branch head and then the exact merged `main` head before Phase 2 is declared fully closed in the user-facing report.
+The behavioral implementation, Phase 2.9 status boundary, and documentation closeout candidate are verified. The final Task 18 report must still verify the resulting exact branch head and then the exact merged `main` head before Phase 2 is declared fully closed in the user-facing report.
 
 ## NEXT
 
