@@ -191,6 +191,57 @@ test("missing candidate root and empty project report no-os rather than incompat
   }
 });
 
+test("strong extension markers alone prevent standalone fallback while one generic marker does not", () => {
+  const registryFixture = fixture();
+  const contractFixture = fixture();
+  const genericFixture = fixture();
+
+  try {
+    mkdirSync(join(registryFixture.rootPath, ".aiverse", "extensions"), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(registryFixture.rootPath, ".aiverse", "extensions", "registry.json"),
+      "{}",
+      "utf8",
+    );
+    const registry = new AiVerseOsCompatibilityDetector().inspect({
+      rootPath: registryFixture.rootPath,
+    });
+    assert.equal(registry.status, "incompatible");
+    assert.ok(issueCodes(registry).includes("MANIFEST_MISSING"));
+
+    mkdirSync(join(contractFixture.rootPath, "system", "extensions"), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(contractFixture.rootPath, "system", "extensions", "README.md"),
+      AI_VERSE_OS_EXTENSION_REGISTRY_PATH,
+      "utf8",
+    );
+    const contract = new AiVerseOsCompatibilityDetector().inspect({
+      rootPath: contractFixture.rootPath,
+    });
+    assert.equal(contract.status, "incompatible");
+    assert.ok(issueCodes(contract).includes("MANIFEST_MISSING"));
+
+    writeFileSync(
+      join(genericFixture.rootPath, "AGENTS.md"),
+      "# Generic agent instructions\n",
+      "utf8",
+    );
+    const generic = new AiVerseOsCompatibilityDetector().inspect({
+      rootPath: genericFixture.rootPath,
+    });
+    assert.equal(generic.status, "no-os");
+    assert.ok(issueCodes(generic).includes("AI_VERSE_NOT_DETECTED"));
+  } finally {
+    registryFixture.cleanup();
+    contractFixture.cleanup();
+    genericFixture.cleanup();
+  }
+});
+
 test("AI-Verse-like partial host without manifest is incompatible and cannot silently fall back", () => {
   const f = fixture();
   try {
@@ -339,6 +390,56 @@ test("required AI-Verse host structure and extension contract are verified", () 
     workspacesFixture.cleanup();
     contractFixture.cleanup();
     referenceFixture.cleanup();
+  }
+});
+
+test("manifest and extension-contract symlinks fail closed before file reads", () => {
+  const manifestFixture = fixture();
+  const contractFixture = fixture();
+
+  try {
+    writeCompatibleHost(manifestFixture.rootPath);
+    rmSync(join(manifestFixture.rootPath, "AI-VERSE.yaml"));
+    writeFileSync(
+      join(manifestFixture.rootPath, "manifest-target.yaml"),
+      "schema: 2\narchitecture: unified-workspace\n",
+      "utf8",
+    );
+    symlinkSync(
+      join(manifestFixture.rootPath, "manifest-target.yaml"),
+      join(manifestFixture.rootPath, "AI-VERSE.yaml"),
+      "file",
+    );
+    const manifest = new AiVerseOsCompatibilityDetector().inspect({
+      rootPath: manifestFixture.rootPath,
+    });
+    assert.equal(manifest.status, "incompatible");
+    assert.ok(issueCodes(manifest).includes("MANIFEST_UNSAFE"));
+
+    writeCompatibleHost(contractFixture.rootPath);
+    rmSync(
+      join(contractFixture.rootPath, "system", "extensions", "README.md"),
+    );
+    writeFileSync(
+      join(contractFixture.rootPath, "contract-target.md"),
+      AI_VERSE_OS_EXTENSION_REGISTRY_PATH,
+      "utf8",
+    );
+    symlinkSync(
+      join(contractFixture.rootPath, "contract-target.md"),
+      join(contractFixture.rootPath, "system", "extensions", "README.md"),
+      "file",
+    );
+    const contract = new AiVerseOsCompatibilityDetector().inspect({
+      rootPath: contractFixture.rootPath,
+    });
+    assert.equal(contract.status, "incompatible");
+    assert.ok(
+      issueCodes(contract).includes("EXTENSION_CONTRACT_UNSAFE"),
+    );
+  } finally {
+    manifestFixture.cleanup();
+    contractFixture.cleanup();
   }
 });
 
