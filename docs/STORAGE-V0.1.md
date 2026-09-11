@@ -1,7 +1,7 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3, scope binding extended in Phase 1.4, catalog persistence extended in Phase 1.5, record persistence extended in Phase 1.6, query storage extended in Phase 1.7, relation and transaction storage extended in Phase 1.8, atomic record concurrency extended in Phase 2.1, durable idempotency extended in Phase 2.2, immutable events/receipts extended in Phase 2.3  
-**Date:** 2026-09-10
+**Status:** Implemented in Phase 1.3 and extended through Phase 2.6 with scope identity, catalog/records/query/relations, optimistic concurrency, idempotency, provenance, consistent backup, and internal format migrations  
+**Date:** 2026-09-11
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
 
@@ -43,9 +43,9 @@ The first local database format uses four independent identity signals:
 
 ```text
 format string:      ai-verse-data/sqlite
-format version:     1
+format version:     2
 SQLite application_id: 0x41495644  ("AIVD")
-SQLite user_version:   1
+SQLite user_version:   2
 ```
 
 These are intentionally separate from:
@@ -53,7 +53,7 @@ These are intentionally separate from:
 - package version;
 - public protocol version;
 - entity schema versions;
-- future migration versions.
+- migration framework/ledger state.
 
 A file is not trusted merely because it has a `.sqlite` extension.
 
@@ -68,13 +68,20 @@ CREATE TABLE _aiverse_meta (
 ) STRICT, WITHOUT ROWID;
 ```
 
-Required core keys in format version 1:
+Required core identity keys remain:
 
 ```text
 format
 format_version
 created_at
 driver
+```
+
+Format version 2 also requires:
+
+```text
+migration_framework_version = 1
+_schema_migrations
 ```
 
 Phase 1.4 adds optional scope-binding keys:
@@ -85,7 +92,7 @@ scope_kind
 workspace_id
 ```
 
-An unbound Phase 1.3 database remains valid. The first scoped open may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space and entity-schema catalog tables are added in Phase 1.5. Canonical record storage is added in Phase 1.6.
+An unbound legacy database remains valid across the internal v1 to v2 migration. The first scoped open after migration may bind it exactly once. Once present, all binding keys are required together; partial binding metadata is treated as corruption. Data Space and entity-schema catalog tables are added in Phase 1.5. Canonical record storage is added in Phase 1.6.
 
 ## Open modes
 
@@ -100,13 +107,17 @@ open-existing
 
 `open-existing` requires an already initialized AI-Verse Data database and never initializes an empty file.
 
+Normal open never performs an internal format migration. A supported older format returns `DATABASE_MIGRATION_REQUIRED`; incomplete/failed migration ledger state returns `DATABASE_MIGRATION_INCOMPLETE`. Migration is an explicit storage operation.
+
 ## Fail-closed adoption rule
 
 The driver must never silently convert an unrelated SQLite database into AI-Verse Data.
 
 If a pre-existing file contains application tables, non-zero SQLite identity metadata, mismatched AI-Verse metadata, or an unsupported format, opening fails visibly.
 
-No schema repair or identity rewrite occurs automatically.
+Supported format v1 is recognized as migratable but is not opened for normal use until explicit migration completes. Unsupported newer formats remain fail-closed.
+
+No schema repair, downgrade, or identity rewrite occurs automatically.
 
 ## SQLite compatibility
 
@@ -350,6 +361,51 @@ Therefore the Phase 2.4 storage change is behavioral composition, not a schema-f
 
 Detailed semantics: `docs/BULK-OPERATIONS-V0.1.md`.
 
+## Phase 2.5 backup storage extension
+
+The storage handle exposes a consistent SQLite online-backup primitive. Phase 2.5 backup/export code uses this primitive rather than copying a live WAL-mode main file.
+
+Backup destinations are reserved with exclusive creation and are never silently overwritten.
+
+Detailed semantics: `docs/BACKUP-EXPORT-IMPORT-V0.1.md`.
+
+## Phase 2.6 internal migration extension
+
+The storage driver now exposes explicit internal format migration operations:
+
+```text
+inspectMigration
+migrate
+verifyMigrationBackup
+```
+
+The current canonical database format is version 2.
+
+New format-v2 databases bootstrap:
+
+```text
+_aiverse_meta.migration_framework_version = 1
+_schema_migrations
+```
+
+The ledger records migration ID, deterministic definition digest, from/to versions, lifecycle state, attempt number, verified pre-migration backup evidence, timestamps, and bounded failure information.
+
+The registered v1 to v2 migration is:
+
+```text
+sqlite-0001-v1-to-v2
+```
+
+Before canonical migration state changes, the engine creates and verifies a pre-migration artifact using the same shared SQLite online-backup primitive as Phase 2.5.
+
+Normal open never auto-migrates. Required, incomplete, failed, unsupported-newer, and binding-conflict states are explicit.
+
+Supported migration work executes transactionally. An interrupted `in_progress` or durable `failed` row blocks normal open. Explicit retry may resume the same known migration definition, with a new verified pre-migration backup and incremented attempt number.
+
+Internal database-format migration remains separate from Task 16 user entity-schema migration/backfill behavior.
+
+Detailed semantics: `docs/INTERNAL-MIGRATIONS-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
 
@@ -371,6 +427,10 @@ Those remain separate tasks in `docs/BUILD-MAP.md`.
 8. Scope binding is persisted only when a trusted host supplies the expected binding.
 9. A database cannot be silently rebound to a different workspace or scope kind.
 10. Raw root paths and Dashboard `systemId` values are not canonical database identity.
+11. Normal open never auto-migrates an older database format.
+12. Internal format migration requires verified pre-migration backup evidence.
+13. Incomplete/failed migration state blocks normal open.
+14. Migration preserves trusted scope binding and canonical user Data.
 
 11. Agent-defined schemas are persisted through fixed engine-owned catalog tables rather than arbitrary generated SQL.
 12. Schema version snapshots are immutable and digest-verified.
