@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
+import Database from "better-sqlite3";
+
 import { DataCatalog } from "../src/catalog/index.js";
 import {
   DATA_PROTOCOL_LIMITS,
@@ -800,4 +802,77 @@ test("protocol validates schema migration preview and execute surfaces", () => {
       return true;
     },
   );
+});
+
+
+test("mid-commit provenance failure rolls schema, records, idempotency, and audit state back atomically", () => {
+  const f = fixture();
+  try {
+    const created = f.records.create({
+      spaceId: "crm",
+      entity: "deals",
+      idempotencyKey: "seed:rollback",
+      data: { title: "Rollback", value: 7 },
+      actor: human,
+    });
+    const baselineEvents = f.provenance.listEvents().items.length;
+
+    const payload = {
+      spaceId: "crm",
+      entity: "deals",
+      expectedSchemaVersion: 1,
+      changes: [
+        {
+          op: "add_field" as const,
+          field: "owner",
+          definition: { type: "string" as const, default: "x" },
+        },
+      ],
+      owner: human,
+    };
+    const preview = f.migrations.preview({ actor: bot, payload });
+
+    const raw = new Database(join(f.directory, "data.sqlite"));
+    try {
+      raw.exec(`
+        CREATE TRIGGER _force_schema_migration_provenance_failure
+        BEFORE INSERT ON _events
+        BEGIN
+          SELECT RAISE(ABORT, 'forced schema migration provenance failure');
+        END;
+      `);
+    } finally {
+      raw.close();
+    }
+
+    assert.throws(() =>
+      f.migrations.execute({
+        actor: bot,
+        payload: {
+          ...payload,
+          idempotencyKey: "schema:migration:forced-rollback",
+          expectedPreviewDigest: preview.previewDigest,
+        },
+      }),
+    );
+
+    assert.equal(f.catalog.getSchema("crm", "deals").schemaVersion, 1);
+    const record = f.records.get({
+      spaceId: "crm",
+      entity: "deals",
+      recordId: created.recordId,
+    });
+    assert.equal(record.version, 1);
+    assert.equal(record.schemaVersion, 1);
+    assert.equal("owner" in record.data, false);
+    assert.equal(f.provenance.listEvents().items.length, baselineEvents);
+
+    const idempotency = f.database.idempotencyStorage();
+    assert.equal(
+      idempotency.get("schema:migration:forced-rollback"),
+      null,
+    );
+  } finally {
+    cleanup(f);
+  }
 });
