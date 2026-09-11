@@ -288,13 +288,20 @@ export function collectPortableState(
       const receipt = hydrateStoredReceipt(storedReceipt);
       assertReceiptMatchesEvent(receipt, event);
 
-      if (
-        storedEvent.scopeKind !== metadata.binding.kind ||
-        storedEvent.workspaceId !== metadata.binding.workspaceId ||
-        storedReceipt.scopeKind !== metadata.binding.kind ||
-        storedReceipt.workspaceId !== metadata.binding.workspaceId
-      ) {
-        corrupt("Stored provenance scope does not match the database binding.");
+      const eventScopeCompatible =
+        storedEvent.scopeKind === "unbound"
+          ? storedEvent.workspaceId === null
+          : storedEvent.scopeKind === metadata.binding.kind &&
+            storedEvent.workspaceId === metadata.binding.workspaceId;
+      const receiptScopeCompatible =
+        storedReceipt.scopeKind === "unbound"
+          ? storedReceipt.workspaceId === null
+          : storedReceipt.scopeKind === metadata.binding.kind &&
+            storedReceipt.workspaceId === metadata.binding.workspaceId;
+      if (!eventScopeCompatible || !receiptScopeCompatible) {
+        corrupt(
+          "Stored provenance scope conflicts with the current database binding.",
+        );
       }
 
       provenance.push({
