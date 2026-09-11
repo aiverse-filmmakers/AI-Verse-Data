@@ -606,6 +606,19 @@ Cancelled:           0
 
 Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       ec03751517caf67e72361c25cd77792b77da3bd7
+GitHub Actions run:  34593931881
+Node 22:             PASS
+Node 24:             PASS
+Tests:               185 / 185 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 2.7 does not implement:
