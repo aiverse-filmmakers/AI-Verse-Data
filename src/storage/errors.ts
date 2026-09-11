@@ -10,6 +10,7 @@ export type DataStorageErrorCode =
   | "MIGRATION_BACKUP_EXISTS"
   | "DATABASE_SCOPE_CONFLICT"
   | "DATABASE_CORRUPT"
+  | "DATABASE_QUARANTINED"
   | "SQLITE_VERSION_UNSUPPORTED";
 
 export class DataStorageError extends Error {
