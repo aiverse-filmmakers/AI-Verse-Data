@@ -465,10 +465,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md) - implemented durable mutation retry/replay contract
 - [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md) - implemented immutable events, durable receipts, and provenance contract
 - [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md) - implemented bounded preview/execute bulk safety contract
+- [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md) - implemented backup, verification, restore, and portable export/import contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 14 / 41, Phase 2.5 - Backup/export/import foundation.**
+**Next: Task 15 / 41, Phase 2.6 - Internal migration framework.**
