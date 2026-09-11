@@ -547,6 +547,48 @@ The Task 20 suite proves:
 
 Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
 
+## 6.3 Phase 3.3 native workspace resolution/initialization verification
+
+Task 21 adds native workspace-manifest resolution, existing database discovery, and explicit one-workspace initialization.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34612425250
+Behavioral commit:   eebe1c894de17b85334f4167456530cf60b61d6c
+Node 22:             PASS
+Node 24:             PASS
+Tests:               244 / 244 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The Task 21 suite proves:
+
+- exact AI-Verse OS workspace slug validation;
+- read-only valid workspace resolution;
+- missing/wrong-type/symlink workspace rejection;
+- missing/symlink/oversized manifest rejection;
+- required manifest string/type/schema/status validation;
+- duplicate required-key and ID-mismatch rejection;
+- unknown additive metadata tolerance;
+- block-string purpose support;
+- paused/archived resolution/discovery with fresh-init denial;
+- current enabled Task 20 installation requirement for fresh init;
+- exact canonical workspace DB derivation;
+- one-workspace-only initialization;
+- exact persisted workspace binding;
+- repeated initialization idempotency;
+- concurrent initialization no-overwrite convergence;
+- orphan sidecar residue rejection when the main DB is missing;
+- unbound legacy DB non-adoption;
+- distinct scope-conflict, migration-required, migration-incomplete, unsupported, quarantined, and unavailable discovery states;
+- data-directory/database symlink rejection;
+- Task 20 registry/owned-file byte preservation.
+
+Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
+
 ## 7. Phase 3 Native Installation gate
 
 Must prove against real fixture repositories:
