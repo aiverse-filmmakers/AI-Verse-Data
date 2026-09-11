@@ -924,6 +924,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 18 / 41: Phase 2.9 - Phase 2 reliability/adversarial gate.**
+**Task 19 / 41: Phase 3.1 - AI-Verse OS compatibility detector.**
 
-Do not begin Phase 3 until Task 18 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 20 / 41 until Task 19 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
