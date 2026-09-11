@@ -699,3 +699,68 @@ test("newer database formats remain fail-closed for open and migration inspectio
     );
   });
 });
+
+
+test("current-format incomplete ledger blocks migrate and does not create a misleading backup", async () => {
+  await withTempDirectory(async (directory) => {
+    const databasePath = join(directory, "data.sqlite");
+    const backupDirectory = join(directory, "should-not-exist");
+    const driver = new SqliteStorageDriver();
+    const created = driver.open({ location: databasePath });
+    created.close();
+
+    const raw = new Database(databasePath);
+    try {
+      raw.prepare(
+        `INSERT INTO _schema_migrations (
+           migration_id,
+           definition_digest,
+           from_version,
+           to_version,
+           state,
+           attempt,
+           backup_artifact_id,
+           backup_payload_sha256,
+           backup_manifest_sha256,
+           started_at,
+           completed_at,
+           failed_at,
+           failure_message
+         ) VALUES (?, ?, 1, 2, 'in_progress', 1, ?, ?, ?, ?, NULL, NULL, NULL)`,
+      ).run(
+        MIGRATION_ID,
+        MIGRATION_DIGEST,
+        "migration_backup_impossible_current",
+        "c".repeat(64),
+        "d".repeat(64),
+        new Date().toISOString(),
+      );
+    } finally {
+      raw.close();
+    }
+
+    assert.equal(
+      driver.inspectMigration({ location: databasePath }).state,
+      "incomplete",
+    );
+
+    await assert.rejects(
+      () =>
+        driver.migrate({
+          location: databasePath,
+          backupDirectory,
+        }),
+      (error) => assertStorageError(error, "DATABASE_MIGRATION_INCOMPLETE"),
+    );
+    assert.equal(existsSync(backupDirectory), false);
+
+    assert.throws(
+      () =>
+        driver.open({
+          location: databasePath,
+          mode: "open-existing",
+        }),
+      (error) => assertStorageError(error, "DATABASE_MIGRATION_INCOMPLETE"),
+    );
+  });
+});
