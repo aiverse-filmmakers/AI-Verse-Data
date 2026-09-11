@@ -245,6 +245,40 @@ test("semantic corruption creates durable quarantine and blocks writes on an alr
   }
 });
 
+test("lost canonical record storage is detected from surviving committed evidence", async () => {
+  const driver = new SqliteStorageDriver();
+  const fixture = newWorkspaceRoot();
+  const handle = seed(driver, fixture.scope);
+  handle.database.close();
+
+  const raw = new Database(fixture.scope.databasePath());
+  try {
+    raw.pragma("foreign_keys = OFF");
+    raw.exec("DROP TABLE _record_relations");
+    raw.exec("DROP TABLE _records");
+  } finally {
+    raw.close();
+  }
+
+  try {
+    const report = await new DataRecovery(driver).inspect({
+      source: fixture.scope,
+    });
+    assert.equal(report.state, "quarantined");
+    assert.equal(report.corruption?.category, "semantic");
+    assert.match(
+      report.corruption?.message ?? "",
+      /canonical record.*missing|references a canonical record that is missing/i,
+    );
+    assert.equal(
+      readQuarantineMarker(fixture.scope.databasePath())?.category,
+      "semantic",
+    );
+  } finally {
+    rmSync(fixture.rootPath, { recursive: true, force: true });
+  }
+});
+
 test("migration-required state is reported separately and does not create corruption quarantine", async () => {
   const driver = new SqliteStorageDriver();
   const fixture = newWorkspaceRoot();
