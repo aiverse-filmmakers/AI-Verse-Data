@@ -457,7 +457,7 @@ Task 2.5 does not implement:
 - corruption repair;
 - background scheduling or cloud backup transport.
 
-At the Task 2.5 boundary, Task 15 / 41 was next. Task 15 / Phase 2.6 has since completed the internal database-format migration framework; user-schema migrations, recovery, and the Phase 2 gate remain later tasks.
+At the Task 2.5 boundary, Task 15 / 41 was next. Task 15 / Phase 2.6 has since completed the internal database-format migration framework, and Task 16 / Phase 2.7 has since completed user-schema migrations. Recovery and the Phase 2 gate remain later tasks.
 
 ### Task 2.5 gate
 
@@ -549,7 +549,7 @@ Task 2.6 does not implement:
 - corruption repair/recovery;
 - arbitrary model-generated SQL migrations.
 
-Those remain later tasks. Task 16 / 41 is next.
+At the Task 2.6 boundary, Task 16 / 41 was next. Task 16 / Phase 2.7 has since completed the governed user-schema migration framework; corruption/recovery behavior and the Phase 2 gate remain later tasks.
 
 ### Task 2.6 gate
 
