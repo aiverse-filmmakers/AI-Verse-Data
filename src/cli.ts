@@ -8,7 +8,7 @@ interface PackageMetadata {
   readonly version: string;
 }
 
-export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 3.1 adds read-only AI-Verse OS v2 compatibility detection with explicit compatible, no-os, and incompatible results. Native installation and registration remain later Phase 3 tasks.\n`;
+export const HELP_TEXT = `AI-Verse Data\n\nUsage:\n  ai-verse-data --help\n  ai-verse-data --version\n\nOptions:\n  -h, --help       Show this help text\n  -v, --version    Show package version\n\nPhase 3.2 adds hardened AI-Verse OS extension materialization and schema-1.0 registry registration with locking, lost-update protection, atomic replacement, and state preservation. Workspace Data initialization remains next.\n`;
 
 function packageVersion(): string {
   const packageUrl = new URL("../../package.json", import.meta.url);
