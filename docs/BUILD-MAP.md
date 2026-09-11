@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 15 / 41 tasks complete  
-**Next:** Task 16 / 41, Phase 2.7 - User-schema migration framework
+**Implementation progress:** 16 / 41 tasks complete  
+**Next:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    67%  (6/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    78%  (7/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **15 / 41 tasks complete**.
+Overall implementation: **16 / 41 tasks complete**.
 
 ---
 
@@ -675,11 +675,58 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 ## Task 16 / 41 - Phase 2.7 User-schema migration framework
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Safe additive changes, backfill plans, destructive-change controls, owner/provenance metadata.
+Implemented:
+
+- public `@ai-verse/data/schema-migrations` surface;
+- protocol operations `data.schema.migration.preview` and `data.schema.migration.execute`;
+- strict migration payload/backfill/approval validation;
+- consistent read-transaction preview;
+- deterministic SHA-256 preview digest bound to actor, owner, schema changes, schema digests, record versions/data, and relation outcomes;
+- exact preview-digest revalidation inside the execute transaction;
+- required-field backfills through deterministic constant values;
+- `set_if_missing` and destructive `set` backfill modes;
+- governed remove/replace/rename field migrations;
+- explicit destructive approval metadata;
+- immutable next entity-schema version;
+- maximum 500 active records per atomic migration;
+- maximum 8 MiB scanned source state and 8 MiB rewritten state;
+- every active record validated against its historical schema before transformation;
+- transformed records validated against the proposed schema;
+- active record schema version + record version advance exactly once;
+- soft-deleted records remain historical on their prior schema version;
+- normalized reference indexes rebuilt from transformed canonical data;
+- stale schema or active-record state rejects reviewed execution;
+- outer and child durable idempotency state;
+- matching execute retry returns one committed migration result/receipt;
+- per-record immutable `record.updated` provenance for migrated records;
+- one immutable transaction-level migration receipt/event with migration ID, owner, executor, schema versions/digests, preview digest, and approval metadata;
+- forced mid-commit provenance failure proves complete schema/record/relation/idempotency/audit rollback;
+- no arbitrary SQL, code expressions, cross-workspace migration, or Task 17 recovery behavior.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34593295702
+Behavioral commit:   4f8e4977035bae02576e7390199625ff5b73a2ae
+Node 22:             PASS
+Node 24:             PASS
+Tests:               183 / 183 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+**Task 2.7 gate: PASSED.**
 
 ## Task 17 / 41 - Phase 2.8 Corruption/recovery behavior
+
+**Status:** NEXT
+
 Corruption detection, fail-closed writes, recovery reporting, no silent empty replacement.
 
 ## Task 18 / 41 - Phase 2.9 Phase 2 gate
@@ -802,6 +849,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 16 / 41: Phase 2.7 - User-schema migration framework.**
+**Task 17 / 41: Phase 2.8 - Corruption/recovery behavior.**
 
-Do not begin Task 17 / 41 until Task 16 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 18 / 41 until Task 17 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
