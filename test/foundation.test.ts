@@ -42,12 +42,12 @@ test("package metadata exposes package, CLI, protocol, storage, scope, catalog, 
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 2.6 internal migration safety", () => {
+test("foundation surface reports Phase 2.7 user-schema migration safety", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.6");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.7");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "2.6",
+    phase: "2.7",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -67,5 +67,7 @@ test("foundation surface reports Phase 2.6 internal migration safety", () => {
     portableExportAvailable: true,
     portableImportAvailable: true,
     internalMigrationsAvailable: true,
+    userSchemaMigrationsAvailable: true,
+    schemaMigrationPreviewAvailable: true,
   });
 });
