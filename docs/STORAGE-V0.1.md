@@ -328,6 +328,28 @@ A future storage driver must provide equivalent rollback-preview and all-or-noth
 
 Detailed semantics: `docs/BULK-OPERATIONS-V0.1.md`.
 
+## Phase 2.4 bulk safety extension
+
+Phase 2.4 adds no new canonical SQLite table.
+
+Bulk preview and execution reuse the existing storage transaction boundary plus the already-implemented record, relation, idempotency, event, and receipt stores.
+
+Preview uses an outer immediate transaction, runs the real bounded transaction path, captures a deterministic review summary, then intentionally rolls back. The rollback covers:
+
+- canonical record rows;
+- relation-index rows;
+- nested mutation idempotency rows;
+- transaction idempotency rows;
+- provenance event rows;
+- mutation receipt rows;
+- SQLite event-sequence advancement.
+
+Bulk commit uses the existing transaction engine normally. Its durable outer retry binding is stored in the existing `_idempotency` table.
+
+Therefore the Phase 2.4 storage change is behavioral composition, not a schema-format change.
+
+Detailed semantics: `docs/BULK-OPERATIONS-V0.1.md`.
+
 ## What storage still deliberately does not implement
 
 
