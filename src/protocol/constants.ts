@@ -2,7 +2,7 @@ export const DATA_PROTOCOL_VERSION = "ai-verse-data/0.1" as const;
 
 export const DATA_OPERATIONS = [
   "data.space.list", "data.space.get", "data.space.create",
-  "data.schema.list", "data.schema.get", "data.schema.create", "data.schema.update",
+  "data.schema.list", "data.schema.get", "data.schema.create", "data.schema.update", "data.schema.migration.preview", "data.schema.migration.execute",
   "data.record.create", "data.record.get", "data.record.list", "data.record.update", "data.record.delete",
   "data.query", "data.aggregate", "data.bulk.preview", "data.bulk.execute", "data.transaction.execute", "data.events.list", "data.doctor", "data.status",
 ] as const;
@@ -19,7 +19,7 @@ export const DATA_ERROR_CODES = [
   "REQUEST_INVALID", "OPERATION_UNSUPPORTED", "PAYLOAD_INVALID",
   "DATA_NOT_INSTALLED", "DATA_DISABLED", "WORKSPACE_NOT_FOUND", "WORKSPACE_INACTIVE", "WORKSPACE_ID_MISMATCH",
   "DATA_SPACE_NOT_FOUND", "DATA_SPACE_ALREADY_EXISTS", "ENTITY_NOT_FOUND", "ENTITY_ALREADY_EXISTS", "SCHEMA_INVALID", "SCHEMA_VERSION_NOT_FOUND", "SCHEMA_VERSION_CONFLICT",
-  "SCHEMA_MIGRATION_REQUIRED", "RECORD_NOT_FOUND", "RECORD_VERSION_CONFLICT", "FIELD_UNKNOWN", "FIELD_INVALID",
+  "SCHEMA_MIGRATION_REQUIRED", "SCHEMA_MIGRATION_INVALID", "SCHEMA_MIGRATION_STALE", "SCHEMA_MIGRATION_LIMIT_EXCEEDED", "RECORD_NOT_FOUND", "RECORD_VERSION_CONFLICT", "FIELD_UNKNOWN", "FIELD_INVALID",
   "REFERENCE_INVALID", "QUERY_INVALID", "QUERY_LIMIT_EXCEEDED", "BULK_INVALID", "BULK_LIMIT_EXCEEDED", "BULK_PREVIEW_STALE", "RECEIPT_NOT_FOUND", "PERMISSION_DENIED", "APPROVAL_REQUIRED",
   "IDEMPOTENCY_CONFLICT", "TRANSACTION_INVALID", "DATABASE_UNAVAILABLE", "DATABASE_CORRUPT", "DATABASE_MIGRATION_REQUIRED",
   "DATABASE_VERSION_UNSUPPORTED", "PATH_UNSAFE", "INTERNAL_ERROR",
@@ -28,6 +28,8 @@ export const DATA_ERROR_CODES = [
 export const DATA_PROTOCOL_LIMITS = Object.freeze({
   maxRequestBytes: 256 * 1024,
   maxSchemaFields: 128,
+  maxSchemaMigrationRecords: 500,
+  maxSchemaMigrationBytes: 8 * 1024 * 1024,
   maxFieldNameLength: 64,
   maxDescriptionLength: 4096,
   maxRecordBytes: 128 * 1024,
