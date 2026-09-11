@@ -10,29 +10,29 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  5 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  6 / 9
 
-Overall implementation: 14 / 41 tasks complete
+Overall implementation: 15 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 14 / 41 - Phase 2.5: Backup/export/import foundation**
+**Task 15 / 41 - Phase 2.6: Internal migration framework**
 
 Behavioral implementation verification:
 
 ```text
-Behavioral commit:   ce03b101c3560825b0e994ca4b30a269c4e3c4a3
-GitHub Actions run:  34588281966
+Behavioral commit:   55c197b5c9c53eba6f09261555e9bf6e4807386e
+GitHub Actions run:  34590556661
 Node 22:             PASS
 Node 24:             PASS
-Tests:               162 / 162 PASS
+Tests:               173 / 173 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 14:
+Implemented through Task 15:
 
 - protocol and validation foundation;
 - SQLite storage driver and trusted workspace identity;
@@ -41,74 +41,77 @@ Implemented through Task 14:
 - durable mutation idempotency and exact replay;
 - immutable mutation events and durable receipts;
 - actor/request/transaction/workspace provenance;
-- SHA-256 provenance integrity and receipt/event linkage checks;
-- bounded opaque event queries;
-- transaction provenance-laundering protection;
 - bounded bulk preview and all-or-nothing execution;
-- `@ai-verse/data/backup`;
-- consistent SQLite online backup;
-- atomically reserved no-overwrite backup destinations;
-- separate physical backup and portable logical export formats;
-- versioned manifest + artifact receipt metadata;
-- payload and deterministic logical-state SHA-256 verification;
-- portable export from a consistent SQLite snapshot;
-- preservation of full schema history, records, tombstones, relation indexes, idempotency state, events, receipts, and event sequence;
-- valid historical pre-binding provenance preservation;
-- workspace-binding conflict rejection;
-- no-overwrite canonical restore/import;
-- staged materialization and SQLite sealing;
-- post-install canonical state verification.
+- consistent physical backup and verified portable export/import;
+- canonical SQLite database format version 2;
+- migration framework version 1;
+- engine-owned `_schema_migrations` ledger;
+- stable migration ID and deterministic migration-definition digest;
+- explicit `inspectMigration`, `migrate`, and `verifyMigrationBackup`;
+- normal open never auto-migrates;
+- supported format v1 migration-required gating;
+- fail-closed interrupted/failed migration state;
+- unsupported newer format rejection;
+- verified consistent pre-migration online backup;
+- migration backup manifest/receipt/digest validation;
+- transactional v1 to v2 migration;
+- durable in-progress/failed/completed migration lifecycle;
+- explicit retry/resume with attempt tracking;
+- current-format incomplete-state rejection;
+- post-migration SQLite integrity verification;
+- exact workspace-binding preservation;
+- canonical record/idempotency/provenance preservation across migration.
 
-Detailed Task 14 contract:
+Detailed Task 15 contract:
 
-`docs/BACKUP-EXPORT-IMPORT-V0.1.md`
+`docs/INTERNAL-MIGRATIONS-V0.1.md`
 
 Documentation closeout candidate verification:
 
 ```text
-Closeout head:       115280c8edb21eeac272828a01e5c56cc2feea90
-GitHub Actions run:  34588699217
+Closeout head:       2ce1cf3ce4d459885bb12552b6abb694806b803a
+GitHub Actions run:  34591037137
 Node 22:             PASS
 Node 24:             PASS
-Tests:               162 / 162 PASS
+Tests:               173 / 173 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-The behavioral implementation and documentation closeout candidate are verified. The final Task 14 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 14 fully closed.
+The behavioral implementation and documentation closeout candidate are verified. The final Task 15 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 15 fully closed.
 
 ## NEXT
 
-**Task 15 / 41 - Phase 2.6: Internal migration framework**
+**Task 16 / 41 - Phase 2.7: User-schema migration framework**
 
-Task 15 scope from the canonical Build Map:
+Task 16 scope from the canonical Build Map:
 
 ```text
-Database-format migrations
-Migration ledger
-Compatibility gates
-Interruption behavior
-Rollback/backup strategy
+Safe additive changes
+Backfill plans
+Destructive-change controls
+Owner/provenance metadata
 ```
 
-Do not start Task 16 until Task 15 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
+Do not start Task 17 until Task 16 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 15 architectural laws
+## Task 16 architectural laws
 
 The implementation must preserve:
 
-1. Internal database-format migrations are engine-owned and distinct from Task 16 user-entity schema migrations.
-2. Unsupported newer database formats must continue to fail closed rather than being silently downgraded or adopted.
-3. Migration state must be durable and detectable. An interrupted or incomplete migration must never look like a healthy completed database.
-4. The migration ledger is canonical engine metadata, not user Data and not Memory.
-5. Transactional DDL/migrations should be used where SQLite permits it, with explicit interruption semantics where it does not.
-6. A safe backup/rollback strategy must use the verified Phase 2.5 backup foundation rather than raw WAL-mode file copying.
-7. Trusted workspace binding and canonical ownership must survive migrations unchanged.
-8. Migration execution must not accept arbitrary model-generated SQL as a public agent/App operation.
-9. Task 15 must not implement Task 16 destructive user-schema migration/backfill behavior early.
-10. Task 15 must not implement Task 17 corruption-repair behavior early.
-11. No sibling repository modifications are permitted without separate explicit approval.
+1. User entity-schema migrations are distinct from Task 15 internal database-format migrations and must not reuse the internal format version as an entity-schema version.
+2. Every accepted entity schema remains an immutable historical version with its deterministic schema digest.
+3. Schema migration planning must respect `expectedSchemaVersion`; stale schema plans cannot silently apply over a newer canonical schema.
+4. Existing records must not become unreadable or silently invalid because of a schema change.
+5. Additive changes should remain the safest default. Required fields without a valid default/backfill need an explicit migration plan.
+6. Destructive operations such as remove/replace/rename/narrowing must not be improvised by model-generated DDL or direct SQL.
+7. Destructive schema changes require explicit migration semantics and sufficient approval/authority metadata. Ordinary record-write authority does not imply schema-migration authority.
+8. Backfills and record rewrites must be bounded, atomic or explicitly checkpointed, provenance-aware, and safe under optimistic concurrency/idempotency rules.
+9. Reference integrity and normalized relation indexes must remain consistent if migrated fields contain references.
+10. Migration provenance must identify the trusted actor/owner and the schema versions involved without turning Data events into Memory.
+11. Task 16 must not implement Task 17 corruption repair/recovery behavior early.
+12. No sibling repository modifications are permitted without separate explicit approval.
 
 ## Canonical documents to read before continuing
 
@@ -118,14 +121,14 @@ Read these first in a new session:
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-2-STATUS.md`
 4. `docs/ARCHITECTURE.md`
-5. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
-6. `docs/STORAGE-V0.1.md`
-7. `docs/SECURITY-AND-AUTHORITY.md`
-8. `docs/TESTING-AND-ACCEPTANCE.md`
-9. `docs/RESEARCH-AND-DECISIONS.md`
-10. `docs/PROTOCOL-V0.1.md`
+5. `docs/CATALOG-AND-SCHEMAS-V0.1.md`
+6. `docs/RECORD-CRUD-V0.1.md`
+7. `docs/INTERNAL-MIGRATIONS-V0.1.md`
+8. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
+9. `docs/SECURITY-AND-AUTHORITY.md`
+10. `docs/TESTING-AND-ACCEPTANCE.md`
 
-Then inspect the current storage identity/version handling, backup implementation, and all existing migration-related placeholders before changing code.
+Then inspect the current schema-update validation, immutable schema-history storage, record hydration/default rules, relation maintenance, transaction/idempotency/provenance paths, and all existing `SCHEMA_MIGRATION_REQUIRED` cases before changing code.
 
 ## Closeout rule for every future task
 

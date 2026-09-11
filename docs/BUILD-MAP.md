@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 14 / 41 tasks complete  
-**Next:** Task 15 / 41, Phase 2.6 - Internal migration framework
+**Implementation progress:** 15 / 41 tasks complete  
+**Next:** Task 16 / 41, Phase 2.7 - User-schema migration framework
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    56%  (5/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    67%  (6/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **14 / 41 tasks complete**.
+Overall implementation: **15 / 41 tasks complete**.
 
 ---
 
@@ -627,11 +627,56 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 ## Task 15 / 41 - Phase 2.6 Internal migration framework
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Database-format migrations, migration ledger, compatibility gates, interruption behavior, rollback/backup strategy.
+Implemented:
+
+- canonical SQLite database format version 2;
+- migration framework version 1;
+- engine-owned `_schema_migrations` STRICT ledger;
+- stable migration ID `sqlite-0001-v1-to-v2`;
+- deterministic migration-definition SHA-256;
+- explicit storage-driver `inspectMigration`, `migrate`, and `verifyMigrationBackup`;
+- normal database open never auto-migrates;
+- format v1 reported as `DATABASE_MIGRATION_REQUIRED`;
+- interrupted/failed migration state reported as `DATABASE_MIGRATION_INCOMPLETE`;
+- unsupported newer formats remain `DATABASE_VERSION_UNSUPPORTED`;
+- consistent online SQLite pre-migration backup before canonical migration state changes;
+- versioned migration-backup manifest + receipt with SHA-256 payload/manifest binding;
+- read-only backup identity + SQLite integrity verification;
+- no-overwrite migration-backup destination;
+- transactional v1 to v2 migration execution;
+- atomic format metadata + `user_version` + ledger completion;
+- durable `in_progress`, `failed`, and `completed` lifecycle states;
+- explicit retry/resume with incremented attempt number;
+- impossible current-format incomplete state fails closed;
+- post-migration integrity failure leaves fail-closed ledger state when possible;
+- trusted workspace binding preserved exactly;
+- canonical records, idempotent replay, and provenance preserved;
+- no Task 16 user-schema migration/backfill behavior.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34590556661
+Behavioral commit:   55c197b5c9c53eba6f09261555e9bf6e4807386e
+Node 22:             PASS
+Node 24:             PASS
+Tests:               173 / 173 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/INTERNAL-MIGRATIONS-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+**Task 2.6 gate: PASSED.**
 
 ## Task 16 / 41 - Phase 2.7 User-schema migration framework
+
+**Status:** NEXT
+
 Safe additive changes, backfill plans, destructive-change controls, owner/provenance metadata.
 
 ## Task 17 / 41 - Phase 2.8 Corruption/recovery behavior
@@ -757,6 +802,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 15 / 41: Phase 2.6 - Internal migration framework.**
+**Task 16 / 41: Phase 2.7 - User-schema migration framework.**
 
-Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 17 / 41 until Task 16 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

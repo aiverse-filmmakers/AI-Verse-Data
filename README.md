@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 14 / 41  
-**Latest completed:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
-**Next task:** Task 15 / 41, Phase 2.6 - Internal migration framework  
+**Completed implementation tasks:** 15 / 41  
+**Latest completed:** Task 15 / 41, Phase 2.6 - Internal migration framework  
+**Next task:** Task 16 / 41, Phase 2.7 - User-schema migration framework  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -164,9 +164,24 @@ Backup/export/import foundation
   -> workspace-binding and valid pre-binding provenance preservation
   -> no-overwrite artifact and canonical destination rules
   -> staged restore/import with post-install verification
+
+Task 15 / 41 - COMPLETE
+Internal migration framework
+  -> database format v2
+  -> engine-owned _schema_migrations ledger
+  -> explicit inspectMigration + migrate + verifyMigrationBackup
+  -> normal open never auto-migrates
+  -> deterministic migration-definition digests
+  -> verified consistent pre-migration backup
+  -> transactional v1 -> v2 migration
+  -> durable in-progress / failed / completed states
+  -> fail-closed interruption and current-format inconsistency handling
+  -> safe explicit retry/resume with attempt tracking
+  -> workspace binding and canonical reliability state preserved
+  -> unsupported newer formats remain fail-closed
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.5 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, and verified portable export/import. Migrations and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.6 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, and explicit internal database-format migrations. User-schema migrations and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -195,9 +210,9 @@ A new Data database receives durable identity:
 
 ```text
 format:          ai-verse-data/sqlite
-format version:  1
+format version:  2
 application_id:  0x41495644 (AIVD)
-user_version:    1
+user_version:    2
 ```
 
 The first internal table is deliberately tiny:
@@ -211,7 +226,9 @@ CREATE TABLE _aiverse_meta (
 
 The connection enforces foreign keys and WAL mode. Integrity checks report database health without attempting repair.
 
-Most importantly, an unrelated SQLite file is never silently converted into AI-Verse Data, and unsupported/newer Data formats fail closed.
+Format v2 also contains `migration_framework_version = 1` and the engine-owned `_schema_migrations` ledger. Supported format v1 databases require an explicit migration operation before normal open; they are never silently upgraded. Unsupported newer formats remain fail-closed.
+
+Most importantly, an unrelated SQLite file is never silently converted into AI-Verse Data.
 
 See [`docs/STORAGE-V0.1.md`](docs/STORAGE-V0.1.md).
 
@@ -335,23 +352,33 @@ Restore and import require the same trusted binding, refuse existing canonical d
 
 See [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md).
 
+## Internal database migrations
+
+Phase 2.6 advances the canonical SQLite format to version 2 and adds an engine-owned migration framework behind `@ai-verse/data/storage`.
+
+Normal database open never auto-migrates. A supported format v1 database reports `DATABASE_MIGRATION_REQUIRED`; interrupted or failed ledger state reports `DATABASE_MIGRATION_INCOMPLETE`. Explicit migration first creates and verifies a consistent pre-migration SQLite backup, then executes the registered migration transactionally while preserving workspace binding and canonical Data.
+
+The first migration is `sqlite-0001-v1-to-v2`. Migration rows bind a deterministic definition digest, from/to versions, lifecycle state, attempt number, backup evidence, timestamps, and bounded failure information. Explicit retry/resume is allowed only for the same installed known migration definition.
+
+See [`docs/INTERNAL-MIGRATIONS-V0.1.md`](docs/INTERNAL-MIGRATIONS-V0.1.md).
+
 ### Latest verification
 
-Task 14 behavioral CI run: `34588281966`  
-Behavioral commit: `ce03b101c3560825b0e994ca4b30a269c4e3c4a3`
+Task 15 behavioral CI run: `34590556661`  
+Behavioral commit: `55c197b5c9c53eba6f09261555e9bf6e4807386e`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-162 tests
-162 passed
+173 tests
+173 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite now additionally proves exact backup/restore state equality, portable export/import equality, schema-history and tombstone preservation, record and bulk replay after transfer, provenance preservation, tamper rejection, binding rejection, no-overwrite behavior, and preservation of valid pre-binding provenance.
+The suite now additionally proves explicit v1 to v2 migration, verified pre-migration backup, migration-required gating, failure/interruption persistence, safe explicit retry/resume, current-format incomplete-state rejection, binding preservation, canonical record/idempotency/provenance preservation, backup tamper rejection, no-overwrite behavior, and continued newer-format rejection.
 
 ## Why Data is separate from Memory
 
@@ -466,10 +493,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md) - implemented immutable events, durable receipts, and provenance contract
 - [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md) - implemented bounded preview/execute bulk safety contract
 - [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md) - implemented backup, verification, restore, and portable export/import contract
+- [`docs/INTERNAL-MIGRATIONS-V0.1.md`](docs/INTERNAL-MIGRATIONS-V0.1.md) - implemented internal database-format migration contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 15 / 41, Phase 2.6 - Internal migration framework.**
+**Next: Task 16 / 41, Phase 2.7 - User-schema migration framework.**
