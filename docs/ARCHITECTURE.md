@@ -639,15 +639,17 @@ Owned by AI-Verse Data itself. Phase 2.6 implements explicit versioned internal 
 
 Owned as Data definitions inside a Data Space.
 
-For first release, prefer additive entity-schema evolution:
+The normal catalog update path remains additive-first:
 
 - add optional field;
-- add required field only with a valid default/backfill plan;
-- add enum values;
+- add required field directly only with a valid default;
+- add enum values through compatible schema definitions;
 - add compatible constraints;
 - deprecate fields without immediately destroying stored values.
 
-Destructive changes such as removing fields, narrowing types, or deleting entities require explicit migration machinery and should not be improvised by a model.
+Phase 2.7 implements the separate governed migration path for changes that require active record transformation. It previews the proposed complete schema against every active record, binds the reviewed state to a deterministic digest, supports explicit constant backfills, requires approval metadata for destructive remove/replace/rename or force-set behavior, and commits the immutable next schema version plus all active record/relation/idempotency/provenance changes atomically.
+
+User-schema versions remain separate from the internal SQLite database-format version. No model-generated SQL or arbitrary migration code is executed.
 
 ## 22. Attachments
 
