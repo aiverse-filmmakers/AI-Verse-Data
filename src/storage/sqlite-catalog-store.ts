@@ -71,9 +71,13 @@ function mapCurrentSchema(row: CurrentSchemaRow): StoredCurrentEntitySchema {
 }
 
 export class SqliteCatalogStorage implements DataCatalogStorage {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly assertWritable: () => void = () => {},
+  ) {}
 
   initialize(): void {
+    this.assertWritable();
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS _data_spaces (
         space_id TEXT PRIMARY KEY,
@@ -116,6 +120,7 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
   }
 
   createSpace(space: StoredDataSpace): boolean {
+    this.assertWritable();
     const result = this.database
       .prepare(
         `INSERT OR IGNORE INTO _data_spaces
@@ -167,6 +172,7 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
   }
 
   createSchema(schema: StoredEntitySchemaVersion): CatalogCreateSchemaResult {
+    this.assertWritable();
     const transaction = this.database.transaction((): CatalogCreateSchemaResult => {
       const space = this.database
         .prepare("SELECT 1 FROM _data_spaces WHERE space_id = ?")
@@ -316,6 +322,7 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
     expectedVersion: number,
     schema: StoredEntitySchemaVersion,
   ): CatalogUpdateSchemaResult {
+    this.assertWritable();
     const transaction = this.database.transaction((): CatalogUpdateSchemaResult => {
       const current = this.database
         .prepare(
