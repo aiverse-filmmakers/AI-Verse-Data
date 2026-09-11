@@ -13,5 +13,9 @@ export interface StoredIdempotencyEntry {
 export interface DataIdempotencyStorage {
   initialize(): void;
   get(idempotencyKey: string): StoredIdempotencyEntry | null;
+  list(
+    afterKey: string | null,
+    limit: number,
+  ): readonly StoredIdempotencyEntry[];
   create(entry: StoredIdempotencyEntry): boolean;
 }
