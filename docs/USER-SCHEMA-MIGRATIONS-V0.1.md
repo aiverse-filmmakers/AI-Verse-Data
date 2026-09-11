@@ -467,16 +467,18 @@ Task 16 acceptance requires proof that:
 - preview uses a consistent SQLite read transaction;
 - forced mid-commit provenance failure rolls everything back;
 - migration provenance records owner/executor/schema metadata;
+- rewritten-state expansion beyond 8 MiB is rejected before mutation;
+- migration idempotency and provenance survive verified portable export/import and replay exactly after import;
 - Node 22 and Node 24 pass the complete repository suite.
 
 Behavioral verification:
 
 ```text
-GitHub Actions run: 34593295702
-Behavioral commit:   4f8e4977035bae02576e7390199625ff5b73a2ae
+GitHub Actions run: 34593805448
+Behavioral commit:   52ca515e3ad18ecdb9dd6907b7362aa00c3530e1
 Node 22:             PASS
 Node 24:             PASS
-Tests:               183 / 183 PASS
+Tests:               185 / 185 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
