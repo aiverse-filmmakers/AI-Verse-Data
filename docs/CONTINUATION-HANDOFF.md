@@ -66,7 +66,20 @@ Detailed Task 15 contract:
 
 `docs/INTERNAL-MIGRATIONS-V0.1.md`
 
-The behavioral implementation is complete. The final Task 15 report must still verify the exact documentation-closeout branch head and then the exact merged `main` head before declaring Task 15 fully closed.
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       2ce1cf3ce4d459885bb12552b6abb694806b803a
+GitHub Actions run:  34591037137
+Node 22:             PASS
+Node 24:             PASS
+Tests:               173 / 173 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The behavioral implementation and documentation closeout candidate are verified. The final Task 15 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 15 fully closed.
 
 ## NEXT
 
