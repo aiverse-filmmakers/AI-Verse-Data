@@ -11,10 +11,11 @@ export * from "./idempotency/index.js";
 export * from "./provenance/index.js";
 export * from "./bulk/index.js";
 export * from "./backup/index.js";
+export * from "./schema-migrations/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.6" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.7" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -38,12 +39,14 @@ export interface FoundationStatus {
   readonly portableExportAvailable: true;
   readonly portableImportAvailable: true;
   readonly internalMigrationsAvailable: true;
+  readonly userSchemaMigrationsAvailable: true;
+  readonly schemaMigrationPreviewAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, and explicit internal database-format migrations exist through Phase 2.6.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations exist through Phase 2.7.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -68,5 +71,7 @@ export function getFoundationStatus(): FoundationStatus {
     portableExportAvailable: true,
     portableImportAvailable: true,
     internalMigrationsAvailable: true,
+    userSchemaMigrationsAvailable: true,
+    schemaMigrationPreviewAvailable: true,
   };
 }
