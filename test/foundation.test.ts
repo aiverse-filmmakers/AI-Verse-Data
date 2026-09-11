@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes package, CLI, protocol, storage, scope, catalog, records, query, transactions, idempotency, provenance, bulk, and backup subpaths", () => {
+test("package metadata exposes all implemented Phase 2.8 public subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -39,15 +39,17 @@ test("package metadata exposes package, CLI, protocol, storage, scope, catalog, 
   assert.ok("./provenance" in packageJson.exports);
   assert.ok("./bulk" in packageJson.exports);
   assert.ok("./backup" in packageJson.exports);
+  assert.ok("./schema-migrations" in packageJson.exports);
+  assert.ok("./recovery" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 2.7 user-schema migration safety", () => {
+test("foundation surface reports Phase 2.8 corruption recovery safety", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.7");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.8");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "2.7",
+    phase: "2.8",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -69,5 +71,8 @@ test("foundation surface reports Phase 2.7 user-schema migration safety", () => 
     internalMigrationsAvailable: true,
     userSchemaMigrationsAvailable: true,
     schemaMigrationPreviewAvailable: true,
+    corruptionRecoveryAvailable: true,
+    quarantineWriteBlockingAvailable: true,
+    stagedRecoveryAvailable: true,
   });
 });
