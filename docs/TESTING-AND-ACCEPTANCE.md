@@ -298,6 +298,41 @@ Cancelled:           0
 
 Detailed contract: `docs/BULK-OPERATIONS-V0.1.md`.
 
+## 5.6 Phase 2.6 internal migration framework verification
+
+Task 15 adds explicit database-format migration acceptance coverage.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34590556661
+Behavioral commit:   55c197b5c9c53eba6f09261555e9bf6e4807386e
+Node 22:             PASS
+Node 24:             PASS
+Tests:               173 / 173 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The suite proves:
+
+- fresh databases bootstrap directly at current format v2;
+- supported format v1 is detected as migration-required rather than silently upgraded;
+- normal open refuses automatic migration;
+- explicit v1 to v2 migration preserves canonical records, idempotent replay, provenance, timestamps, and trusted workspace binding;
+- a verified consistent pre-migration backup is created before canonical migration state changes;
+- migration backup payload/manifest/receipt tampering is rejected;
+- failed migrations remain at the old format and leave durable fail-closed ledger state;
+- interrupted `in_progress` migration state blocks normal open;
+- explicit retry/resume increments attempt state and completes transactionally;
+- an existing migration-backup destination is never overwritten;
+- already-current migration is a no-op;
+- impossible current-format incomplete ledger state fails closed;
+- unsupported newer database formats remain rejected.
+
+Detailed contract: `docs/INTERNAL-MIGRATIONS-V0.1.md`.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
@@ -318,7 +353,11 @@ Must prove:
 - database backup is consistent;
 - exported data can be verified/reimported according to the supported format;
 - corruption is reported instead of silently replaced;
-- migration-required state blocks unsafe writes.
+- migration-required state blocks unsafe writes;
+- supported older internal formats require explicit migration rather than auto-migration;
+- pre-migration backup evidence is verified before canonical migration state changes;
+- interrupted/failed migration state blocks normal use until an explicit supported retry completes;
+- internal migrations preserve trusted workspace binding and canonical reliability state.
 
 ## 7. Phase 3 Native Installation gate
 
