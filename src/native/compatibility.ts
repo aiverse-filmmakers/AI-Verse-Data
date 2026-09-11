@@ -215,20 +215,30 @@ function parseManifest(contents: string): {
   };
 }
 
-function partialHostMarkerCount(rootPath: string): number {
-  const markers: readonly (readonly string[])[] = [
-    ["AGENTS.md"],
-    ["operator"],
-    ["workspaces"],
+function partialHostEvidence(rootPath: string): {
+  readonly strong: boolean;
+  readonly genericCount: number;
+} {
+  const strongMarkers: readonly (readonly string[])[] = [
     ["system", "extensions", "README.md"],
     [".aiverse", "extensions", "registry.json"],
   ];
+  const genericMarkers: readonly (readonly string[])[] = [
+    ["AGENTS.md"],
+    ["operator"],
+    ["workspaces"],
+  ];
 
-  return markers.reduce(
-    (count, segments) =>
-      count + (existsSync(join(rootPath, ...segments)) ? 1 : 0),
-    0,
-  );
+  return {
+    strong: strongMarkers.some((segments) =>
+      existsSync(join(rootPath, ...segments)),
+    ),
+    genericCount: genericMarkers.reduce(
+      (count, segments) =>
+        count + (existsSync(join(rootPath, ...segments)) ? 1 : 0),
+      0,
+    ),
+  };
 }
 
 function resolveSafePath(
@@ -423,7 +433,8 @@ export class AiVerseOsCompatibilityDetector
     const manifestPath = manifestResolved.path!;
 
     if (!existsSync(manifestPath)) {
-      if (partialHostMarkerCount(root.canonicalPath) >= 2) {
+      const partial = partialHostEvidence(root.canonicalPath);
+      if (partial.strong || partial.genericCount >= 2) {
         return result("incompatible", root.canonicalPath, null, [
           compatibilityIssue(
             "MANIFEST_MISSING",
