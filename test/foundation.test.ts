@@ -22,7 +22,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes all implemented Phase 2 public subpaths", () => {
+test("package metadata exposes all implemented Phase 3.1 public subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -41,15 +41,16 @@ test("package metadata exposes all implemented Phase 2 public subpaths", () => {
   assert.ok("./backup" in packageJson.exports);
   assert.ok("./schema-migrations" in packageJson.exports);
   assert.ok("./recovery" in packageJson.exports);
+  assert.ok("./native" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports completed Phase 2 reliability acceptance", () => {
+test("foundation surface reports Phase 3.1 native compatibility detection", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "2.9");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "3.1");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "2.9",
+    phase: "3.1",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -75,5 +76,6 @@ test("foundation surface reports completed Phase 2 reliability acceptance", () =
     quarantineWriteBlockingAvailable: true,
     stagedRecoveryAvailable: true,
     phase2AcceptanceVerified: true,
+    nativeCompatibilityAvailable: true,
   });
 });
