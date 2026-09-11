@@ -467,6 +467,8 @@ The gate proves:
 - physical and semantic corruption remain distinguishable from migration/scope/format failures;
 - staged recovery uses only verified same-binding backup/export artifacts and never overwrites the corrupt canonical source.
 
+Task 18 adds `test/phase2-integration.test.ts` to compose these guarantees across realistic lifecycle, migration, restart, corruption, and recovery sequences. The full repository suite retains the dedicated separate-process race, rollback-injection, tamper, hard-limit, interruption, approval, and quarantine tests from Tasks 10 through 17.
+
 **Phase 2 gate result: PASSED.**
 
 ## 7. Phase 3 Native Installation gate
