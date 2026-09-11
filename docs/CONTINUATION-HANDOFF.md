@@ -20,7 +20,7 @@ Overall implementation: 18 / 41 tasks complete
 
 **Task 18 / 41 - Phase 2.9: Phase 2 reliability/adversarial gate**
 
-Behavioral verification:
+Behavioral integration verification:
 
 ```text
 Behavioral commit:   d173e822d5a851051bdd1c3c9c9b4642ec1d58bc
@@ -33,81 +33,91 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Detailed final Phase 2 acceptance record:
+Phase 2.9 machine-readable/public-status verification:
+
+```text
+Phase 2.9 head:      7a0925db3e8924f2137931cf0e8a1484b196ea83
+GitHub Actions run:  34600518720
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Task 18 adds the cross-feature integration gate while retaining all dedicated Phase 2 adversarial suites.
+
+The final gate proves composition across:
+
+- race-safe optimistic concurrency;
+- durable exact idempotent replay;
+- immutable events, receipts, and provenance;
+- bounded bulk preview/execute;
+- consistent physical backup;
+- portable export/import verification;
+- explicit internal database-format migration;
+- governed state-bound user-schema migration;
+- corruption quarantine;
+- verified same-binding staged recovery;
+- restart/reopen durability;
+- preservation of replay/provenance through migration and recovery;
+- distinct stale/conflict/migration/corruption failure classes;
+- no silent empty replacement or destructive recovery overwrite.
+
+Detailed acceptance:
 
 `docs/PHASE-2-ACCEPTANCE.md`
 
-Task 18 adds the integration gate rather than another product feature. The complete Phase 2 surface is now verified across:
+Phase 2 is now **9 / 9 complete**.
 
-- optimistic concurrency, including separate-process races;
-- durable idempotent replay and conflicting-key rejection;
-- immutable events, receipts, and transaction provenance;
-- bounded rollback-only bulk preview and atomic execute;
-- consistent SQLite backup and portable export/import;
-- explicit internal SQLite format migration;
-- governed state-bound user-schema migration;
-- corruption detection and durable quarantine;
-- same-binding verified staged recovery;
-- close/reopen durability;
-- cross-feature replay/provenance preservation;
-- adversarial failure-class separation.
-
-Task 18's dedicated integration stories prove:
-
-1. replay + OCC + bulk + schema migration + backup/export + reopen remain coherent;
-2. corruption -> quarantine -> staged verified recovery preserves idempotent and schema-migration replay without duplicate provenance;
-3. OCC/idempotency/bulk/schema-migration stale/conflict states remain distinct;
-4. internal format migration preserves replay/provenance and supports new writes;
-5. unrecognized, migration-required, and corruption/quarantine states remain distinct.
-
-The dedicated feature suites remain authoritative for process races, tamper detection, forced rollback, byte/count ceilings, migration interruption, and corruption injection.
-
-The final Task 18 report must still verify the documentation-closeout branch head and then the exact merged `main` head before declaring Task 18 fully closed.
+The final Task 18 report must still verify the documentation-closeout branch head and then the exact merged `main` head before Phase 2 is declared fully closed in the user-facing report.
 
 ## NEXT
 
 **Task 19 / 41 - Phase 3.1: AI-Verse OS compatibility detector**
 
-Canonical Build Map scope:
+Canonical Task 19 scope:
 
 ```text
 AI-Verse OS v2 / unified-workspace detection
 extension-contract verification
-safe path checks
+safe trusted-root/path checks
 explicit compatible / no-os / incompatible results
 ```
 
-Task 19 begins Phase 3. It must detect host compatibility without installing, registering, initializing Data, or modifying the host.
+Do not begin Task 20 until Task 19 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
 ## Task 19 architectural laws
 
-1. Detection is read-only. Compatibility inspection must not mutate the AI-Verse OS repository, extension registry, workspaces, or Data databases.
-2. `compatible`, `no-os`, and `incompatible` are distinct results. Missing OS must not be treated as a broken OS, and an incompatible OS must not silently fall back to standalone mode.
-3. Compatibility must be based on the actual supported AI-Verse OS contract, not repo-name guessing or incidental files.
-4. The detector must verify the v2/unified-workspace architecture and the extension contract required by later Data installation tasks.
-5. Paths derived from the candidate OS root must be validated against traversal/symlink escape before reading host-owned files.
-6. Unknown future metadata fields should be tolerated when the supported contract remains valid; unsupported required major/architecture changes must fail visibly.
-7. Task 19 must not implement Task 20 extension materialization or registry writes early.
-8. Task 19 must not initialize Data in any workspace. Workspace Data initialization belongs to Task 21.
-9. Task 19 must not modify tracked host files such as `AI-VERSE.yaml`, `AGENTS.md`, `CLAUDE.md`, or sibling extension state.
-10. Standalone Data must remain usable without AI-Verse OS, but standalone fallback must never mask a detected incompatible AI-Verse OS.
-11. Tests should use local fixture repositories representing compatible, missing, malformed, and incompatible hosts. Do not require sibling-repository mutation.
-12. No sibling repository changes are permitted without separate explicit approval.
+Task 19 must preserve:
+
+1. Compatibility detection is read-only. Detection must not install, register, initialize Data, or mutate an OS repository.
+2. The detector must distinguish at least `compatible`, `no-os`, and `incompatible`; absence must never be silently treated as compatibility.
+3. Native integration must target the actual AI-Verse OS v2/unified-workspace contract, not a guessed directory shape.
+4. The detector must validate the specific extension contract Data needs before reporting compatibility.
+5. Unsupported OS major/schema/architecture state must fail visibly rather than falling back to standalone and masking the incompatibility.
+6. Trusted-root and path validation must reject symlink/path escape before any later native lifecycle operation can rely on the result.
+7. Detection must preserve unknown/unrelated OS state and must not read sibling repositories as canonical Data authority.
+8. Dashboard `systemId`, Brain state, Memory state, Multiple Bots state, and Skills registry are not Data workspace identity.
+9. Task 19 must not materialize extension files or edit `.aiverse/extensions/registry.json`; that belongs to Task 20.
+10. Task 19 must not initialize workspace databases; that belongs to Task 21.
+11. Standalone Data behavior must remain available when no AI-Verse OS is present, but it must not hide an explicitly incompatible OS.
+12. No sibling repository modifications are permitted without separate explicit approval.
 
 ## Canonical documents to read before Task 19
 
-Read these first:
-
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
-3. `docs/ARCHITECTURE.md`
-4. `docs/ECOSYSTEM-INTEGRATION.md`
-5. `docs/INSTALLATION-AND-LIFECYCLE.md`
-6. `docs/SECURITY-AND-AUTHORITY.md`
-7. `docs/TESTING-AND-ACCEPTANCE.md`
-8. `docs/PHASE-2-ACCEPTANCE.md`
+3. `docs/PHASE-2-ACCEPTANCE.md`
+4. `docs/ARCHITECTURE.md`
+5. `docs/ECOSYSTEM-INTEGRATION.md`
+6. `docs/INSTALLATION-AND-LIFECYCLE.md`
+7. `docs/SCOPE-AND-IDENTITY-V0.1.md`
+8. `docs/SECURITY-AND-AUTHORITY.md`
+9. `docs/TESTING-AND-ACCEPTANCE.md`
 
-Then inspect the actual current host-integration assumptions and fixture requirements before adding the compatibility detector. Do not start extension registration/materialization in Task 19.
+Then inspect current native-integration placeholders and fixture expectations before introducing the detector. Do not implement Task 20 registration/materialization early.
 
 ## Closeout rule for every future task
 
