@@ -192,9 +192,10 @@ function validateBindingValue(
 }
 
 function bindingEquals(
-  left: StorageDatabaseBinding,
-  right: StorageDatabaseBinding,
+  left: StorageDatabaseBinding | null,
+  right: StorageDatabaseBinding | null,
 ): boolean {
+  if (left === null || right === null) return left === right;
   return (
     left.bindingVersion === right.bindingVersion &&
     left.kind === right.kind &&
