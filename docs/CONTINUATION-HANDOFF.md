@@ -69,7 +69,20 @@ Detailed Task 16 contract:
 
 `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
 
-The behavioral implementation is complete. The final Task 16 report must still verify the exact documentation-closeout branch head and then the exact merged `main` head before declaring Task 16 fully closed.
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       ec03751517caf67e72361c25cd77792b77da3bd7
+GitHub Actions run:  34593931881
+Node 22:             PASS
+Node 24:             PASS
+Tests:               185 / 185 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The behavioral implementation and documentation closeout candidate are verified. The final Task 16 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 16 fully closed.
 
 ## NEXT
 
