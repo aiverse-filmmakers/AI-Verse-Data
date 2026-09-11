@@ -1,8 +1,16 @@
-import { closeSync, existsSync, openSync, rmSync, statSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 
 import Database from "better-sqlite3";
 
 import { DataStorageError, isDataStorageError } from "./errors.js";
+import { backupSqliteDatabase } from "./sqlite-backup.js";
+import {
+  assertSqliteFormatCurrent,
+  bootstrapSqliteMigrationFramework,
+  inspectSqliteMigrationState,
+  migrateSqliteDatabase,
+  verifySqliteMigrationBackup,
+} from "./sqlite-migrations.js";
 import { SqliteCatalogStorage } from "./sqlite-catalog-store.js";
 import { SqliteRecordStorage } from "./sqlite-record-store.js";
 import { SqliteQueryStorage } from "./sqlite-query-store.js";
@@ -22,6 +30,12 @@ import {
   type StorageBackupResult,
   type StorageDatabaseMetadata,
   type StorageDiagnostics,
+  type StorageMigrationBackupVerification,
+  type StorageMigrationBackupVerifyOptions,
+  type StorageMigrationInspectOptions,
+  type StorageMigrationOptions,
+  type StorageMigrationResult,
+  type StorageMigrationStatus,
   type StorageOpenOptions,
   type StorageTransactionMode,
 } from "./types.js";
@@ -235,6 +249,8 @@ function bootstrap(
       insert.run("workspace_id", binding.workspaceId);
     }
 
+    bootstrapSqliteMigrationFramework(database);
+
     database.pragma(
       `application_id = ${AI_VERSE_DATA_SQLITE_APPLICATION_ID}`,
     );
@@ -330,13 +346,6 @@ function readMetadata(database: Database.Database): StorageDatabaseMetadata {
     );
   }
 
-  if (formatVersion !== AI_VERSE_DATA_DATABASE_FORMAT_VERSION) {
-    throw new DataStorageError(
-      "DATABASE_VERSION_UNSUPPORTED",
-      `Database format ${formatVersion} is unsupported by this engine; expected ${AI_VERSE_DATA_DATABASE_FORMAT_VERSION}.`,
-    );
-  }
-
   if (Number.isNaN(Date.parse(createdAt))) {
     throw new DataStorageError(
       "DATABASE_CORRUPT",
@@ -422,6 +431,7 @@ function validateOrBootstrap(
   }
 
   const metadata = readMetadata(database);
+  assertSqliteFormatCurrent(database, metadata);
   return ensureExpectedBinding(database, metadata, expectedBinding);
 }
 
@@ -501,70 +511,7 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 
   async backupTo(location: string): Promise<StorageBackupResult> {
     this.assertOpen();
-
-    if (location.length === 0 || location.includes("\u0000")) {
-      throw new DataStorageError(
-        "DATABASE_UNAVAILABLE",
-        "SQLite backup destination must be a non-empty filesystem path without NUL.",
-      );
-    }
-    if (this.database.inTransaction) {
-      throw new DataStorageError(
-        "DATABASE_UNAVAILABLE",
-        "SQLite backup cannot begin while the source connection has an active transaction.",
-      );
-    }
-
-    let reservation: number | undefined;
-    try {
-      reservation = openSync(location, "wx", 0o600);
-      closeSync(reservation);
-      reservation = undefined;
-    } catch (error) {
-      if (reservation !== undefined) {
-        try {
-          closeSync(reservation);
-        } catch {
-          // Continue cleanup of the file reserved by this operation.
-        }
-        rmSync(location, { force: true });
-      }
-      throw new DataStorageError(
-        "DATABASE_UNAVAILABLE",
-        "SQLite backup destination already exists or cannot be reserved safely.",
-        error,
-      );
-    }
-
-    try {
-      const result = await this.database.backup(location);
-      if (
-        !Number.isSafeInteger(result.totalPages) ||
-        result.totalPages < 0 ||
-        result.remainingPages !== 0
-      ) {
-        throw new DataStorageError(
-          "DATABASE_CORRUPT",
-          "SQLite backup completed with invalid completion metadata.",
-        );
-      }
-      return {
-        totalPages: result.totalPages,
-        remainingPages: 0,
-      };
-    } catch (error) {
-      try {
-        rmSync(location, { force: true });
-      } catch {
-        // Preserve the original backup failure.
-      }
-      if (isDataStorageError(error)) throw error;
-      throw new DataStorageError(
-        "DATABASE_UNAVAILABLE",
-        "Unable to create a consistent SQLite backup.",
-        error,
-      );
-    }
+    return backupSqliteDatabase(this.database, location);
   }
 
   catalogStorage(): SqliteCatalogStorage {
@@ -625,6 +572,138 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 export class SqliteStorageDriver implements DataStorageDriver {
   readonly kind = SQLITE_DRIVER_NAME;
 
+  inspectMigration(options: StorageMigrationInspectOptions): StorageMigrationStatus {
+    const location = options.location;
+    if (location.length === 0) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite database location must not be empty.",
+      );
+    }
+    if (!existsSync(location)) {
+      throw new DataStorageError(
+        "DATABASE_NOT_FOUND",
+        "AI-Verse Data database does not exist.",
+      );
+    }
+    if (!statSync(location).isFile()) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite database location must be a file.",
+      );
+    }
+
+    let database: Database.Database | undefined;
+    try {
+      database = new Database(location, {
+        readonly: true,
+        fileMustExist: true,
+      });
+      ensureSupportedSqlite(database);
+      const metadata = readMetadata(database);
+      this.assertMigrationExpectedBinding(
+        metadata.binding,
+        options.expectedBinding,
+      );
+      return inspectSqliteMigrationState(database, metadata);
+    } catch (error) {
+      if (isDataStorageError(error)) throw error;
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "Unable to inspect AI-Verse Data migration state.",
+        error,
+      );
+    } finally {
+      if (database !== undefined) database.close();
+    }
+  }
+
+  async migrate(options: StorageMigrationOptions): Promise<StorageMigrationResult> {
+    const location = options.location;
+    if (location.length === 0) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite database location must not be empty.",
+      );
+    }
+    if (!existsSync(location)) {
+      throw new DataStorageError(
+        "DATABASE_NOT_FOUND",
+        "AI-Verse Data database does not exist.",
+      );
+    }
+    if (!statSync(location).isFile()) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite database location must be a file.",
+      );
+    }
+
+    let database: Database.Database | undefined;
+    try {
+      database = new Database(location, { fileMustExist: true });
+      ensureSupportedSqlite(database);
+      const before = readMetadata(database);
+      this.assertMigrationExpectedBinding(
+        before.binding,
+        options.expectedBinding,
+      );
+      configureConnection(database);
+
+      const result = await migrateSqliteDatabase(
+        database,
+        before,
+        options.backupDirectory,
+      );
+
+      const after = readMetadata(database);
+      assertSqliteFormatCurrent(database, after);
+      if (!bindingEquals(before.binding, after.binding)) {
+        throw new DataStorageError(
+          "DATABASE_MIGRATION_FAILED",
+          "Internal migration changed the canonical database scope binding.",
+        );
+      }
+      this.assertMigrationExpectedBinding(
+        after.binding,
+        options.expectedBinding,
+      );
+
+      const integrityRows = database.pragma("integrity_check") as Array<
+        Record<string, unknown>
+      >;
+      const integrityMessages = integrityRows.map((row) =>
+        String(row.integrity_check ?? Object.values(row)[0] ?? "unknown"),
+      );
+      if (
+        integrityMessages.length !== 1 ||
+        integrityMessages[0]?.toLowerCase() !== "ok"
+      ) {
+        throw new DataStorageError(
+          "DATABASE_MIGRATION_FAILED",
+          `Migrated database failed SQLite integrity verification: ${integrityMessages.join("; ")}`,
+        );
+      }
+
+      return result;
+    } catch (error) {
+      if (isDataStorageError(error)) throw error;
+      throw new DataStorageError(
+        "DATABASE_MIGRATION_FAILED",
+        "Internal database migration could not complete safely.",
+        error,
+      );
+    } finally {
+      if (database !== undefined) database.close();
+    }
+  }
+
+  verifyMigrationBackup(
+    options: StorageMigrationBackupVerifyOptions,
+  ): StorageMigrationBackupVerification {
+    return verifySqliteMigrationBackup(options);
+  }
+
   open(options: StorageOpenOptions): DataStorageDatabase {
     const mode = options.mode ?? "create-or-open";
     const location = options.location;
@@ -681,4 +760,19 @@ export class SqliteStorageDriver implements DataStorageDriver {
       );
     }
   }
+
+  private assertMigrationExpectedBinding(
+    stored: StorageDatabaseBinding | null,
+    expected: StorageDatabaseBinding | undefined,
+  ): void {
+    if (expected === undefined) return;
+    validateBindingValue(expected, "expected");
+    if (stored !== null && !bindingEquals(stored, expected)) {
+      throw new DataStorageError(
+        "DATABASE_SCOPE_CONFLICT",
+        `Database is bound to ${stored.kind} workspace '${stored.workspaceId}', not ${expected.kind} workspace '${expected.workspaceId}'.`,
+      );
+    }
+  }
+
 }
