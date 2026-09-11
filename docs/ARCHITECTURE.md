@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 complete; Phase 2.1 concurrency, Phase 2.2 idempotency, Phase 2.3 provenance, and Phase 2.4 bounded bulk safety implemented
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native AI-Verse OS compatibility detection implemented
 
 ## 1. Architectural position
 
@@ -84,6 +84,10 @@ Future adapters
 ```
 
 No consumer should need to know SQLite file layout to use Data.
+
+Phase 3.1 now implements the first AI-Verse adapter boundary: a read-only compatibility detector verifies the OS v2 `unified-workspace` manifest, required native host structure, trusted path safety, and the local extension registry contract before any later native mutation is allowed. It returns explicit `compatible`, `no-os`, or `incompatible` state.
+
+The detector does not register Data, write the extension registry, or initialize workspace databases. Those remain later Phase 3 responsibilities.
 
 ## 3. Canonical storage placement
 
@@ -245,7 +249,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog, `_records`, `_record_relations`, `_idempotency`, `_events`, `_mutation_receipts`, and the engine-owned `_schema_migrations` ledger are now implemented. Phase 2.6 advances the internal SQLite format to version 2 with explicit migration inspection/execution and verified pre-migration backups. Task 16 remains responsible for user entity-schema migration/backfill behavior.
+The catalog, `_records`, `_record_relations`, `_idempotency`, `_events`, `_mutation_receipts`, and the engine-owned `_schema_migrations` ledger are implemented. Phase 2.6 advances the internal SQLite format to version 2 with explicit migration inspection/execution and verified pre-migration backups. Phase 2.7 implements governed user entity-schema migration/backfill behavior, and Phase 2.8 adds corruption quarantine/recovery staging.
 
 ## 7. Record representation
 
