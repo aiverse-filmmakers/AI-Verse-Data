@@ -143,6 +143,16 @@ export class AiVerseDataExtensionInstaller
       let registryWritten = false;
 
       try {
+        const remainingFileChanges = planOwnedFiles(root).filter(
+          (file) => file.requiresWrite,
+        );
+        if (remainingFileChanges.length > 0) {
+          throw new AiVerseDataExtensionInstallError(
+            "EXTENSION_MATERIALIZATION_FAILED",
+            "Installed Data-owned extension files failed verification before registry commit.",
+          );
+        }
+
         if (registryRequiresWrite) {
           writeRegistryAtomic(
             root,
@@ -157,9 +167,9 @@ export class AiVerseDataExtensionInstaller
         } catch (rollbackError) {
           throw new AiVerseDataExtensionInstallError(
             "EXTENSION_ROLLBACK_FAILED",
-            "Registry installation failed and Data-owned extension files could not be safely rolled back.",
+            "Pre-commit installation failed and Data-owned extension files could not be safely rolled back.",
             {
-              registryError: error,
+              installationError: error,
               rollbackError,
             },
           );
@@ -175,28 +185,9 @@ export class AiVerseDataExtensionInstaller
         finalEntry === null ||
         canonicalJson(finalEntry) !== canonicalJson(nextEntry)
       ) {
-        try {
-          rollbackOwnedFiles(root, materialization.snapshots);
-        } catch (rollbackError) {
-          throw new AiVerseDataExtensionInstallError(
-            "EXTENSION_ROLLBACK_FAILED",
-            "Installed registry state failed verification and Data-owned files could not be safely rolled back.",
-            rollbackError,
-          );
-        }
         throw new AiVerseDataExtensionInstallError(
-          "INVALID_EXTENSION_REGISTRY",
-          "Installed ai-verse-data registry entry failed post-write verification.",
-        );
-      }
-
-      const remainingFileChanges = planOwnedFiles(root).filter(
-        (file) => file.requiresWrite,
-      );
-      if (remainingFileChanges.length > 0) {
-        throw new AiVerseDataExtensionInstallError(
-          "EXTENSION_MATERIALIZATION_FAILED",
-          "Installed Data-owned extension files failed post-write verification.",
+          "EXTENSION_REGISTRY_CHANGED",
+          "ai-verse-data registry state changed after commit; installed files were preserved and no destructive rollback was attempted.",
         );
       }
 
