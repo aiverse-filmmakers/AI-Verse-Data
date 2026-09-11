@@ -429,6 +429,19 @@ Cancelled:           0
 
 The added suite proves exact physical backup/restore state equality, deterministic portable export/import equality, schema-history and tombstone preservation, relation preservation, idempotent record replay after transfer, bulk replay after transfer, provenance preservation, payload-tamper rejection, workspace-binding rejection, existing-destination rejection, valid pre-binding provenance preservation, and low-level backup no-overwrite behavior.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       115280c8edb21eeac272828a01e5c56cc2feea90
+GitHub Actions run:  34588699217
+Node 22:             PASS
+Node 24:             PASS
+Tests:               162 / 162 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 Detailed contract: `docs/BACKUP-EXPORT-IMPORT-V0.1.md`.
 
 ### Deliberately not implemented
