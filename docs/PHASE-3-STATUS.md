@@ -109,7 +109,7 @@ Task 3.1 does not implement:
 - native doctor/status;
 - sibling repository changes.
 
-Task 20 / 41 is next.
+At the Task 3.1 boundary, Task 20 / 41 was next. Task 20 / Phase 3.2 has since completed hardened extension materialization/registration.
 
 ### Task 3.1 gate
 
