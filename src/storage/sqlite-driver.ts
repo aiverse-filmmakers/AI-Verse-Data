@@ -785,12 +785,13 @@ export class SqliteStorageDriver implements DataStorageDriver {
     }
 
     let database: Database.Database | undefined;
+    let metadata: StorageDatabaseMetadata | undefined;
     try {
       database = new Database(location, {
         fileMustExist: mode === "open-existing",
       });
       ensureSupportedSqlite(database);
-      const metadata = validateOrBootstrap(
+      metadata = validateOrBootstrap(
         database,
         existedBeforeOpen,
         mode,
@@ -829,7 +830,20 @@ export class SqliteStorageDriver implements DataStorageDriver {
           // Preserve the original failure.
         }
       }
-      if (isDataStorageError(error)) throw error;
+      if (isDataStorageError(error)) {
+        if (error.code === "DATABASE_CORRUPT" && existedBeforeOpen) {
+          try {
+            markDatabaseQuarantined(location, {
+              category: "physical",
+              message: error.message,
+              binding: metadata?.binding ?? options.expectedBinding ?? null,
+            });
+          } catch {
+            // Preserve the original corruption error if quarantine persistence fails.
+          }
+        }
+        throw error;
+      }
       throw new DataStorageError(
         "DATABASE_UNAVAILABLE",
         "Unable to open AI-Verse Data SQLite database.",
