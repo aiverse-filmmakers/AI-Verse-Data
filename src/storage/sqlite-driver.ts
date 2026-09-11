@@ -846,7 +846,7 @@ export class SqliteStorageDriver implements DataStorageDriver {
         if (error.code === "DATABASE_CORRUPT" && existedBeforeOpen) {
           try {
             markDatabaseQuarantined(location, {
-              category: "physical",
+              category: "semantic",
               message: error.message,
               binding: metadata?.binding ?? options.expectedBinding ?? null,
             });
