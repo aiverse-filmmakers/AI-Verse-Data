@@ -688,9 +688,13 @@ export class DataBackup implements DataBackupApi {
     input: DataPortableExportInput,
   ): Promise<DataArtifactResult> {
     assertScopedSource(input.source);
-    const state = collectPortableState(input.source.database);
-    const summary = summarizePortableState(state);
-    const metadata = input.source.database.metadata();
+    const captured = await this.captureConsistentPortableState(
+      input.source.database,
+      input.source.scope.binding,
+    );
+    const state = captured.state;
+    const summary = captured.summary;
+    const metadata = captured.metadata;
     const artifactDirectory = createArtifactDirectory(
       input.destinationDirectory,
     );
@@ -896,6 +900,52 @@ export class DataBackup implements DataBackupApi {
     }
 
     return { manifest, receipt, payloadPath };
+  }
+
+  private async captureConsistentPortableState(
+    source: DataStorageDatabase,
+    binding: StorageDatabaseBinding,
+  ): Promise<{
+    readonly metadata: StorageDatabaseMetadata;
+    readonly state: DataPortableState;
+    readonly summary: DataStateSummary;
+  }> {
+    const directory = mkdtempSync(join(tmpdir(), "ai-verse-data-export-snapshot-"));
+    const snapshotPath = join(directory, "snapshot.sqlite");
+    let snapshot: DataStorageDatabase | undefined;
+
+    try {
+      await source.backupTo(snapshotPath);
+      snapshot = this.driver.open({
+        location: snapshotPath,
+        mode: "open-existing",
+        expectedBinding: binding,
+      });
+      const metadata = snapshot.metadata();
+      const state = collectPortableState(snapshot);
+      return {
+        metadata,
+        state,
+        summary: summarizePortableState(state),
+      };
+    } catch (error) {
+      if (isDataBackupError(error)) throw error;
+      throw new DataBackupError(
+        "DATABASE_UNAVAILABLE",
+        "A consistent portable-export snapshot could not be captured.",
+        undefined,
+        error,
+      );
+    } finally {
+      if (snapshot !== undefined) {
+        try {
+          snapshot.close();
+        } catch {
+          // Snapshot cleanup is best effort.
+        }
+      }
+      rmSync(directory, { recursive: true, force: true });
+    }
   }
 
   private async inspectSqlitePayload(
