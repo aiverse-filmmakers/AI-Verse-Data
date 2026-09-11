@@ -51,6 +51,10 @@
     "./bulk": {
       "types": "./dist/src/bulk/index.d.ts",
       "import": "./dist/src/bulk/index.js"
+    },
+    "./backup": {
+      "types": "./dist/src/backup/index.d.ts",
+      "import": "./dist/src/backup/index.js"
     }
   },
   "files": [
