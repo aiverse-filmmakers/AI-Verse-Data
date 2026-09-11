@@ -84,7 +84,20 @@ Phase status:
 
 `docs/PHASE-3-STATUS.md`
 
-The Task 20 behavioral implementation is verified. The final Task 20 report must still verify the documentation-closeout branch head and then the exact merged `main` head before declaring Task 20 fully closed.
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       6aa470d536369b23ca5887714da16ffd1ed89fca
+GitHub Actions run:  34607179121
+Node 22:             PASS
+Node 24:             PASS
+Tests:               229 / 229 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The Task 20 behavioral implementation and documentation closeout candidate are verified. The final Task 20 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 20 fully closed.
 
 ## NEXT
 
