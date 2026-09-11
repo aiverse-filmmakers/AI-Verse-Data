@@ -50,11 +50,17 @@ export interface IntegrityCheckResult {
   readonly messages: readonly string[];
 }
 
+export interface StorageBackupResult {
+  readonly totalPages: number;
+  readonly remainingPages: 0;
+}
+
 export interface DataStorageDatabase {
   readonly driverKind: string;
   metadata(): StorageDatabaseMetadata;
   diagnostics(): StorageDiagnostics;
   integrityCheck(): IntegrityCheckResult;
+  backupTo(location: string): Promise<StorageBackupResult>;
   catalogStorage(): DataCatalogStorage;
   recordStorage(): DataRecordStorage;
   queryStorage(): DataQueryStorage;
