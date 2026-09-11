@@ -393,21 +393,21 @@ See [`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`](docs/USER-SCHEMA-MIGRATIONS-V0.1.md)
 
 ### Latest verification
 
-Task 16 behavioral CI run: `34593295702`  
-Behavioral commit: `4f8e4977035bae02576e7390199625ff5b73a2ae`
+Task 16 behavioral CI run: `34593805448`  
+Behavioral commit: `52ca515e3ad18ecdb9dd6907b7362aa00c3530e1`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-183 tests
-183 passed
+185 tests
+185 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite additionally proves required-field backfills, destructive approval, rename/replace/narrowing behavior, reference-index rebuilding, stale-preview rejection, idempotent replay, deleted-record history preservation, atomic size/count ceilings, consistent preview state, and complete rollback after a forced mid-commit provenance failure.
+The suite additionally proves required-field backfills, destructive approval, rename/replace/narrowing behavior, reference-index rebuilding, stale-preview rejection, idempotent replay, deleted-record history preservation, atomic source/rewrite size and count ceilings, consistent preview state, complete rollback after a forced mid-commit provenance failure, and exact migration provenance/idempotency survival through portable export/import.
 
 ## Why Data is separate from Memory
 
