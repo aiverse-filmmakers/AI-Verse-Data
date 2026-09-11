@@ -266,11 +266,20 @@ function validateLedgerRow(row: MigrationLedgerRow): void {
     );
   }
 
-  if (
+  const lifecycleValid =
     row.state === "completed"
-      ? row.completed_at === null || row.failed_at !== null
-      : row.completed_at !== null
-  ) {
+      ? row.completed_at !== null &&
+        row.failed_at === null &&
+        row.failure_message === null
+      : row.state === "failed"
+        ? row.completed_at === null &&
+          row.failed_at !== null &&
+          row.failure_message !== null
+        : row.completed_at === null &&
+          row.failed_at === null &&
+          row.failure_message === null;
+
+  if (!lifecycleValid) {
     throw new DataStorageError(
       "DATABASE_MIGRATION_INCOMPLETE",
       `Migration ledger entry '${row.migration_id}' has inconsistent lifecycle metadata.`,
@@ -630,7 +639,22 @@ function parseManifest(raw: string): StorageMigrationBackupManifest {
     value.targetDatabaseFormatVersion !==
       AI_VERSE_DATA_DATABASE_FORMAT_VERSION ||
     value.source === undefined ||
+    value.source === null ||
+    Array.isArray(value.source) ||
+    typeof value.source !== "object" ||
+    value.source.databaseFormat !== AI_VERSE_DATA_SQLITE_FORMAT ||
+    value.source.driver !== "sqlite" ||
+    !Number.isSafeInteger(value.source.databaseFormatVersion) ||
+    value.source.databaseFormatVersion <
+      AI_VERSE_DATA_MIN_MIGRATABLE_FORMAT_VERSION ||
+    value.source.databaseFormatVersion >=
+      AI_VERSE_DATA_DATABASE_FORMAT_VERSION ||
+    typeof value.source.databaseCreatedAt !== "string" ||
+    Number.isNaN(Date.parse(value.source.databaseCreatedAt)) ||
     value.payload === undefined ||
+    value.payload === null ||
+    Array.isArray(value.payload) ||
+    typeof value.payload !== "object" ||
     value.payload.file !== MIGRATION_PAYLOAD_FILE ||
     value.payload.mediaType !== "application/vnd.sqlite3" ||
     !Number.isSafeInteger(value.payload.bytes) ||
@@ -676,6 +700,7 @@ function parseReceipt(raw: string): StorageMigrationBackupReceipt {
     typeof value.receiptId !== "string" ||
     !/^migration_receipt_[0-9a-f]{32}$/.test(value.receiptId) ||
     typeof value.artifactId !== "string" ||
+    !/^migration_backup_[0-9a-f]{32}$/.test(value.artifactId) ||
     typeof value.completedAt !== "string" ||
     Number.isNaN(Date.parse(value.completedAt)) ||
     typeof value.manifestSha256 !== "string" ||
