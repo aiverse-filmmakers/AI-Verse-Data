@@ -648,7 +648,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
-    assertNotQuarantined(location);
     if (!existsSync(location)) {
       throw new DataStorageError(
         "DATABASE_NOT_FOUND",
@@ -701,6 +700,7 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
+    assertNotQuarantined(location);
     if (!existsSync(location)) {
       throw new DataStorageError(
         "DATABASE_NOT_FOUND",
