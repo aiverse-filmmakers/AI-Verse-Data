@@ -1,6 +1,6 @@
 # AI-Verse Data Storage v0.1
 
-**Status:** Implemented in Phase 1.3 and extended through Phase 2.6 with scope identity, catalog/records/query/relations, optimistic concurrency, idempotency, provenance, consistent backup, and internal format migrations  
+**Status:** Implemented in Phase 1.3 and extended through Phase 2.8 with scope identity, catalog/records/query/relations, optimistic concurrency, idempotency, provenance, backup/portability, internal migrations, user-schema migrations, and corruption quarantine/recovery  
 **Date:** 2026-09-11
 
 This document records the first concrete storage-driver behavior for AI-Verse Data. It is intentionally narrower than the public Data protocol.
@@ -103,9 +103,11 @@ create-or-open
 open-existing
 ```
 
-`create-or-open` may initialize a new or truly empty SQLite file.
+`create-or-open` may initialize only when the target database path did not already exist before open.
 
-`open-existing` requires an already initialized AI-Verse Data database and never initializes an empty file.
+An already-existing zero-byte, empty, or otherwise uninitialized SQLite file is never bootstrapped as fresh Data. It is preserved and fails visibly as unrecognized state.
+
+`open-existing` requires an already initialized AI-Verse Data database and never initializes a file.
 
 Normal open never performs an internal format migration. A supported older format returns `DATABASE_MIGRATION_REQUIRED`; incomplete/failed migration ledger state returns `DATABASE_MIGRATION_INCOMPLETE`. Migration is an explicit storage operation.
 
@@ -113,7 +115,7 @@ Normal open never performs an internal format migration. A supported older forma
 
 The driver must never silently convert an unrelated SQLite database into AI-Verse Data.
 
-If a pre-existing file contains application tables, non-zero SQLite identity metadata, mismatched AI-Verse metadata, or an unsupported format, opening fails visibly.
+If any file already exists at the canonical path but is not an initialized compatible AI-Verse Data database, opening fails visibly. This includes unrelated SQLite databases and zero-byte/uninitialized files.
 
 Supported format v1 is recognized as migratable but is not opened for normal use until explicit migration completes. Unsupported newer formats remain fail-closed.
 
@@ -160,7 +162,29 @@ A healthy database returns:
 }
 ```
 
+Phase 2.8 makes corruption detection fail closed. Existing databases pass a bounded physical integrity check before first trusted binding or WAL configuration. A later explicit storage-handle integrity failure records durable quarantine evidence.
+
 Integrity checking does not attempt repair.
+
+## Phase 2.8 quarantine and recovery extension
+
+Confirmed corruption persists a sidecar marker:
+
+```text
+<database-path>.quarantine.json
+```
+
+The marker is engine-owned write-block evidence. It is not canonical record storage.
+
+A valid marker records physical/semantic category, timestamp, bounded diagnostic message, and trusted binding when known. Malformed or symlinked quarantine evidence fails closed rather than being ignored.
+
+Quarantine blocks normal database open and is rechecked by write-capable catalog, record, relation, idempotency, provenance, transaction, and internal-migration paths. Read-only migration inspection remains permitted.
+
+Deep recovery diagnosis does not initialize lazy tables inside the original source. `@ai-verse/data/recovery` opens the source read-only, checks SQLite integrity/foreign keys/migration identity, captures a consistent temporary SQLite online-backup snapshot, and runs semantic verification on that temporary copy.
+
+Verified recovery staging reuses the Phase 2.5 backup/export machinery and requires a different empty physical destination with the exact same trusted binding. Phase 2.8 does not overwrite or automatically promote over the original canonical source.
+
+Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
 
 ## Diagnostics
 
