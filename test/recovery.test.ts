@@ -607,6 +607,44 @@ test("staged recovery rejects cross-workspace binding and same canonical path", 
   }
 });
 
+test("quarantine allows read-only migration inspection but blocks migrate mutation", async () => {
+  const driver = new SqliteStorageDriver();
+  const fixture = newWorkspaceRoot();
+  const handle = seed(driver, fixture.scope);
+  handle.database.close();
+
+  corruptEventDigest(fixture.scope.databasePath());
+
+  try {
+    const report = await new DataRecovery(driver).inspect({
+      source: fixture.scope,
+    });
+    assert.equal(report.state, "quarantined");
+
+    const migration = driver.inspectMigration({
+      location: fixture.scope.databasePath(),
+      expectedBinding: fixture.scope.binding,
+    });
+    assert.equal(migration.state, "current");
+
+    await assert.rejects(
+      () =>
+        driver.migrate({
+          location: fixture.scope.databasePath(),
+          expectedBinding: fixture.scope.binding,
+          backupDirectory: join(fixture.rootPath, "should-not-exist"),
+        }),
+      (error) => assertStorageError(error, "DATABASE_QUARANTINED"),
+    );
+    assert.equal(
+      existsSync(join(fixture.rootPath, "should-not-exist")),
+      false,
+    );
+  } finally {
+    rmSync(fixture.rootPath, { recursive: true, force: true });
+  }
+});
+
 test("malformed quarantine evidence fails closed and is never ignored", async () => {
   const driver = new SqliteStorageDriver();
   const fixture = newWorkspaceRoot();
