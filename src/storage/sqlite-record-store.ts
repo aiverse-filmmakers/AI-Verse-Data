@@ -64,9 +64,13 @@ const SELECT_RECORD = `
 `;
 
 export class SqliteRecordStorage implements DataRecordStorage {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly assertWritable: () => void = () => {},
+  ) {}
 
   initialize(): void {
+    this.assertWritable();
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS _records (
         space_id TEXT NOT NULL,
@@ -117,6 +121,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
   }
 
   createRecord(record: StoredRecord): boolean {
+    this.assertWritable();
     const result = this.database
       .prepare(
         `INSERT INTO _records (
@@ -199,6 +204,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
   }
 
   updateRecord(record: StoredRecord, expectedVersion: number): boolean {
+    this.assertWritable();
     const result = this.database
       .prepare(
         `UPDATE _records
@@ -230,6 +236,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
   }
 
   softDeleteRecord(record: StoredRecord, expectedVersion: number): boolean {
+    this.assertWritable();
     const result = this.database
       .prepare(
         `UPDATE _records
