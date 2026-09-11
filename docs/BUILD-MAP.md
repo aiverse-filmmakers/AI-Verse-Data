@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 19 / 41 tasks complete  
-**Next:** Task 20 / 41, Phase 3.2 - Hardened extension materialization/registration
+**Implementation progress:** 20 / 41 tasks complete  
+**Next:** Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    13%  (1/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    25%  (2/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **19 / 41 tasks complete**.
+Overall implementation: **20 / 41 tasks complete**.
 
 ---
 
@@ -813,7 +813,7 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 # Phase 3 - Native AI-Verse Integration
 
 **Status:** IN PROGRESS  
-**Progress:** 1 / 8 tasks complete
+**Progress:** 2 / 8 tasks complete
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
 
@@ -857,7 +857,54 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.1 gate: PASSED.**
 
 ## Task 20 / 41 - Phase 3.2 Hardened extension materialization/registration
-Install extension-owned files and register only `ai-verse-data`; preserve unknown registry state and disabled state; lock/re-read/atomic-write; no tracked OS edits.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- public `AiVerseDataExtensionInstaller` under `@ai-verse/data/native`;
+- read-only installation planning;
+- exact AI-Verse OS local registry schema `1.0` validation;
+- Data-owned materialization under `.aiverse/extensions/ai-verse-data/`;
+- deterministic `INSTRUCTIONS.md`, `engine.mjs`, and `extension.json`;
+- registration owns only `extensions["ai-verse-data"]`;
+- package/extension version alignment;
+- unknown top-level registry fields preserved;
+- unrelated extension entries preserved;
+- unknown existing Data-entry fields preserved;
+- existing `enabled: false` preserved;
+- unknown files in the Data extension directory preserved;
+- exclusive `registry.json.lock` without stale-lock stealing;
+- Task 19 compatibility recheck inside the lock;
+- latest registry re-read inside the lock;
+- exact raw-registry lost-update precondition;
+- same-directory temporary file + rename registry replacement;
+- atomic Data-owned file materialization and verification;
+- pre-registry-commit owned-file rollback on failure;
+- traversal/absolute/drive/UNC/NUL path rejection;
+- symlinked extension roots/files rejected;
+- byte-stable persistent reinstall when current;
+- malformed/unsupported registry state fails closed;
+- no tracked OS file mutation;
+- no workspace Data initialization.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34606467549
+Behavioral commit:   1e88ba758dcc1151b4de6f60e8c3b2a9822afad7
+Node 22:             PASS
+Node 24:             PASS
+Tests:               229 / 229 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.2 gate: PASSED.**
 
 ## Task 21 / 41 - Phase 3.3 Native workspace resolver + Data initialization
 Trusted OS root, exact workspace identity/status checks, safe workspace Data path, explicit initialization, existing-DB discovery.
