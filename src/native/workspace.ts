@@ -884,6 +884,19 @@ export class AiVerseDataWorkspaceManager
         reopened.close();
       }
 
+      for (const auxiliary of [
+        `${temporaryPath}-wal`,
+        `${temporaryPath}-shm`,
+        `${temporaryPath}${AI_VERSE_DATA_QUARANTINE_SUFFIX}`,
+      ]) {
+        if (existsSync(auxiliary)) {
+          throw new AiVerseWorkspaceError(
+            "DATABASE_INITIALIZATION_FAILED",
+            "Reopened staged workspace database left unresolved auxiliary state after close.",
+          );
+        }
+      }
+
       try {
         linkSync(temporaryPath, canonicalPath);
       } catch (error) {
