@@ -245,7 +245,7 @@ Request fingerprint and result binding for retry-safe mutations.
 
 Engine-owned migration ledger for internal database format and future schema evolution machinery.
 
-The catalog, `_records`, `_record_relations`, `_idempotency`, `_events`, and `_mutation_receipts` portions of this model are now implemented. Migration tables remain later implementation tasks.
+The catalog, `_records`, `_record_relations`, `_idempotency`, `_events`, `_mutation_receipts`, and the engine-owned `_schema_migrations` ledger are now implemented. Phase 2.6 advances the internal SQLite format to version 2 with explicit migration inspection/execution and verified pre-migration backups. Task 16 remains responsible for user entity-schema migration/backfill behavior.
 
 ## 7. Record representation
 
@@ -633,7 +633,7 @@ Two schema layers must stay distinct:
 
 ### Internal storage schema
 
-Owned by AI-Verse Data itself. Versioned migrations update `_records`, `_events`, etc.
+Owned by AI-Verse Data itself. Phase 2.6 implements explicit versioned internal migrations, a durable engine-owned migration ledger, migration-definition digests, verified pre-migration backups, and fail-closed interrupted/failed migration state. Normal database open never auto-migrates an older format.
 
 ### User entity schemas
 
