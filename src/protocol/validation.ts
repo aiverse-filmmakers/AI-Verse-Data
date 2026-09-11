@@ -29,6 +29,9 @@ import type {
   QueryPayload,
   QueryOrder,
   SchemaChange,
+  SchemaMigrationApproval,
+  SchemaMigrationExecutePayload,
+  SchemaMigrationPreviewPayload,
   SchemaUpdatePayload,
   TransactionExecutePayload,
 } from "./types.js";
@@ -496,11 +499,15 @@ function validateScope(input: unknown): void {
   safeId(value.workspaceId, "$.scope.workspaceId");
 }
 
+function validateActorAt(input: unknown, path: string): void {
+  const value = object(input, path);
+  keysOnly(value, ["kind", "id"], path);
+  oneOf(value.kind, ACTOR_KINDS, `${path}.kind`);
+  safeId(value.id, `${path}.id`);
+}
+
 function validateActor(input: unknown): void {
-  const value = object(input, "$.actor");
-  keysOnly(value, ["kind", "id"], "$.actor");
-  oneOf(value.kind, ACTOR_KINDS, "$.actor.kind");
-  safeId(value.id, "$.actor.id");
+  validateActorAt(input, "$.actor");
 }
 
 function validateAuthorization(input: unknown): void {
@@ -781,6 +788,161 @@ export function validateSchemaUpdatePayload(
   return input as SchemaUpdatePayload;
 }
 
+
+function validateSchemaMigrationBackfills(
+  input: unknown,
+  path: string,
+): void {
+  if (input === undefined) return;
+  if (
+    !Array.isArray(input) ||
+    input.length > DATA_PROTOCOL_LIMITS.maxSchemaFields
+  ) {
+    fail(
+      path,
+      `must be an array of at most ${DATA_PROTOCOL_LIMITS.maxSchemaFields} backfills`,
+    );
+  }
+
+  const fields = new Set<string>();
+  input.forEach((item, index) => {
+    const itemPath = `${path}[${index}]`;
+    const value = object(item, itemPath);
+    keysOnly(value, ["field", "mode", "value"], itemPath);
+    const field = fieldName(value.field, `${itemPath}.field`);
+    if (fields.has(field)) {
+      fail(`${itemPath}.field`, "duplicate backfill field");
+    }
+    fields.add(field);
+    oneOf(value.mode, ["set_if_missing", "set"] as const, `${itemPath}.mode`);
+    validateJsonValue(value.value, `${itemPath}.value`);
+  });
+}
+
+function validateSchemaMigrationReason(
+  input: unknown,
+  path: string,
+): void {
+  if (input === undefined) return;
+  string(input, path, 1, DATA_PROTOCOL_LIMITS.maxDescriptionLength);
+}
+
+function validateSchemaMigrationApproval(
+  input: unknown,
+  path: string,
+): SchemaMigrationApproval {
+  const value = object(input, path);
+  keysOnly(value, ["approvalRef", "approvedBy", "approvedAt", "reason"], path);
+  safeId(value.approvalRef, `${path}.approvalRef`);
+  validateActorAt(value.approvedBy, `${path}.approvedBy`);
+  const approvedAt = string(value.approvedAt, `${path}.approvedAt`, 1, 128);
+  if (!ISO_DATETIME_RE.test(approvedAt) || Number.isNaN(Date.parse(approvedAt))) {
+    fail(`${path}.approvedAt`, "must be a valid timezone-qualified ISO datetime");
+  }
+  if (value.reason !== undefined) {
+    string(
+      value.reason,
+      `${path}.reason`,
+      1,
+      DATA_PROTOCOL_LIMITS.maxDescriptionLength,
+    );
+  }
+  return input as SchemaMigrationApproval;
+}
+
+export function validateSchemaMigrationPreviewPayload(
+  input: unknown,
+  path = "$schemaMigrationPreview",
+): SchemaMigrationPreviewPayload {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    [
+      "spaceId",
+      "entity",
+      "expectedSchemaVersion",
+      "changes",
+      "backfills",
+      "owner",
+      "reason",
+    ],
+    path,
+  );
+  requireSpaceEntity(value, path);
+  positiveInt(value.expectedSchemaVersion, `${path}.expectedSchemaVersion`);
+  if (
+    !Array.isArray(value.changes) ||
+    value.changes.length < 1 ||
+    value.changes.length > DATA_PROTOCOL_LIMITS.maxSchemaFields
+  ) {
+    fail(
+      `${path}.changes`,
+      `must contain 1..${DATA_PROTOCOL_LIMITS.maxSchemaFields} changes`,
+    );
+  }
+  value.changes.forEach((item, index) =>
+    validateSchemaChange(item, `${path}.changes[${index}]`),
+  );
+  validateSchemaMigrationBackfills(value.backfills, `${path}.backfills`);
+  validateActorAt(value.owner, `${path}.owner`);
+  validateSchemaMigrationReason(value.reason, `${path}.reason`);
+  return input as SchemaMigrationPreviewPayload;
+}
+
+export function validateSchemaMigrationExecutePayload(
+  input: unknown,
+  path = "$schemaMigrationExecute",
+): SchemaMigrationExecutePayload {
+  const value = object(input, path);
+  keysOnly(
+    value,
+    [
+      "spaceId",
+      "entity",
+      "expectedSchemaVersion",
+      "changes",
+      "backfills",
+      "owner",
+      "reason",
+      "idempotencyKey",
+      "expectedPreviewDigest",
+      "approval",
+    ],
+    path,
+  );
+
+  validateSchemaMigrationPreviewPayload(
+    {
+      spaceId: value.spaceId,
+      entity: value.entity,
+      expectedSchemaVersion: value.expectedSchemaVersion,
+      changes: value.changes,
+      ...(value.backfills === undefined ? {} : { backfills: value.backfills }),
+      owner: value.owner,
+      ...(value.reason === undefined ? {} : { reason: value.reason }),
+    },
+    path,
+  );
+
+  validateIdempotency(value.idempotencyKey, `${path}.idempotencyKey`);
+  const digest = string(
+    value.expectedPreviewDigest,
+    `${path}.expectedPreviewDigest`,
+    64,
+    64,
+  );
+  if (!SHA256_HEX_RE.test(digest)) {
+    fail(
+      `${path}.expectedPreviewDigest`,
+      "must be a lowercase SHA-256 hex digest",
+    );
+  }
+  if (value.approval !== undefined) {
+    validateSchemaMigrationApproval(value.approval, `${path}.approval`);
+  }
+  return input as SchemaMigrationExecutePayload;
+}
+
 export function validateQueryPayload(
   input: unknown,
   path = "$query",
@@ -978,6 +1140,14 @@ function validatePayload(operation: DataOperation, input: unknown): void {
 
     case "data.schema.update":
       validateSchemaUpdatePayload(value, path);
+      return;
+
+    case "data.schema.migration.preview":
+      validateSchemaMigrationPreviewPayload(value, path);
+      return;
+
+    case "data.schema.migration.execute":
+      validateSchemaMigrationExecutePayload(value, path);
       return;
 
     case "data.record.create":

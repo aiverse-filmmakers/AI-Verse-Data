@@ -316,7 +316,7 @@ Errors should be structured and actionable. An agent should be able to distingui
 - Soft delete is the default delete behavior for first release.
 - Hard purge is separate, explicit, and strongly restricted.
 - Schema changes are versioned.
-- Destructive schema changes require explicit future migration machinery rather than ad-hoc SQL.
+- Destructive schema changes require the explicit governed user-schema migration machinery rather than ad-hoc SQL; Phase 2.7 implements bounded preview, deterministic backfills, approval metadata, atomic active-record rewrite, and migration provenance.
 - Backups/exports must produce deterministic metadata and verify completion.
 
 ## 14. Local-first storage requirements

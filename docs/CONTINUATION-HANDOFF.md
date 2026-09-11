@@ -10,107 +10,110 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  6 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  7 / 9
 
-Overall implementation: 15 / 41 tasks complete
+Overall implementation: 16 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 15 / 41 - Phase 2.6: Internal migration framework**
+**Task 16 / 41 - Phase 2.7: User-schema migration framework**
 
 Behavioral implementation verification:
 
 ```text
-Behavioral commit:   55c197b5c9c53eba6f09261555e9bf6e4807386e
-GitHub Actions run:  34590556661
+Behavioral commit:   52ca515e3ad18ecdb9dd6907b7362aa00c3530e1
+GitHub Actions run:  34593805448
 Node 22:             PASS
 Node 24:             PASS
-Tests:               173 / 173 PASS
+Tests:               185 / 185 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 15:
+Implemented through Task 16:
 
 - protocol and validation foundation;
 - SQLite storage driver and trusted workspace identity;
-- Data Spaces, schemas, CRUD, query/aggregate, relations, bounded transactions;
+- Data Spaces, immutable schema history, CRUD, query/aggregate, relations, bounded transactions;
 - race-safe optimistic concurrency;
 - durable mutation idempotency and exact replay;
 - immutable mutation events and durable receipts;
 - actor/request/transaction/workspace provenance;
 - bounded bulk preview and all-or-nothing execution;
 - consistent physical backup and verified portable export/import;
-- canonical SQLite database format version 2;
-- migration framework version 1;
-- engine-owned `_schema_migrations` ledger;
-- stable migration ID and deterministic migration-definition digest;
-- explicit `inspectMigration`, `migrate`, and `verifyMigrationBackup`;
-- normal open never auto-migrates;
-- supported format v1 migration-required gating;
-- fail-closed interrupted/failed migration state;
-- unsupported newer format rejection;
-- verified consistent pre-migration online backup;
-- migration backup manifest/receipt/digest validation;
-- transactional v1 to v2 migration;
-- durable in-progress/failed/completed migration lifecycle;
-- explicit retry/resume with attempt tracking;
-- current-format incomplete-state rejection;
-- post-migration SQLite integrity verification;
-- exact workspace-binding preservation;
-- canonical record/idempotency/provenance preservation across migration.
+- internal SQLite database format v2 migration framework;
+- public `@ai-verse/data/schema-migrations` surface;
+- `data.schema.migration.preview` and `data.schema.migration.execute`;
+- consistent snapshot migration preview;
+- schema/actor/owner/record/relation-bound SHA-256 preview digest;
+- required-field backfills;
+- deterministic `set_if_missing` and destructive `set` backfills;
+- remove/replace/rename field migrations;
+- explicit destructive approval metadata;
+- maximum 500 active records per atomic migration;
+- maximum 8 MiB source state and 8 MiB rewritten state;
+- immutable next schema version;
+- active record schema + record version advancement exactly once;
+- deleted records preserved as historical state;
+- reference-target validation and normalized relation-index rebuilding;
+- stale schema/record preview rejection;
+- idempotent migration replay;
+- per-record immutable migration provenance plus one transaction-level migration receipt;
+- migration owner/executor/approver metadata;
+- forced mid-commit failure proof for full schema/record/relation/idempotency/audit rollback;
+- no arbitrary SQL or arbitrary-code backfills.
 
-Detailed Task 15 contract:
+Detailed Task 16 contract:
 
-`docs/INTERNAL-MIGRATIONS-V0.1.md`
+`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
 
 Documentation closeout candidate verification:
 
 ```text
-Closeout head:       2ce1cf3ce4d459885bb12552b6abb694806b803a
-GitHub Actions run:  34591037137
+Closeout head:       ec03751517caf67e72361c25cd77792b77da3bd7
+GitHub Actions run:  34593931881
 Node 22:             PASS
 Node 24:             PASS
-Tests:               173 / 173 PASS
+Tests:               185 / 185 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-The behavioral implementation and documentation closeout candidate are verified. The final Task 15 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 15 fully closed.
+The behavioral implementation and documentation closeout candidate are verified. The final Task 16 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 16 fully closed.
 
 ## NEXT
 
-**Task 16 / 41 - Phase 2.7: User-schema migration framework**
+**Task 17 / 41 - Phase 2.8: Corruption/recovery behavior**
 
-Task 16 scope from the canonical Build Map:
+Task 17 scope from the canonical Build Map:
 
 ```text
-Safe additive changes
-Backfill plans
-Destructive-change controls
-Owner/provenance metadata
+Corruption detection
+Fail-closed writes
+Recovery reporting
+No silent empty replacement
 ```
 
-Do not start Task 17 until Task 16 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
+Do not start Task 18 until Task 17 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 16 architectural laws
+## Task 17 architectural laws
 
 The implementation must preserve:
 
-1. User entity-schema migrations are distinct from Task 15 internal database-format migrations and must not reuse the internal format version as an entity-schema version.
-2. Every accepted entity schema remains an immutable historical version with its deterministic schema digest.
-3. Schema migration planning must respect `expectedSchemaVersion`; stale schema plans cannot silently apply over a newer canonical schema.
-4. Existing records must not become unreadable or silently invalid because of a schema change.
-5. Additive changes should remain the safest default. Required fields without a valid default/backfill need an explicit migration plan.
-6. Destructive operations such as remove/replace/rename/narrowing must not be improvised by model-generated DDL or direct SQL.
-7. Destructive schema changes require explicit migration semantics and sufficient approval/authority metadata. Ordinary record-write authority does not imply schema-migration authority.
-8. Backfills and record rewrites must be bounded, atomic or explicitly checkpointed, provenance-aware, and safe under optimistic concurrency/idempotency rules.
-9. Reference integrity and normalized relation indexes must remain consistent if migrated fields contain references.
-10. Migration provenance must identify the trusted actor/owner and the schema versions involved without turning Data events into Memory.
-11. Task 16 must not implement Task 17 corruption repair/recovery behavior early.
+1. Canonical Data corruption must fail visibly. A corrupt or semantically inconsistent database must never be represented as an empty healthy database.
+2. Detection and repair are separate concerns. Integrity/semantic checks may report corruption, but automatic destructive repair is not a safe default.
+3. Once corruption is detected, unsafe canonical writes must remain blocked until an explicit supported recovery path establishes a verified healthy state.
+4. The original corrupted canonical database must not be silently deleted, truncated, replaced, or rebound as part of diagnosis.
+5. Physical SQLite integrity failures and AI-Verse semantic-integrity failures must be distinguishable enough for actionable reporting.
+6. Recovery evidence must build on the verified Phase 2.5 backup/export foundations rather than raw WAL-mode file copying.
+7. Any recovery source must preserve trusted workspace binding and must not enable cross-workspace remapping or ownership laundering.
+8. Internal-format migration-required/incomplete state remains distinct from corruption and must not be mislabeled or “repaired” by Task 17.
+9. User-schema validation failures remain distinct from database corruption; Task 17 must not turn rejected migrations into repair operations.
+10. Recovery actions must be explicit, staged, verifiable, and no-overwrite by default unless a separately documented destructive replacement contract is deliberately introduced.
+11. Task 17 must not prematurely claim the full Phase 2 gate. Task 18 remains responsible for the complete Phase 2 reliability/adversarial acceptance gate.
 12. No sibling repository modifications are permitted without separate explicit approval.
 
 ## Canonical documents to read before continuing
@@ -121,14 +124,14 @@ Read these first in a new session:
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-2-STATUS.md`
 4. `docs/ARCHITECTURE.md`
-5. `docs/CATALOG-AND-SCHEMAS-V0.1.md`
-6. `docs/RECORD-CRUD-V0.1.md`
+5. `docs/STORAGE-V0.1.md`
+6. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
 7. `docs/INTERNAL-MIGRATIONS-V0.1.md`
-8. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
+8. `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
 9. `docs/SECURITY-AND-AUTHORITY.md`
 10. `docs/TESTING-AND-ACCEPTANCE.md`
 
-Then inspect the current schema-update validation, immutable schema-history storage, record hydration/default rules, relation maintenance, transaction/idempotency/provenance paths, and all existing `SCHEMA_MIGRATION_REQUIRED` cases before changing code.
+Then inspect all existing SQLite integrity checks, stored-schema/record/relation/idempotency/provenance digest verification, database-open fail-closed behavior, backup verification, and current error mapping before changing code.
 
 ## Closeout rule for every future task
 

@@ -333,6 +333,46 @@ The suite proves:
 
 Detailed contract: `docs/INTERNAL-MIGRATIONS-V0.1.md`.
 
+## 5.7 Phase 2.7 user-schema migration verification
+
+Task 16 adds governed user-schema migration acceptance coverage.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34593805448
+Behavioral commit:   52ca515e3ad18ecdb9dd6907b7362aa00c3530e1
+Node 22:             PASS
+Node 24:             PASS
+Tests:               185 / 185 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The suite proves:
+
+- required-field migration can backfill every active record;
+- preview returns the exact next schema version/digest and deterministic state-bound digest;
+- execute advances the immutable schema version once;
+- active records advance schema version + record version exactly once;
+- soft-deleted records remain historical under their previous schema;
+- matching execute retry returns the original result/receipt without duplicate state;
+- rename/remove/replace are governed by the migration path rather than direct catalog DDL;
+- destructive migration requires approval metadata;
+- invalid narrowing is rejected before canonical mutation;
+- an explicit destructive backfill can make narrowing valid;
+- changed reference targets are revalidated and relation indexes are rebuilt;
+- active-record changes invalidate a reviewed preview;
+- more than 500 active records is rejected;
+- source and rewritten migration state are bounded at 8 MiB each;
+- preview runs inside one consistent SQLite read transaction;
+- forced mid-commit provenance failure rolls schema, records, relations, idempotency, events, and receipts back together;
+- migration provenance identifies owner, executor, schema versions/digests, preview digest, and approval metadata;
+- protocol validators reject malformed migration digests/backfills/approval metadata.
+
+Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
+
 ## 6. Phase 2 Reliability and Agent Safety gate
 
 Must prove:
@@ -357,7 +397,11 @@ Must prove:
 - supported older internal formats require explicit migration rather than auto-migration;
 - pre-migration backup evidence is verified before canonical migration state changes;
 - interrupted/failed migration state blocks normal use until an explicit supported retry completes;
-- internal migrations preserve trusted workspace binding and canonical reliability state.
+- internal migrations preserve trusted workspace binding and canonical reliability state;
+- user-schema migrations require a reviewed state-bound preview before execution;
+- destructive user-schema migrations require explicit approval metadata;
+- active record rewrites and relation indexes commit atomically with the new immutable schema version;
+- user-schema migration retry cannot duplicate schema versions, record rewrites, or provenance.
 
 ## 7. Phase 3 Native Installation gate
 

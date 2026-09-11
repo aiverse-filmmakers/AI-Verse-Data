@@ -223,6 +223,37 @@ export interface SchemaUpdatePayload {
   readonly changes: readonly SchemaChange[];
 }
 
+export type SchemaMigrationBackfillMode = "set_if_missing" | "set";
+
+export interface SchemaMigrationBackfill {
+  readonly field: string;
+  readonly mode: SchemaMigrationBackfillMode;
+  readonly value: JsonValue;
+}
+
+export interface SchemaMigrationApproval {
+  readonly approvalRef: string;
+  readonly approvedBy: DataActor;
+  readonly approvedAt: string;
+  readonly reason?: string;
+}
+
+export interface SchemaMigrationPreviewPayload {
+  readonly spaceId: DataSpaceId;
+  readonly entity: EntityId;
+  readonly expectedSchemaVersion: number;
+  readonly changes: readonly SchemaChange[];
+  readonly backfills?: readonly SchemaMigrationBackfill[];
+  readonly owner: DataActor;
+  readonly reason?: string;
+}
+
+export interface SchemaMigrationExecutePayload extends SchemaMigrationPreviewPayload {
+  readonly idempotencyKey: string;
+  readonly expectedPreviewDigest: string;
+  readonly approval?: SchemaMigrationApproval;
+}
+
 export interface RecordCreatePayload {
   readonly spaceId: DataSpaceId;
   readonly entity: EntityId;
@@ -334,6 +365,8 @@ export interface DataOperationPayloadMap {
   readonly "data.schema.get": SchemaGetPayload;
   readonly "data.schema.create": SchemaCreatePayload;
   readonly "data.schema.update": SchemaUpdatePayload;
+  readonly "data.schema.migration.preview": SchemaMigrationPreviewPayload;
+  readonly "data.schema.migration.execute": SchemaMigrationExecutePayload;
   readonly "data.record.create": RecordCreatePayload;
   readonly "data.record.get": RecordGetPayload;
   readonly "data.record.list": RecordListPayload;

@@ -209,7 +209,7 @@ The digest is persisted with the version. When a stored schema is read, Data val
 
 ## 9. Safe additive updates
 
-Phase 1.5 directly permits:
+The direct catalog update path still directly permits:
 
 ```text
 add_field
@@ -219,13 +219,13 @@ set_description
 
 Adding an optional field is safe.
 
-Adding a required field is allowed only if a valid default exists. Without a default, existing future records could not be interpreted consistently, so Data returns:
+Adding a required field is allowed directly only if a valid default exists. Without a default, the direct catalog path returns:
 
 ```text
 SCHEMA_MIGRATION_REQUIRED
 ```
 
-The full user-schema migration framework belongs to Phase 2.7.
+Phase 2.7 now implements the separate governed `@ai-verse/data/schema-migrations` path. It can preview and atomically migrate active records with an explicit backfill before advancing the schema version.
 
 ## 10. Destructive changes
 
@@ -237,7 +237,7 @@ replace_field
 rename_field
 ```
 
-Phase 1.5 does not execute them.
+The direct `DataCatalog.updateSchema` path still does not execute them.
 
 They return:
 
@@ -246,6 +246,8 @@ SCHEMA_MIGRATION_REQUIRED
 ```
 
 instead of generating ad-hoc SQL or partially changing canonical schema state.
+
+Phase 2.7 provides the explicit migration path for remove/replace/rename operations. Preview validates every active record and resulting reference index; destructive execution requires approval metadata and commits the new immutable schema plus all active record rewrites atomically. See `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
 
 ## 11. Atomicity
 

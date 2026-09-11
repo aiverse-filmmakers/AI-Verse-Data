@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 15 / 41  
-**Latest completed:** Task 15 / 41, Phase 2.6 - Internal migration framework  
-**Next task:** Task 16 / 41, Phase 2.7 - User-schema migration framework  
+**Completed implementation tasks:** 16 / 41  
+**Latest completed:** Task 16 / 41, Phase 2.7 - User-schema migration framework  
+**Next task:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -155,7 +155,8 @@ Bulk-operation safety and limits
 
 Task 14 / 41 - COMPLETE
 Backup/export/import foundation
-  -> public @ai-verse/data/backup surface
+  -> public @ai-verse/data/backup
+@ai-verse/data/schema-migrations surface
   -> consistent SQLite online backup
   -> manifest, payload SHA-256, and artifact receipt
   -> portable export from a consistent SQLite snapshot
@@ -179,9 +180,27 @@ Internal migration framework
   -> safe explicit retry/resume with attempt tracking
   -> workspace binding and canonical reliability state preserved
   -> unsupported newer formats remain fail-closed
+
+Task 16 / 41 - COMPLETE
+User-schema migration framework
+  -> public @ai-verse/data/schema-migrations surface
+  -> data.schema.migration.preview + execute protocol operations
+  -> consistent read-transaction preview
+  -> actor/owner/schema/record-bound SHA-256 preview digest
+  -> required-field backfills
+  -> remove/replace/rename field migrations
+  -> destructive approval metadata
+  -> 500-active-record + 8 MiB source/rewrite ceilings
+  -> atomic schema + record + relation + idempotency + provenance commit
+  -> active records advance schema and record version exactly once
+  -> deleted records remain historical
+  -> reference indexes rebuilt against proposed schema
+  -> idempotent replay returns one migration effect
+  -> migration owner/executor/approval provenance
+  -> no arbitrary SQL or model-generated backfill code
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.6 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, and explicit internal database-format migrations. User-schema migrations and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.7 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, explicit internal database-format migrations, and governed user-schema migrations. Corruption/recovery remains the final implementation task before the Phase 2 gate.
 
 ## Public package surfaces
 
@@ -362,23 +381,33 @@ The first migration is `sqlite-0001-v1-to-v2`. Migration rows bind a determinist
 
 See [`docs/INTERNAL-MIGRATIONS-V0.1.md`](docs/INTERNAL-MIGRATIONS-V0.1.md).
 
+## User-schema migrations
+
+Phase 2.7 adds `@ai-verse/data/schema-migrations` plus `data.schema.migration.preview` and `data.schema.migration.execute`.
+
+Preview evaluates the complete proposed schema against one consistent committed snapshot, transforms every active record in memory, validates references, and returns a SHA-256 digest bound to the schema, actor, owner, migration instructions, record versions/data, and resulting relation state. Execute recomputes that plan inside one immediate transaction and refuses a stale digest.
+
+Required-field backfills and destructive remove/replace/rename operations are now governed explicitly. Destructive migrations require approval metadata. Active records are rewritten atomically onto the new immutable schema version, record versions advance once, relation indexes are rebuilt, and deleted records remain historical. The migration reuses existing idempotency plus immutable record/transaction provenance rather than creating a second truth.
+
+See [`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`](docs/USER-SCHEMA-MIGRATIONS-V0.1.md).
+
 ### Latest verification
 
-Task 15 behavioral CI run: `34590556661`  
-Behavioral commit: `55c197b5c9c53eba6f09261555e9bf6e4807386e`
+Task 16 behavioral CI run: `34593805448`  
+Behavioral commit: `52ca515e3ad18ecdb9dd6907b7362aa00c3530e1`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-173 tests
-173 passed
+185 tests
+185 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite now additionally proves explicit v1 to v2 migration, verified pre-migration backup, migration-required gating, failure/interruption persistence, safe explicit retry/resume, current-format incomplete-state rejection, binding preservation, canonical record/idempotency/provenance preservation, backup tamper rejection, no-overwrite behavior, and continued newer-format rejection.
+The suite additionally proves required-field backfills, destructive approval, rename/replace/narrowing behavior, reference-index rebuilding, stale-preview rejection, idempotent replay, deleted-record history preservation, atomic source/rewrite size and count ceilings, consistent preview state, complete rollback after a forced mid-commit provenance failure, and exact migration provenance/idempotency survival through portable export/import.
 
 ## Why Data is separate from Memory
 
@@ -494,10 +523,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md) - implemented bounded preview/execute bulk safety contract
 - [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md) - implemented backup, verification, restore, and portable export/import contract
 - [`docs/INTERNAL-MIGRATIONS-V0.1.md`](docs/INTERNAL-MIGRATIONS-V0.1.md) - implemented internal database-format migration contract
+- [`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`](docs/USER-SCHEMA-MIGRATIONS-V0.1.md) - implemented governed user-schema migration contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 16 / 41, Phase 2.7 - User-schema migration framework.**
+**Next: Task 17 / 41, Phase 2.8 - Corruption/recovery behavior.**
