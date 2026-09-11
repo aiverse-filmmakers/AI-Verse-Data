@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 6 / 9  
-**Overall implementation tasks completed:** 15 / 41  
-**Next:** Task 16 / 41, Phase 2.7 - User-schema migration framework
+**Implementation tasks completed:** 7 / 9  
+**Overall implementation tasks completed:** 16 / 41  
+**Next:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -557,14 +557,83 @@ Those remain later tasks. Task 16 / 41 is next.
 
 ---
 
+## Task 16 / 41 - Phase 2.7 User-schema migration framework
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.7 adds a governed logical entity-schema migration path without changing the internal SQLite database format.
+
+Core guarantees:
+
+- public `@ai-verse/data/schema-migrations` surface;
+- structured preview/execute protocol operations, never caller SQL;
+- consistent SQLite read-transaction preview;
+- `expectedSchemaVersion` compare-and-swap boundary;
+- immutable next schema version + deterministic schema digest;
+- deterministic migration preview digest over schema instructions plus active record versions/data and resulting relation state;
+- execution recomputes that digest under immediate write intent;
+- required-field backfills can be planned explicitly;
+- deterministic `set_if_missing` and destructive `set` backfills;
+- remove/replace/rename field migrations are explicit;
+- destructive operations require approval metadata;
+- migration owner, trusted executor, and approver remain distinct provenance fields;
+- maximum 500 active records;
+- maximum 8 MiB source record state and 8 MiB rewritten state;
+- active records advance schema version and record version exactly once;
+- deleted records remain historical;
+- reference targets are revalidated against the proposed schema;
+- normalized outgoing relation indexes are rebuilt atomically;
+- stale preview/schema/record state commits nothing;
+- matching idempotent retry produces no duplicate schema version, record rewrite, event, or receipt;
+- migration record updates use existing immutable provenance + idempotency machinery;
+- one transaction-level event/receipt identifies the semantic schema migration and its child audit facts;
+- forced mid-commit provenance failure proves the whole migration rolls back.
+
+### Behavioral verification
+
+```text
+GitHub Actions run: 34593295702
+Behavioral commit:   4f8e4977035bae02576e7390199625ff5b73a2ae
+Node 22:             PASS
+Node 24:             PASS
+Tests:               183 / 183 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.7 does not implement:
+
+- arbitrary SQL or arbitrary-code backfills;
+- cross-workspace schema migrations;
+- checkpointed/unbounded large migrations;
+- automatic migrations based on model suggestion;
+- hard-deleted record recovery;
+- corruption repair;
+- recovery selection/restoration policy;
+- Task 17 corruption/recovery behavior.
+
+Task 17 / 41 is next.
+
+### Task 2.7 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 16 / 41 | 2.7 | NEXT | User-schema migration framework |
-| 17 / 41 | 2.8 | NOT STARTED | Corruption/recovery behavior |
+| 17 / 41 | 2.8 | NEXT | Corruption/recovery behavior |
 | 18 / 41 | 2.9 | NOT STARTED | Phase 2 gate |
 
 ## Current boundary
 
-Task 16 / 41 is next. Do not begin Task 17 / 41 until Task 16 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 17 / 41 is next. Do not begin Task 18 / 41 until Task 17 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
