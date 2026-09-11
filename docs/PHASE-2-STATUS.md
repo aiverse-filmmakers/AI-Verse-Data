@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 5 / 9  
-**Overall implementation tasks completed:** 14 / 41  
-**Next:** Task 15 / 41, Phase 2.6 - Internal migration framework
+**Implementation tasks completed:** 6 / 9  
+**Overall implementation tasks completed:** 15 / 41  
+**Next:** Task 16 / 41, Phase 2.7 - User-schema migration framework
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -465,15 +465,93 @@ Those remain later tasks. Task 15 / 41 is next.
 
 ---
 
+## Task 15 / 41 - Phase 2.6 Internal migration framework
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.6 adds an explicit engine-owned internal SQLite format migration system.
+
+Current canonical format:
+
+```text
+ai-verse-data/sqlite
+format version: 2
+SQLite user_version: 2
+migration framework version: 1
+```
+
+Core guarantees:
+
+- fresh databases bootstrap directly at current format v2;
+- format v2 contains the fixed `_schema_migrations` ledger;
+- migration definitions have stable IDs and deterministic SHA-256 digests;
+- the first migration is `sqlite-0001-v1-to-v2`;
+- `inspectMigration` reports current/required/incomplete state without mutating canonical storage;
+- normal `open` never auto-migrates;
+- supported v1 databases fail normal open with `DATABASE_MIGRATION_REQUIRED`;
+- failed/interrupted ledger state fails normal open with `DATABASE_MIGRATION_INCOMPLETE`;
+- unsupported newer formats remain fail-closed;
+- explicit migration requires a verified consistent pre-migration backup;
+- migration backup uses the shared Phase 2.5 SQLite online-backup primitive;
+- migration-backup artifact includes payload digest, exact manifest digest, source format/binding, and receipt;
+- backup artifacts are opened read-only and SQLite-integrity checked during verification;
+- backup destination is never overwritten;
+- migration execution uses immediate transactional semantics;
+- canonical format metadata, SQLite `user_version`, migration changes, and completed ledger state commit atomically;
+- interruption after durable `in_progress` registration remains detectable;
+- failed migration retains the old format and durable failed/incomplete state;
+- explicit retry/resume uses the same installed migration definition and increments attempt state;
+- current-format incomplete state cannot masquerade as a resumable old-format migration;
+- final SQLite integrity failure is fail-closed;
+- trusted binding is preserved exactly;
+- canonical records, idempotency results/replay, events, and receipts survive migration.
+
+### Behavioral verification
+
+```text
+GitHub Actions run: 34590556661
+Behavioral commit:   55c197b5c9c53eba6f09261555e9bf6e4807386e
+Node 22:             PASS
+Node 24:             PASS
+Tests:               173 / 173 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/INTERNAL-MIGRATIONS-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.6 does not implement:
+
+- user entity-schema migration execution;
+- field backfill plans;
+- destructive user-schema change approval;
+- migration-generated user record rewrites;
+- automatic internal migration during normal open;
+- downgrade migration;
+- corruption repair/recovery;
+- arbitrary model-generated SQL migrations.
+
+Those remain later tasks. Task 16 / 41 is next.
+
+### Task 2.6 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 15 / 41 | 2.6 | NEXT | Internal migration framework |
-| 16 / 41 | 2.7 | NOT STARTED | User-schema migration framework |
+| 16 / 41 | 2.7 | NEXT | User-schema migration framework |
 | 17 / 41 | 2.8 | NOT STARTED | Corruption/recovery behavior |
 | 18 / 41 | 2.9 | NOT STARTED | Phase 2 gate |
 
 ## Current boundary
 
-Task 15 / 41 is next. Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 16 / 41 is next. Do not begin Task 17 / 41 until Task 16 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
