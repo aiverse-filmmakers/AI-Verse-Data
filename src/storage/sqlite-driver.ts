@@ -1,4 +1,4 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, rmSync, statSync } from "node:fs";
 
 import Database from "better-sqlite3";
 
@@ -19,6 +19,7 @@ import {
   type DataStorageDriver,
   type IntegrityCheckResult,
   type StorageDatabaseBinding,
+  type StorageBackupResult,
   type StorageDatabaseMetadata,
   type StorageDiagnostics,
   type StorageOpenOptions,
@@ -496,6 +497,59 @@ class SqliteStorageDatabase implements DataStorageDatabase {
       ok: messages.length === 1 && messages[0]?.toLowerCase() === "ok",
       messages,
     };
+  }
+
+  async backupTo(location: string): Promise<StorageBackupResult> {
+    this.assertOpen();
+
+    if (location.length === 0 || location.includes("\u0000")) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite backup destination must be a non-empty filesystem path without NUL.",
+      );
+    }
+    if (existsSync(location)) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite backup destination already exists; backups never overwrite files.",
+      );
+    }
+    if (this.database.inTransaction) {
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "SQLite backup cannot begin while the source connection has an active transaction.",
+      );
+    }
+
+    try {
+      const result = await this.database.backup(location);
+      if (
+        !Number.isSafeInteger(result.totalPages) ||
+        result.totalPages < 0 ||
+        result.remainingPages !== 0
+      ) {
+        throw new DataStorageError(
+          "DATABASE_CORRUPT",
+          "SQLite backup completed with invalid completion metadata.",
+        );
+      }
+      return {
+        totalPages: result.totalPages,
+        remainingPages: 0,
+      };
+    } catch (error) {
+      try {
+        rmSync(location, { force: true });
+      } catch {
+        // Preserve the original backup failure.
+      }
+      if (isDataStorageError(error)) throw error;
+      throw new DataStorageError(
+        "DATABASE_UNAVAILABLE",
+        "Unable to create a consistent SQLite backup.",
+        error,
+      );
+    }
   }
 
   catalogStorage(): SqliteCatalogStorage {
