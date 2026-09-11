@@ -84,7 +84,20 @@ Phase status:
 
 `docs/PHASE-3-STATUS.md`
 
-The Task 21 behavioral implementation is verified. The final Task 21 report must still verify the documentation-closeout branch head and then the exact merged `main` head before declaring Task 21 fully closed.
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       a73039aec0ae593dd6a9a24b7b6d0dacd96cd3d4
+GitHub Actions run:  34613317729
+Node 22:             PASS
+Node 24:             PASS
+Tests:               244 / 244 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The Task 21 behavioral implementation and documentation closeout candidate are verified. The final Task 21 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 21 fully closed.
 
 ## NEXT
 
