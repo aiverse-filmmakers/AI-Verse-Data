@@ -113,6 +113,33 @@ Security controls:
 
 Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
 
+## 5.2 Native workspace initialization safety
+
+Phase 3.3 applies trusted host scope to the actual AI-Verse OS workspace manifest before a canonical native Data database may be created.
+
+Security controls:
+
+- caller supplies a workspace ID, never a workspace/database path;
+- workspace ID must satisfy the host slug contract;
+- only `workspaces/<requested-id>/` is inspected;
+- workspace directory and `WORKSPACE.yaml` must be real non-symlink paths;
+- manifest schema major, required string fields, exact ID, and status are validated;
+- unknown/additive manifest metadata does not become authority;
+- canonical DB path is derived internally from the validated scope;
+- data-directory/canonical-leaf symlink escape is rejected;
+- fresh creation requires `status: active`;
+- fresh creation requires current enabled Task 20 installation;
+- unbound legacy DBs are not silently adopted;
+- migration/corruption/unsupported/scope-conflict states are not replaced;
+- orphan WAL/SHM/quarantine residue blocks fresh empty replacement;
+- fresh DB is staged and bound before canonical publication;
+- publication uses atomic no-overwrite semantics;
+- concurrent initializers converge instead of replacing each other;
+- initialization affects only the requested workspace;
+- Task 20 registry/files and tracked OS state remain untouched.
+
+Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
+
 ## 6. No arbitrary SQL by default
 
 Agent-facing and App-facing APIs accept structured operations only.
