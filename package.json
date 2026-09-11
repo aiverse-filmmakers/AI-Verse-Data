@@ -59,6 +59,10 @@
     "./schema-migrations": {
       "types": "./dist/src/schema-migrations/index.d.ts",
       "import": "./dist/src/schema-migrations/index.js"
+    },
+    "./recovery": {
+      "types": "./dist/src/recovery/index.d.ts",
+      "import": "./dist/src/recovery/index.js"
     }
   },
   "files": [

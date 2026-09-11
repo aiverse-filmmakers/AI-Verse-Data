@@ -54,9 +54,13 @@ function mapEntry(row: IdempotencyRow): StoredIdempotencyEntry {
 }
 
 export class SqliteIdempotencyStorage implements DataIdempotencyStorage {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly assertWritable: () => void = () => {},
+  ) {}
 
   initialize(): void {
+    this.assertWritable();
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS _idempotency (
         idempotency_key TEXT PRIMARY KEY,
@@ -116,6 +120,7 @@ export class SqliteIdempotencyStorage implements DataIdempotencyStorage {
   }
 
   create(entry: StoredIdempotencyEntry): boolean {
+    this.assertWritable();
     const result = this.database
       .prepare(
         `INSERT INTO _idempotency (

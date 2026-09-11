@@ -12,10 +12,11 @@ export * from "./provenance/index.js";
 export * from "./bulk/index.js";
 export * from "./backup/index.js";
 export * from "./schema-migrations/index.js";
+export * from "./recovery/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.7" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "2.8" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -41,12 +42,15 @@ export interface FoundationStatus {
   readonly internalMigrationsAvailable: true;
   readonly userSchemaMigrationsAvailable: true;
   readonly schemaMigrationPreviewAvailable: true;
+  readonly corruptionRecoveryAvailable: true;
+  readonly quarantineWriteBlockingAvailable: true;
+  readonly stagedRecoveryAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations exist through Phase 2.7.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations, corruption quarantine, recovery diagnosis, and verified staged recovery exist through Phase 2.8.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -73,5 +77,8 @@ export function getFoundationStatus(): FoundationStatus {
     internalMigrationsAvailable: true,
     userSchemaMigrationsAvailable: true,
     schemaMigrationPreviewAvailable: true,
+    corruptionRecoveryAvailable: true,
+    quarantineWriteBlockingAvailable: true,
+    stagedRecoveryAvailable: true,
   };
 }

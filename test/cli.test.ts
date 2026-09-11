@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 2.4 bulk boundary", () => {
+test("--help succeeds and identifies the Phase 2.8 recovery boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 2\.4 adds bounded bulk preview and atomic bulk execution/);
+  assert.match(result.stdout, /Phase 2\.8 adds fail-closed corruption quarantine/);
   assert.equal(result.stderr, "");
 });
 

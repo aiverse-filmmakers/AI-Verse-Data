@@ -144,9 +144,13 @@ const RECEIPT_SELECT = `
 `;
 
 export class SqliteProvenanceStorage implements DataProvenanceStorage {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly assertWritable: () => void = () => {},
+  ) {}
 
   initialize(): void {
+    this.assertWritable();
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS _events (
         event_sequence INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -246,6 +250,7 @@ export class SqliteProvenanceStorage implements DataProvenanceStorage {
     event: StoredDataEventInput,
     receipt: StoredMutationReceipt,
   ): StoredDataEvent {
+    this.assertWritable();
     const result = this.database
       .prepare(`
         INSERT INTO _events (

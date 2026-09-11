@@ -10,29 +10,29 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  7 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  8 / 9
 
-Overall implementation: 16 / 41 tasks complete
+Overall implementation: 17 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 16 / 41 - Phase 2.7: User-schema migration framework**
+**Task 17 / 41 - Phase 2.8: Corruption/recovery behavior**
 
 Behavioral implementation verification:
 
 ```text
-Behavioral commit:   52ca515e3ad18ecdb9dd6907b7362aa00c3530e1
-GitHub Actions run:  34593805448
+Behavioral commit:   1ff0e683603ae4a6da9967a0f2bbc199b526c119
+GitHub Actions run:  34598198275
 Node 22:             PASS
 Node 24:             PASS
-Tests:               185 / 185 PASS
+Tests:               199 / 199 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 16:
+Implemented through Task 17:
 
 - protocol and validation foundation;
 - SQLite storage driver and trusted workspace identity;
@@ -43,78 +43,83 @@ Implemented through Task 16:
 - actor/request/transaction/workspace provenance;
 - bounded bulk preview and all-or-nothing execution;
 - consistent physical backup and verified portable export/import;
-- internal SQLite database format v2 migration framework;
-- public `@ai-verse/data/schema-migrations` surface;
-- `data.schema.migration.preview` and `data.schema.migration.execute`;
-- consistent snapshot migration preview;
-- schema/actor/owner/record/relation-bound SHA-256 preview digest;
-- required-field backfills;
-- deterministic `set_if_missing` and destructive `set` backfills;
-- remove/replace/rename field migrations;
-- explicit destructive approval metadata;
-- maximum 500 active records per atomic migration;
-- maximum 8 MiB source state and 8 MiB rewritten state;
-- immutable next schema version;
-- active record schema + record version advancement exactly once;
-- deleted records preserved as historical state;
-- reference-target validation and normalized relation-index rebuilding;
-- stale schema/record preview rejection;
-- idempotent migration replay;
-- per-record immutable migration provenance plus one transaction-level migration receipt;
-- migration owner/executor/approver metadata;
-- forced mid-commit failure proof for full schema/record/relation/idempotency/audit rollback;
-- no arbitrary SQL or arbitrary-code backfills.
+- internal SQLite database-format migration framework;
+- governed user-schema migration preview/execute;
+- public `@ai-verse/data/recovery` surface;
+- physical versus semantic corruption reporting;
+- durable engine-owned quarantine sidecar evidence;
+- malformed/unsafe quarantine evidence fails closed;
+- quarantine blocks normal open and already-open canonical write paths;
+- internal migration writes cannot bypass quarantine;
+- read-only migration inspection remains available for diagnosis;
+- existing empty/uninitialized files are never silently bootstrapped;
+- existing DB integrity is verified before first trusted binding/WAL configuration;
+- unrelated SQLite stays unrecognized rather than quarantined;
+- migration-required/incomplete stays distinct from corruption;
+- read-only original-source recovery diagnosis;
+- deep semantic validation on a consistent temporary SQLite online-backup snapshot;
+- lost canonical records detected from surviving committed provenance/idempotency evidence;
+- same-binding staged recovery from verified SQLite backup artifacts;
+- same-binding staged recovery from verified portable-export artifacts;
+- staged destination must be a distinct empty physical path and re-verify healthy;
+- original corrupt canonical state and quarantine remain untouched;
+- no automatic repair, overwrite, promotion, quarantine clearing, or cross-workspace recovery.
 
-Detailed Task 16 contract:
+Detailed Task 17 contract:
 
-`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
+`docs/CORRUPTION-AND-RECOVERY-V0.1.md`
 
 Documentation closeout candidate verification:
 
 ```text
-Closeout head:       ec03751517caf67e72361c25cd77792b77da3bd7
-GitHub Actions run:  34593931881
+Closeout head:       8b425df4875ddaacd39da6d7e5d116b89f40f9c0
+GitHub Actions run:  34598581199
 Node 22:             PASS
 Node 24:             PASS
-Tests:               185 / 185 PASS
+Tests:               199 / 199 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-The behavioral implementation and documentation closeout candidate are verified. The final Task 16 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 16 fully closed.
+The behavioral implementation and documentation closeout candidate are verified. The final Task 17 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 17 fully closed.
 
 ## NEXT
 
-**Task 17 / 41 - Phase 2.8: Corruption/recovery behavior**
+**Task 18 / 41 - Phase 2.9: Phase 2 reliability/adversarial gate**
 
-Task 17 scope from the canonical Build Map:
+Task 18 scope from the canonical Build Map:
 
 ```text
-Corruption detection
-Fail-closed writes
-Recovery reporting
-No silent empty replacement
+Run the full Phase 2 reliability/adversarial acceptance story across:
+optimistic concurrency
+idempotency
+events/receipts/provenance
+bulk safety
+backup/export/import
+internal migrations
+user-schema migrations
+corruption/recovery
 ```
 
-Do not start Task 18 until Task 17 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
+Do not start Phase 3 until Task 18 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 17 architectural laws
+## Task 18 architectural laws
 
 The implementation must preserve:
 
-1. Canonical Data corruption must fail visibly. A corrupt or semantically inconsistent database must never be represented as an empty healthy database.
-2. Detection and repair are separate concerns. Integrity/semantic checks may report corruption, but automatic destructive repair is not a safe default.
-3. Once corruption is detected, unsafe canonical writes must remain blocked until an explicit supported recovery path establishes a verified healthy state.
-4. The original corrupted canonical database must not be silently deleted, truncated, replaced, or rebound as part of diagnosis.
-5. Physical SQLite integrity failures and AI-Verse semantic-integrity failures must be distinguishable enough for actionable reporting.
-6. Recovery evidence must build on the verified Phase 2.5 backup/export foundations rather than raw WAL-mode file copying.
-7. Any recovery source must preserve trusted workspace binding and must not enable cross-workspace remapping or ownership laundering.
-8. Internal-format migration-required/incomplete state remains distinct from corruption and must not be mislabeled or “repaired” by Task 17.
-9. User-schema validation failures remain distinct from database corruption; Task 17 must not turn rejected migrations into repair operations.
-10. Recovery actions must be explicit, staged, verifiable, and no-overwrite by default unless a separately documented destructive replacement contract is deliberately introduced.
-11. Task 17 must not prematurely claim the full Phase 2 gate. Task 18 remains responsible for the complete Phase 2 reliability/adversarial acceptance gate.
-12. No sibling repository modifications are permitted without separate explicit approval.
+1. Task 18 is an integration/acceptance gate, not a new feature-development phase.
+2. The gate must compose the already implemented Phase 2 capabilities rather than replacing their dedicated unit/behavior suites.
+3. Cross-feature scenarios must prove canonical state, workspace binding, idempotency, provenance, relations, migrations, backup/recovery, and quarantine invariants survive realistic sequences.
+4. The gate must include adversarial failure paths, not only happy-path operation.
+5. Every destructive/retry/recovery scenario must prove no silent partial success, duplicate canonical effects, ownership laundering, or empty-database replacement.
+6. Migration-required/incomplete, corruption/quarantine, stale OCC, idempotency conflict, stale bulk/schema preview, and artifact mismatch must remain distinguishable failure classes.
+7. Phase 2 acceptance must prove restart/reopen durability where relevant.
+8. Phase 2 acceptance must run on Node 22 and Node 24 under the repository CI matrix.
+9. The gate must not start Phase 3 native OS integration work early.
+10. The gate must not modify sibling repositories.
+11. Task 18 documentation must explicitly state which Phase 2 guarantees were composed and which later lifecycle/integration concerns remain for Phase 3+.
+12. Phase 2 is not declared complete until the exact final `main` merge head passes CI.
 
 ## Canonical documents to read before continuing
 
@@ -123,22 +128,24 @@ Read these first in a new session:
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-2-STATUS.md`
-4. `docs/ARCHITECTURE.md`
-5. `docs/STORAGE-V0.1.md`
-6. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
-7. `docs/INTERNAL-MIGRATIONS-V0.1.md`
-8. `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
-9. `docs/SECURITY-AND-AUTHORITY.md`
-10. `docs/TESTING-AND-ACCEPTANCE.md`
+4. `docs/TESTING-AND-ACCEPTANCE.md`
+5. `docs/OPTIMISTIC-CONCURRENCY-V0.1.md`
+6. `docs/IDEMPOTENCY-V0.1.md`
+7. `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`
+8. `docs/BULK-OPERATIONS-V0.1.md`
+9. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
+10. `docs/INTERNAL-MIGRATIONS-V0.1.md`
+11. `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`
+12. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
 
-Then inspect all existing SQLite integrity checks, stored-schema/record/relation/idempotency/provenance digest verification, database-open fail-closed behavior, backup verification, and current error mapping before changing code.
+Then inspect the current Phase 2 tests and identify cross-feature acceptance gaps before adding the Task 18 integration suite. Do not redo individual feature implementations unless the integration gate exposes a real defect.
 
 ## Closeout rule for every future task
 
 A task is not complete until all of the following are updated and committed:
 
 - implementation/tests;
-- task-specific contract document when appropriate;
+- task-specific contract or acceptance document when appropriate;
 - `README.md`;
 - `docs/BUILD-MAP.md`;
 - active phase status file, currently `docs/PHASE-2-STATUS.md`;

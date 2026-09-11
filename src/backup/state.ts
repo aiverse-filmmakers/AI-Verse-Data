@@ -16,6 +16,7 @@ import { collectRecordRelations } from "../records/relations.js";
 import type {
   DataStorageDatabase,
   StoredEntitySchemaVersion,
+  StoredIdempotencyEntry,
   StoredRecord,
   StoredRecordRelation,
 } from "../storage/index.js";
@@ -65,6 +66,180 @@ function recordKey(record: StoredRecord): string {
   return [record.spaceId, record.entity, record.createdAt, record.recordId].join(
     "\u0000",
   );
+}
+
+
+function canonicalRecordIdentity(
+  spaceId: string,
+  entity: string,
+  recordId: string,
+): string {
+  return [spaceId, entity, recordId].join("\u0000");
+}
+
+function recordIdentityFromResult(value: unknown): string | null {
+  if (value === null || Array.isArray(value) || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.spaceId !== "string" ||
+    typeof record.entity !== "string" ||
+    typeof record.recordId !== "string"
+  ) {
+    return null;
+  }
+  return canonicalRecordIdentity(
+    record.spaceId,
+    record.entity,
+    record.recordId,
+  );
+}
+
+function assertReferencedRecordExists(
+  identities: ReadonlySet<string>,
+  value: unknown,
+  label: string,
+): void {
+  const identity = recordIdentityFromResult(value);
+  if (identity === null) {
+    corrupt(`${label} does not contain a valid canonical record identity.`);
+  }
+  if (!identities.has(identity)) {
+    corrupt(`${label} references a canonical record that is missing.`);
+  }
+}
+
+function assertCommittedRecordReferences(
+  records: readonly StoredRecord[],
+  idempotency: readonly StoredIdempotencyEntry[],
+  provenance: readonly DataPortableProvenanceEntry[],
+): void {
+  const identities = new Set(
+    records.map((record) =>
+      canonicalRecordIdentity(
+        record.spaceId,
+        record.entity,
+        record.recordId,
+      ),
+    ),
+  );
+
+  for (const pair of provenance) {
+    const event = pair.event;
+    if (
+      event.spaceId !== null &&
+      event.entity !== null &&
+      event.recordId !== null &&
+      !identities.has(
+        canonicalRecordIdentity(
+          event.spaceId,
+          event.entity,
+          event.recordId,
+        ),
+      )
+    ) {
+      corrupt(
+        `Provenance event '${event.eventId}' references a canonical record that is missing.`,
+      );
+    }
+  }
+
+  for (const entry of idempotency) {
+    let result: unknown;
+    try {
+      result = JSON.parse(entry.resultJson) as unknown;
+    } catch (error) {
+      corrupt(
+        `Idempotency result JSON cannot be decoded for key '${entry.idempotencyKey}'.`,
+        error,
+      );
+    }
+
+    if (
+      entry.operation === "data.record.create" ||
+      entry.operation === "data.record.update" ||
+      entry.operation === "data.record.delete"
+    ) {
+      assertReferencedRecordExists(
+        identities,
+        result,
+        `Idempotency result '${entry.idempotencyKey}'`,
+      );
+      continue;
+    }
+
+    if (
+      entry.operation === "data.transaction.execute" &&
+      result !== null &&
+      !Array.isArray(result) &&
+      typeof result === "object" &&
+      Array.isArray((result as { readonly operations?: unknown }).operations)
+    ) {
+      const operations = (
+        result as { readonly operations: readonly unknown[] }
+      ).operations;
+      for (let index = 0; index < operations.length; index += 1) {
+        const operation = operations[index];
+        if (
+          operation === null ||
+          Array.isArray(operation) ||
+          typeof operation !== "object"
+        ) {
+          corrupt(
+            `Transaction idempotency result '${entry.idempotencyKey}' has an invalid operation result.`,
+          );
+        }
+        assertReferencedRecordExists(
+          identities,
+          (operation as { readonly record?: unknown }).record,
+          `Transaction idempotency result '${entry.idempotencyKey}' operation ${index}`,
+        );
+      }
+      continue;
+    }
+
+    if (
+      entry.operation === "data.bulk.execute" &&
+      result !== null &&
+      !Array.isArray(result) &&
+      typeof result === "object"
+    ) {
+      const transaction = (
+        result as { readonly transaction?: unknown }
+      ).transaction;
+      if (
+        transaction !== null &&
+        transaction !== undefined &&
+        !Array.isArray(transaction) &&
+        typeof transaction === "object" &&
+        Array.isArray(
+          (transaction as { readonly operations?: unknown }).operations,
+        )
+      ) {
+        const operations = (
+          transaction as { readonly operations: readonly unknown[] }
+        ).operations;
+        for (let index = 0; index < operations.length; index += 1) {
+          const operation = operations[index];
+          if (
+            operation === null ||
+            Array.isArray(operation) ||
+            typeof operation !== "object"
+          ) {
+            corrupt(
+              `Bulk idempotency result '${entry.idempotencyKey}' has an invalid transaction result.`,
+            );
+          }
+          assertReferencedRecordExists(
+            identities,
+            (operation as { readonly record?: unknown }).record,
+            `Bulk idempotency result '${entry.idempotencyKey}' operation ${index}`,
+          );
+        }
+      }
+    }
+  }
 }
 
 function assertSourceRelations(
@@ -313,6 +488,8 @@ export function collectPortableState(
     afterSequence = page.at(-1)!.sequence;
     if (page.length < PAGE_SIZE) break;
   }
+
+  assertCommittedRecordReferences(records, idempotency, provenance);
 
   const idempotencyKeys = new Set(
     idempotency.map((entry) => entry.idempotencyKey),

@@ -3,6 +3,10 @@ import { existsSync, statSync } from "node:fs";
 import Database from "better-sqlite3";
 
 import { DataStorageError, isDataStorageError } from "./errors.js";
+import {
+  assertNotQuarantined,
+  markDatabaseQuarantined,
+} from "./sqlite-quarantine.js";
 import { backupSqliteDatabase } from "./sqlite-backup.js";
 import {
   assertSqliteFormatCurrent,
@@ -415,6 +419,7 @@ function validateOrBootstrap(
     const userVersion = simpleNumber(database, "user_version");
 
     if (
+      existedBeforeOpen ||
       mode === "open-existing" ||
       tables.length > 0 ||
       applicationId !== 0 ||
@@ -433,7 +438,37 @@ function validateOrBootstrap(
 
   const metadata = readMetadata(database);
   assertSqliteFormatCurrent(database, metadata);
-  return ensureExpectedBinding(database, metadata, expectedBinding);
+  return metadata;
+}
+
+function runIntegrityCheck(
+  database: Database.Database,
+  maxErrors?: number,
+): IntegrityCheckResult {
+  let rows: Array<Record<string, unknown>>;
+  try {
+    rows = database.pragma(
+      maxErrors === undefined
+        ? "integrity_check"
+        : `integrity_check(${maxErrors})`,
+    ) as Array<Record<string, unknown>>;
+  } catch (error) {
+    throw new DataStorageError(
+      "DATABASE_CORRUPT",
+      "SQLite integrity check could not be completed.",
+      error,
+    );
+  }
+
+  const messages = rows.map((row) => {
+    const value = row.integrity_check ?? Object.values(row)[0];
+    return String(value ?? "unknown integrity result");
+  });
+
+  return {
+    ok: messages.length === 1 && messages[0]?.toLowerCase() === "ok",
+    messages,
+  };
 }
 
 function configureConnection(database: Database.Database): void {
@@ -465,6 +500,7 @@ class SqliteStorageDatabase implements DataStorageDatabase {
   constructor(
     private readonly database: Database.Database,
     private readonly storedMetadata: StorageDatabaseMetadata,
+    private readonly location: string,
   ) {}
 
   metadata(): StorageDatabaseMetadata {
@@ -496,18 +532,29 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 
   integrityCheck(): IntegrityCheckResult {
     this.assertOpen();
-    const rows = this.database.pragma("integrity_check") as Array<
-      Record<string, unknown>
-    >;
-    const messages = rows.map((row) => {
-      const value = row.integrity_check ?? Object.values(row)[0];
-      return String(value ?? "unknown integrity result");
-    });
+    let result: IntegrityCheckResult;
+    try {
+      result = runIntegrityCheck(this.database);
+    } catch (error) {
+      markDatabaseQuarantined(this.location, {
+        category: "physical",
+        message:
+          error instanceof Error
+            ? error.message
+            : "SQLite integrity check failed unexpectedly.",
+        binding: this.storedMetadata.binding,
+      });
+      throw error;
+    }
 
-    return {
-      ok: messages.length === 1 && messages[0]?.toLowerCase() === "ok",
-      messages,
-    };
+    if (!result.ok) {
+      markDatabaseQuarantined(this.location, {
+        category: "physical",
+        message: `SQLite integrity check failed: ${result.messages.join("; ")}`,
+        binding: this.storedMetadata.binding,
+      });
+    }
+    return result;
   }
 
   async backupTo(location: string): Promise<StorageBackupResult> {
@@ -517,12 +564,18 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 
   catalogStorage(): SqliteCatalogStorage {
     this.assertOpen();
-    return new SqliteCatalogStorage(this.database);
+    return new SqliteCatalogStorage(
+      this.database,
+      () => this.assertWritable(),
+    );
   }
 
   recordStorage(): SqliteRecordStorage {
     this.assertOpen();
-    return new SqliteRecordStorage(this.database);
+    return new SqliteRecordStorage(
+      this.database,
+      () => this.assertWritable(),
+    );
   }
 
   queryStorage(): SqliteQueryStorage {
@@ -532,24 +585,33 @@ class SqliteStorageDatabase implements DataStorageDatabase {
 
   relationStorage(): SqliteRelationStorage {
     this.assertOpen();
-    return new SqliteRelationStorage(this.database);
+    return new SqliteRelationStorage(
+      this.database,
+      () => this.assertWritable(),
+    );
   }
 
   idempotencyStorage(): SqliteIdempotencyStorage {
     this.assertOpen();
-    return new SqliteIdempotencyStorage(this.database);
+    return new SqliteIdempotencyStorage(
+      this.database,
+      () => this.assertWritable(),
+    );
   }
 
   provenanceStorage(): SqliteProvenanceStorage {
     this.assertOpen();
-    return new SqliteProvenanceStorage(this.database);
+    return new SqliteProvenanceStorage(
+      this.database,
+      () => this.assertWritable(),
+    );
   }
 
   transaction<T>(
     operation: () => T,
     mode: StorageTransactionMode = "deferred",
   ): T {
-    this.assertOpen();
+    this.assertWritable();
     const wrapped = this.database.transaction(operation);
     return mode === "immediate" ? wrapped.immediate() : wrapped.deferred();
   }
@@ -567,6 +629,11 @@ class SqliteStorageDatabase implements DataStorageDatabase {
         "AI-Verse Data database is already closed.",
       );
     }
+  }
+
+  private assertWritable(): void {
+    this.assertOpen();
+    assertNotQuarantined(this.location);
   }
 }
 
@@ -601,6 +668,12 @@ export class SqliteStorageDriver implements DataStorageDriver {
         fileMustExist: true,
       });
       ensureSupportedSqlite(database);
+      if (!hasMetaTable(database)) {
+        throw new DataStorageError(
+          "DATABASE_FORMAT_UNRECOGNIZED",
+          "Existing SQLite file is not an initialized AI-Verse Data database.",
+        );
+      }
       const metadata = readMetadata(database);
       this.assertMigrationExpectedBinding(
         metadata.binding,
@@ -627,6 +700,7 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
+    assertNotQuarantined(location);
     if (!existsSync(location)) {
       throw new DataStorageError(
         "DATABASE_NOT_FOUND",
@@ -644,6 +718,12 @@ export class SqliteStorageDriver implements DataStorageDriver {
     try {
       database = new Database(location, { fileMustExist: true });
       ensureSupportedSqlite(database);
+      if (!hasMetaTable(database)) {
+        throw new DataStorageError(
+          "DATABASE_FORMAT_UNRECOGNIZED",
+          "Existing SQLite file is not an initialized AI-Verse Data database.",
+        );
+      }
       const before = readMetadata(database);
       this.assertMigrationExpectedBinding(
         before.binding,
@@ -691,7 +771,6 @@ export class SqliteStorageDriver implements DataStorageDriver {
   open(options: StorageOpenOptions): DataStorageDatabase {
     const mode = options.mode ?? "create-or-open";
     const location = options.location;
-    const existedBeforeOpen = existsSync(location);
 
     if (location.length === 0) {
       throw new DataStorageError(
@@ -699,6 +778,9 @@ export class SqliteStorageDriver implements DataStorageDriver {
         "SQLite database location must not be empty.",
       );
     }
+
+    assertNotQuarantined(location);
+    const existedBeforeOpen = existsSync(location);
 
     if (existedBeforeOpen && !statSync(location).isFile()) {
       throw new DataStorageError(
@@ -715,19 +797,48 @@ export class SqliteStorageDriver implements DataStorageDriver {
     }
 
     let database: Database.Database | undefined;
+    let metadata: StorageDatabaseMetadata | undefined;
     try {
       database = new Database(location, {
         fileMustExist: mode === "open-existing",
       });
       ensureSupportedSqlite(database);
-      const metadata = validateOrBootstrap(
+      metadata = validateOrBootstrap(
         database,
         existedBeforeOpen,
         mode,
         options.expectedBinding,
       );
+      let integrity: IntegrityCheckResult;
+      try {
+        integrity = runIntegrityCheck(database, 1);
+      } catch (error) {
+        markDatabaseQuarantined(location, {
+          category: "physical",
+          message:
+            error instanceof Error
+              ? error.message
+              : "SQLite integrity check failed unexpectedly.",
+          binding: metadata.binding,
+        });
+        throw error;
+      }
+      if (!integrity.ok) {
+        const message = `SQLite integrity check failed: ${integrity.messages.join("; ")}`;
+        markDatabaseQuarantined(location, {
+          category: "physical",
+          message,
+          binding: metadata.binding ?? options.expectedBinding ?? null,
+        });
+        throw new DataStorageError("DATABASE_CORRUPT", message);
+      }
+      metadata = ensureExpectedBinding(
+        database,
+        metadata,
+        options.expectedBinding,
+      );
       configureConnection(database);
-      return new SqliteStorageDatabase(database, metadata);
+      return new SqliteStorageDatabase(database, metadata, location);
     } catch (error) {
       if (database !== undefined) {
         try {
@@ -736,7 +847,20 @@ export class SqliteStorageDriver implements DataStorageDriver {
           // Preserve the original failure.
         }
       }
-      if (isDataStorageError(error)) throw error;
+      if (isDataStorageError(error)) {
+        if (error.code === "DATABASE_CORRUPT" && existedBeforeOpen) {
+          try {
+            markDatabaseQuarantined(location, {
+              category: "semantic",
+              message: error.message,
+              binding: metadata?.binding ?? options.expectedBinding ?? null,
+            });
+          } catch {
+            // Preserve the original corruption error if quarantine persistence fails.
+          }
+        }
+        throw error;
+      }
       throw new DataStorageError(
         "DATABASE_UNAVAILABLE",
         "Unable to open AI-Verse Data SQLite database.",

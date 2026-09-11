@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 16 / 41  
-**Latest completed:** Task 16 / 41, Phase 2.7 - User-schema migration framework  
-**Next task:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior  
+**Completed implementation tasks:** 17 / 41  
+**Latest completed:** Task 17 / 41, Phase 2.8 - Corruption/recovery behavior  
+**Next task:** Task 18 / 41, Phase 2.9 - Phase 2 gate  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -155,8 +155,7 @@ Bulk-operation safety and limits
 
 Task 14 / 41 - COMPLETE
 Backup/export/import foundation
-  -> public @ai-verse/data/backup
-@ai-verse/data/schema-migrations surface
+  -> public @ai-verse/data/backup surface
   -> consistent SQLite online backup
   -> manifest, payload SHA-256, and artifact receipt
   -> portable export from a consistent SQLite snapshot
@@ -198,9 +197,25 @@ User-schema migration framework
   -> idempotent replay returns one migration effect
   -> migration owner/executor/approval provenance
   -> no arbitrary SQL or model-generated backfill code
+
+Task 17 / 41 - COMPLETE
+Corruption/recovery behavior
+  -> public @ai-verse/data/recovery surface
+  -> physical + semantic corruption distinction
+  -> durable .quarantine.json write-block marker
+  -> quarantined writes blocked on open and already-open handles
+  -> existing empty/uninitialized files never silently bootstrapped
+  -> existing DB integrity verified before binding/WAL writes
+  -> migration-required/incomplete kept distinct from corruption
+  -> unrelated SQLite kept unrecognized rather than quarantined
+  -> deep semantic verification on a consistent temporary snapshot
+  -> lost canonical records detected from surviving committed evidence
+  -> verified same-binding backup/export recovery staging
+  -> staged recovery never overwrites the corrupt canonical source
+  -> no automatic repair, promotion, or quarantine clearing
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.7 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, explicit internal database-format migrations, and governed user-schema migrations. Corruption/recovery remains the final implementation task before the Phase 2 gate.
+Phase 1 is complete. Phase 2.1 through 2.8 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, verified portable export/import, explicit internal database-format migrations, governed user-schema migrations, and fail-closed corruption quarantine/recovery staging. The Phase 2 reliability/adversarial gate is next.
 
 ## Public package surfaces
 
@@ -217,6 +232,8 @@ Phase 1 is complete. Phase 2.1 through 2.7 now add race-safe optimistic concurre
 @ai-verse/data/provenance
 @ai-verse/data/bulk
 @ai-verse/data/backup
+@ai-verse/data/schema-migrations
+@ai-verse/data/recovery
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -391,23 +408,33 @@ Required-field backfills and destructive remove/replace/rename operations are no
 
 See [`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`](docs/USER-SCHEMA-MIGRATIONS-V0.1.md).
 
+## Corruption quarantine and staged recovery
+
+Phase 2.8 adds `@ai-verse/data/recovery` and durable corruption quarantine behavior.
+
+Normal storage open now refuses to initialize any already-existing unrecognized or zero-byte file as fresh Data. Existing databases pass SQLite integrity verification before first trusted binding or WAL configuration. Confirmed physical or semantic corruption writes a validated sidecar quarantine marker, and quarantine is rechecked across catalog, record, relation, idempotency, provenance, transaction, and internal-migration write boundaries.
+
+`DataRecovery.inspect` diagnoses the original canonical file read-only, distinguishes migration/scope/format states from corruption, and performs deep semantic validation against a consistent temporary SQLite snapshot. Recovery staging verifies an existing Phase 2.5 backup/export and restores/imports it only to a different empty physical scope with the exact same workspace binding. Task 17 deliberately does not replace, delete, truncate, or automatically promote over the corrupt canonical source.
+
+See [`docs/CORRUPTION-AND-RECOVERY-V0.1.md`](docs/CORRUPTION-AND-RECOVERY-V0.1.md).
+
 ### Latest verification
 
-Task 16 behavioral CI run: `34593805448`  
-Behavioral commit: `52ca515e3ad18ecdb9dd6907b7362aa00c3530e1`
+Task 17 behavioral CI run: `34598198275`  
+Behavioral commit: `1ff0e683603ae4a6da9967a0f2bbc199b526c119`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-185 tests
-185 passed
+199 tests
+199 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite additionally proves required-field backfills, destructive approval, rename/replace/narrowing behavior, reference-index rebuilding, stale-preview rejection, idempotent replay, deleted-record history preservation, atomic source/rewrite size and count ceilings, consistent preview state, complete rollback after a forced mid-commit provenance failure, and exact migration provenance/idempotency survival through portable export/import.
+The suite additionally proves no-silent-bootstrap behavior, physical and semantic quarantine, already-open write blocking, open-time quarantine persistence, lost-record detection from surviving committed evidence, migration-state separation, malformed-marker fail-closed behavior, quarantined migration-write blocking, same-binding staged backup/export recovery, and preservation of the original corrupt canonical source.
 
 ## Why Data is separate from Memory
 
@@ -524,10 +551,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md) - implemented backup, verification, restore, and portable export/import contract
 - [`docs/INTERNAL-MIGRATIONS-V0.1.md`](docs/INTERNAL-MIGRATIONS-V0.1.md) - implemented internal database-format migration contract
 - [`docs/USER-SCHEMA-MIGRATIONS-V0.1.md`](docs/USER-SCHEMA-MIGRATIONS-V0.1.md) - implemented governed user-schema migration contract
+- [`docs/CORRUPTION-AND-RECOVERY-V0.1.md`](docs/CORRUPTION-AND-RECOVERY-V0.1.md) - implemented corruption quarantine, diagnosis, and staged recovery contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 17 / 41, Phase 2.8 - Corruption/recovery behavior.**
+**Next: Task 18 / 41, Phase 2.9 - Phase 2 reliability/adversarial gate.**

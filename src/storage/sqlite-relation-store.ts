@@ -28,9 +28,13 @@ function mapRelation(row: RelationRow): StoredRecordRelation {
 }
 
 export class SqliteRelationStorage implements DataRelationStorage {
-  constructor(private readonly database: Database.Database) {}
+  constructor(
+    private readonly database: Database.Database,
+    private readonly assertWritable: () => void = () => {},
+  ) {}
 
   initialize(): void {
+    this.assertWritable();
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS _record_relations (
         source_space_id TEXT NOT NULL,
@@ -96,6 +100,7 @@ export class SqliteRelationStorage implements DataRelationStorage {
     recordId: string,
     relations: readonly StoredRecordRelation[],
   ): void {
+    this.assertWritable();
     this.deleteSourceRelations(spaceId, entity, recordId);
     if (relations.length === 0) return;
 
@@ -129,6 +134,7 @@ export class SqliteRelationStorage implements DataRelationStorage {
     entity: string,
     recordId: string,
   ): void {
+    this.assertWritable();
     this.database
       .prepare(
         `DELETE FROM _record_relations
