@@ -10,38 +10,29 @@
 ```text
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
-Phase 2  Reliability + Agent Safety    IN PROGRESS  4 / 9
+Phase 2  Reliability + Agent Safety    IN PROGRESS  5 / 9
 
-Overall implementation: 13 / 41 tasks complete
+Overall implementation: 14 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 13 / 41 - Phase 2.4: Bulk-operation safety and limits**
+**Task 14 / 41 - Phase 2.5: Backup/export/import foundation**
 
 Behavioral implementation verification:
 
 ```text
-Commit: 48cc437647fdf76e21b51b310eb6567f4a843d1f
-GitHub Actions run: 34535289214
-Node 22: PASS
-Node 24: PASS
-Tests: 153 / 153 PASS
-Failures: 0
-Skipped: 0
-Cancelled: 0
+Behavioral commit:   ce03b101c3560825b0e994ca4b30a269c4e3c4a3
+GitHub Actions run:  34588281966
+Node 22:             PASS
+Node 24:             PASS
+Tests:               162 / 162 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
 ```
 
-Task 12 final documentation-closeout head was independently verified before Task 13 began:
-
-```text
-Task 12 closeout head: 23327f4bde448776fcb1562eb28eb992e8eb6637
-GitHub Actions run: 34534379610
-Node 22: PASS
-Node 24: PASS
-```
-
-Implemented through Task 13:
+Implemented through Task 14:
 
 - protocol and validation foundation;
 - SQLite storage driver and trusted workspace identity;
@@ -53,55 +44,58 @@ Implemented through Task 13:
 - SHA-256 provenance integrity and receipt/event linkage checks;
 - bounded opaque event queries;
 - transaction provenance-laundering protection;
-- `@ai-verse/data/bulk`;
-- `data.bulk.preview` and `data.bulk.execute`;
-- exact rollback-only bulk preview;
-- no durable preview records/relations/idempotency/events/receipts/event-sequence changes;
-- hard 50-operation and 256 KiB bulk ceilings;
-- actor/operation/state-bound preview digests;
-- mandatory preview-digest match before commit;
-- all-or-nothing bulk commit;
-- bulk replay verification against underlying transaction idempotency + provenance.
+- bounded bulk preview and all-or-nothing execution;
+- `@ai-verse/data/backup`;
+- consistent SQLite online backup;
+- atomically reserved no-overwrite backup destinations;
+- separate physical backup and portable logical export formats;
+- versioned manifest + artifact receipt metadata;
+- payload and deterministic logical-state SHA-256 verification;
+- portable export from a consistent SQLite snapshot;
+- preservation of full schema history, records, tombstones, relation indexes, idempotency state, events, receipts, and event sequence;
+- valid historical pre-binding provenance preservation;
+- workspace-binding conflict rejection;
+- no-overwrite canonical restore/import;
+- staged materialization and SQLite sealing;
+- post-install canonical state verification.
 
-Documentation/log closeout candidate verification:
+Detailed Task 14 contract:
 
-```text
-Closeout head:       f9fd9e32eaabb0f516a7550524b418bfcadcebed
-GitHub Actions run:  34584742493
-Node 22:             PASS
-Node 24:             PASS
-```
+`docs/BACKUP-EXPORT-IMPORT-V0.1.md`
 
-This handoff commit records that verified closeout candidate. The final report must still verify the resulting current repository HEAD before Task 13 is declared fully closed.
+The behavioral implementation is complete. The final Task 14 report must still verify the exact documentation-closeout branch head and then the exact merged `main` head before declaring Task 14 fully closed.
 
 ## NEXT
 
-**Task 14 / 41 - Phase 2.5: Backup/export/import foundation**
+**Task 15 / 41 - Phase 2.6: Internal migration framework**
 
-Task 14 scope from the canonical Build Map:
+Task 15 scope from the canonical Build Map:
 
 ```text
-Consistent backup
-Manifest + digest + receipt metadata
-Verified portable export/import where appropriate
+Database-format migrations
+Migration ledger
+Compatibility gates
+Interruption behavior
+Rollback/backup strategy
 ```
 
-Do not start Task 15 until Task 14 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
+Do not start Task 16 until Task 15 is fully implemented, tested, documented, committed, logged here, and the current repository head has passing CI.
 
-## Task 14 architectural laws
+## Task 15 architectural laws
 
 The implementation must preserve:
 
-1. Backup/export must never mutate or weaken canonical workspace Data.
-2. A backup must represent a consistent committed database state, never a torn copy.
-3. Manifests/digests/receipts must make corruption or file mismatch visible.
-4. Import/restore must fail closed on incompatible format, binding, integrity, or digest mismatch.
-5. Existing canonical Data must never be silently overwritten by restore/import.
-6. Backup artifacts are portable evidence/copies, not a second editable source of truth.
-7. Restore/import must preserve workspace ownership and scope rules.
-8. No raw SQL or canonical DB paths are exposed through normal agent/App APIs.
-9. Task 14 must not implement Task 15 internal migration behavior early.
-10. No sibling repo modifications are permitted without separate explicit approval.
+1. Internal database-format migrations are engine-owned and distinct from Task 16 user-entity schema migrations.
+2. Unsupported newer database formats must continue to fail closed rather than being silently downgraded or adopted.
+3. Migration state must be durable and detectable. An interrupted or incomplete migration must never look like a healthy completed database.
+4. The migration ledger is canonical engine metadata, not user Data and not Memory.
+5. Transactional DDL/migrations should be used where SQLite permits it, with explicit interruption semantics where it does not.
+6. A safe backup/rollback strategy must use the verified Phase 2.5 backup foundation rather than raw WAL-mode file copying.
+7. Trusted workspace binding and canonical ownership must survive migrations unchanged.
+8. Migration execution must not accept arbitrary model-generated SQL as a public agent/App operation.
+9. Task 15 must not implement Task 16 destructive user-schema migration/backfill behavior early.
+10. Task 15 must not implement Task 17 corruption-repair behavior early.
+11. No sibling repository modifications are permitted without separate explicit approval.
 
 ## Canonical documents to read before continuing
 
@@ -111,14 +105,14 @@ Read these first in a new session:
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-2-STATUS.md`
 4. `docs/ARCHITECTURE.md`
-5. `docs/PROTOCOL-V0.1.md`
-6. `docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`
-7. `docs/BULK-OPERATIONS-V0.1.md`
-8. `docs/IDEMPOTENCY-V0.1.md`
-9. `docs/SECURITY-AND-AUTHORITY.md`
-10. `docs/TESTING-AND-ACCEPTANCE.md`
+5. `docs/BACKUP-EXPORT-IMPORT-V0.1.md`
+6. `docs/STORAGE-V0.1.md`
+7. `docs/SECURITY-AND-AUTHORITY.md`
+8. `docs/TESTING-AND-ACCEPTANCE.md`
+9. `docs/RESEARCH-AND-DECISIONS.md`
+10. `docs/PROTOCOL-V0.1.md`
 
-Then inspect the current implementation relevant to the next task.
+Then inspect the current storage identity/version handling, backup implementation, and all existing migration-related placeholders before changing code.
 
 ## Closeout rule for every future task
 
