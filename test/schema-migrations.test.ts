@@ -195,15 +195,6 @@ test("required-field migration previews and atomically backfills all active reco
       migrationEvents[2]!.details.requestedOperation,
       "data.schema.migration.execute",
     );
-    assert.equal(
-      migrationEvents[2]!.details.schemaMigrationOwner,
-      undefined,
-      "owner is a structured object, not flattened scalar metadata",
-    );
-    assert.deepEqual(
-      migrationEvents[2]!.details.schemaMigrationOwner,
-      undefined,
-    );
     const rawOuter = migrationEvents[2]!.details as Record<string, unknown>;
     assert.deepEqual(rawOuter.schemaMigrationOwner, human);
   } finally {
