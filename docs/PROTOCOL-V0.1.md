@@ -1,7 +1,7 @@
 # AI-Verse Data Protocol v0.1
 
-**Status:** Protocol foundation implemented; core execution, optimistic concurrency, durable idempotency, mutation provenance, and bounded bulk preview/execute implemented through Phase 2.4  
-**Date:** 2026-09-10
+**Status:** Protocol foundation implemented; core execution, optimistic concurrency, durable idempotency, mutation provenance, bounded bulk operations, and governed user-schema migration preview/execute implemented through Phase 2.7  
+**Date:** 2026-09-11
 
 ## 1. Purpose
 
@@ -198,7 +198,78 @@ Input includes:
 }
 ```
 
-Unsupported destructive changes return a migration-required error rather than generating ad-hoc SQL.
+Unsupported destructive changes on the normal `data.schema.update` path return a migration-required error rather than generating ad-hoc SQL.
+
+### `data.schema.migration.preview`
+
+Phase 2.7 provides a separate review surface for schema changes that require record transformation.
+
+Illustrative input:
+
+```json
+{
+  "spaceId": "crm",
+  "entity": "deals",
+  "expectedSchemaVersion": 1,
+  "changes": [
+    {
+      "op": "rename_field",
+      "field": "value",
+      "newField": "amount"
+    }
+  ],
+  "owner": {
+    "kind": "human",
+    "id": "data-owner"
+  },
+  "reason": "Normalize deal amount naming"
+}
+```
+
+Preview validates the proposed schema and every active record against one consistent committed snapshot. It returns a deterministic digest bound to the executor, owner, schema state, exact migration instructions, active record versions/data, and resulting reference relations.
+
+Preview commits no canonical state.
+
+### `data.schema.migration.execute`
+
+Execution requires the exact reviewed digest plus an idempotency key.
+
+Destructive remove/replace/rename changes or force-set backfills additionally require structured approval metadata.
+
+```json
+{
+  "spaceId": "crm",
+  "entity": "deals",
+  "expectedSchemaVersion": 1,
+  "changes": [
+    {
+      "op": "rename_field",
+      "field": "value",
+      "newField": "amount"
+    }
+  ],
+  "owner": {
+    "kind": "human",
+    "id": "data-owner"
+  },
+  "idempotencyKey": "schema-migration:deals:amount",
+  "expectedPreviewDigest": "<64-lowercase-hex>",
+  "approval": {
+    "approvalRef": "approval-123",
+    "approvedBy": {
+      "kind": "human",
+      "id": "approver"
+    },
+    "approvedAt": "2026-09-11T12:00:00Z"
+  }
+}
+```
+
+Phase 2.7 execution is bounded to 500 active records and 8 MiB of both source and rewritten record state. It creates the next immutable schema version, rewrites every active record exactly once, rebuilds relation indexes, and commits idempotency plus immutable provenance in one transaction.
+
+No SQL, database path, script, or arbitrary expression is accepted by either schema-migration operation.
+
+Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
 
 ## 8. Record operations
 
