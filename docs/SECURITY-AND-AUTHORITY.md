@@ -85,6 +85,34 @@ Before opening or creating native storage:
 
 No `../../other-workspace` escape is acceptable even if the requesting agent otherwise has Data write permission in its own workspace.
 
+## 5.1 Native extension installation safety
+
+Phase 3.2 applies the same fail-closed authority model to local extension installation.
+
+Security controls:
+
+- native mutation requires a Task 19 `compatible` host;
+- Data owns only `.aiverse/extensions/ai-verse-data/` and `extensions["ai-verse-data"]`;
+- the shared registry must use supported schema `1.0`;
+- malformed/unsupported registry state is never replaced with a fresh empty registry;
+- unknown top-level fields and unrelated extension entries are preserved;
+- unknown fields on the existing Data entry are preserved;
+- existing `enabled: false` is preserved;
+- registry mutation uses exclusive `registry.json.lock`;
+- an existing lock is never stolen or deleted by a process that did not acquire it;
+- registry state is re-read inside the lock;
+- exact raw registry bytes are checked again before atomic replacement;
+- a competing out-of-contract writer causes `EXTENSION_REGISTRY_CHANGED` instead of a lost update;
+- Data-owned files use verified same-directory temporary staging plus rename replacement;
+- changed Data-owned files are rolled back when registry commit fails before the commit boundary;
+- rollback refuses to overwrite a file that changed externally after materialization;
+- absolute/traversal/UNC/drive/NUL paths and symlink traversal are rejected;
+- normal installation does not edit tracked OS files;
+- registration does not grant Data authority and does not assert health;
+- installation does not initialize workspace databases.
+
+Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
+
 ## 6. No arbitrary SQL by default
 
 Agent-facing and App-facing APIs accept structured operations only.
