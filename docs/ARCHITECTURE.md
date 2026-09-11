@@ -669,21 +669,28 @@ The host resolves the reference under workspace policy.
 
 Data does not become a media object store.
 
-## 23. Backup and portability
+## 23. Backup, portability, and recovery
 
-Canonical databases require explicit backup/export semantics.
-
-The engine should eventually support:
+Phase 2.5 implements explicit backup/export semantics:
 
 ```text
-data backup
-  -> consistent SQLite backup
-  -> manifest with workspace/database format/schema metadata
-  -> digest
+physical backup
+  -> consistent SQLite online backup
+  -> manifest + source identity/binding
+  -> payload/state digests
   -> receipt
+
+portable export
+  -> consistent snapshot
+  -> canonical logical state
+  -> manifest/digests/receipt
 ```
 
-Export/import should be a separate portable format from low-level SQLite file copying where possible.
+Restore/import never overwrites an existing canonical destination and re-verifies installed state.
+
+Phase 2.8 builds recovery on those verified artifacts rather than raw WAL-mode file copying. Confirmed corruption creates durable quarantine evidence and blocks writes. Recovery diagnosis reads the original source without repairing it, performs deep semantic verification on a consistent temporary snapshot, and may stage a verified backup/export only to a different empty destination with the same trusted binding.
+
+Phase 2.8 deliberately does not automatically promote a staged candidate over the corrupt canonical source.
 
 Uninstall must never count as backup.
 
@@ -697,6 +704,7 @@ The engine should fail closed on:
 - unsupported database format version;
 - incomplete migration;
 - corrupt canonical storage;
+- quarantined canonical storage;
 - malformed schema;
 - invalid query field/operator;
 - idempotency collision;
