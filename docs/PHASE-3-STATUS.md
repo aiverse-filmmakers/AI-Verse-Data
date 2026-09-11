@@ -164,6 +164,19 @@ Cancelled:           0
 
 Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       6aa470d536369b23ca5887714da16ffd1ed89fca
+GitHub Actions run:  34607179121
+Node 22:             PASS
+Node 24:             PASS
+Tests:               229 / 229 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 3.2 does not implement:
