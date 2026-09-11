@@ -259,6 +259,19 @@ Cancelled:           0
 
 Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       a73039aec0ae593dd6a9a24b7b6d0dacd96cd3d4
+GitHub Actions run:  34613317729
+Node 22:             PASS
+Node 24:             PASS
+Tests:               244 / 244 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 3.3 does not implement:
