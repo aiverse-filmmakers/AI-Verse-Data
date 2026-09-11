@@ -46,7 +46,12 @@ function validBinding(
     (binding.kind === "standalone" || binding.kind === "workspace") &&
     typeof binding.workspaceId === "string" &&
     binding.workspaceId.length >= 1 &&
-    binding.workspaceId.length <= 128
+    binding.workspaceId.length <= 128 &&
+    binding.workspaceId !== "." &&
+    binding.workspaceId !== ".." &&
+    !binding.workspaceId.includes("/") &&
+    !binding.workspaceId.includes("\\") &&
+    !binding.workspaceId.includes("\u0000")
   );
 }
 
