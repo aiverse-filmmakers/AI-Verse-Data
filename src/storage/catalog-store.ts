@@ -50,6 +50,10 @@ export interface DataCatalogStorage {
     entity: string,
     version: number,
   ): StoredEntitySchemaVersion | null;
+  listSchemaVersions(
+    spaceId: string,
+    entity: string,
+  ): readonly StoredEntitySchemaVersion[];
   updateSchema(
     expectedVersion: number,
     schema: StoredEntitySchemaVersion,

@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 2 in progress  
-**Implementation progress:** 13 / 41 tasks complete  
-**Next:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation
+**Implementation progress:** 14 / 41 tasks complete  
+**Next:** Task 15 / 41, Phase 2.6 - Internal migration framework
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -18,13 +18,13 @@ The target is an installable local-first structured-data layer that can run stan
 ```text
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
-Phase 2  Reliability + Agent Safety    [IN PROGRESS]    44%  (4/9)
+Phase 2  Reliability + Agent Safety    [IN PROGRESS]    56%  (5/9)
 Phase 3  Native AI-Verse Integration   [NOT STARTED]     0%
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **13 / 41 tasks complete**.
+Overall implementation: **14 / 41 tasks complete**.
 
 ---
 
@@ -581,11 +581,54 @@ No Task 14 backup/export/import behavior was introduced.
 
 ## Task 14 / 41 - Phase 2.5 Backup/export/import foundation
 
-**Status:** NEXT
+**Status:** COMPLETE
 
-Consistent backup, manifests/digests/receipts, verified portable export/import where appropriate.
+Implemented:
+
+- public `@ai-verse/data/backup` package surface;
+- consistent SQLite online backup;
+- atomically reserved no-overwrite backup destinations;
+- separate physical backup and portable logical export artifacts;
+- manifest format/version, artifact identity, source identity, payload metadata, and state summary;
+- SHA-256 payload, manifest, event, receipt, idempotency-result, and logical-state verification;
+- durable artifact receipt metadata;
+- backup verification on an isolated temporary copy;
+- portable export from a consistent SQLite snapshot rather than a live multi-query walk;
+- preservation of Data Spaces and complete immutable schema history;
+- preservation of active records and soft-delete tombstones;
+- preservation and validation of normalized relation indexes;
+- preservation of durable idempotency state and exact replay results;
+- preservation of immutable events, mutation receipts, and event sequence;
+- valid historical pre-binding provenance preserved after later trusted binding;
+- semantic portable-import verification before acceptance;
+- trusted binding conflict rejection;
+- existing canonical destination rejection;
+- staging plus SQLite sealing before canonical installation;
+- post-install canonical state verification;
+- no Task 15 migration behavior.
+
+Behavioral verification:
+
+```text
+GitHub Actions run: 34588281966
+Commit:              ce03b101c3560825b0e994ca4b30a269c4e3c4a3
+Node 22:             PASS
+Node 24:             PASS
+Tests:               162 / 162 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/BACKUP-EXPORT-IMPORT-V0.1.md`.  
+Phase status: `docs/PHASE-2-STATUS.md`.
+
+**Task 2.5 gate: PASSED.**
 
 ## Task 15 / 41 - Phase 2.6 Internal migration framework
+
+**Status:** NEXT
+
 Database-format migrations, migration ledger, compatibility gates, interruption behavior, rollback/backup strategy.
 
 ## Task 16 / 41 - Phase 2.7 User-schema migration framework
@@ -714,6 +757,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 14 / 41: Phase 2.5 - Backup/export/import foundation.**
+**Task 15 / 41: Phase 2.6 - Internal migration framework.**
 
-Do not begin Task 15 / 41 until Task 14 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

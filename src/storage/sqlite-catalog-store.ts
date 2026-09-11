@@ -291,6 +291,27 @@ export class SqliteCatalogStorage implements DataCatalogStorage {
     return row === undefined ? null : mapSchema(row);
   }
 
+  listSchemaVersions(
+    spaceId: string,
+    entity: string,
+  ): readonly StoredEntitySchemaVersion[] {
+    const rows = this.database
+      .prepare(
+        `SELECT
+            space_id,
+            entity_id,
+            schema_version,
+            schema_digest,
+            definition_json,
+            created_at
+         FROM _entity_schema_versions
+         WHERE space_id = ? AND entity_id = ?
+         ORDER BY schema_version ASC`,
+      )
+      .all(spaceId, entity) as SchemaVersionRow[];
+    return rows.map(mapSchema);
+  }
+
   updateSchema(
     expectedVersion: number,
     schema: StoredEntitySchemaVersion,

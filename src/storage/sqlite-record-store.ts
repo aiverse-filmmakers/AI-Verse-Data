@@ -183,6 +183,7 @@ export class SqliteRecordStorage implements DataRecordStorage {
     entity: string,
     limit: number,
     includeDeleted = false,
+    offset = 0,
   ): readonly StoredRecord[] {
     const rows = this.database
       .prepare(
@@ -191,9 +192,9 @@ export class SqliteRecordStorage implements DataRecordStorage {
            AND entity_id = ?
            ${includeDeleted ? "" : "AND deleted_at IS NULL"}
          ORDER BY created_at ASC, record_id ASC
-         LIMIT ?`,
+         LIMIT ? OFFSET ?`,
       )
-      .all(spaceId, entity, limit) as RecordRow[];
+      .all(spaceId, entity, limit, offset) as RecordRow[];
     return rows.map(mapRecord);
   }
 

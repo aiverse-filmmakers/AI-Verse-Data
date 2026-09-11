@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 13 / 41  
-**Latest completed:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits  
-**Next task:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
+**Completed implementation tasks:** 14 / 41  
+**Latest completed:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
+**Next task:** Task 15 / 41, Phase 2.6 - Internal migration framework  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -152,9 +152,21 @@ Bulk-operation safety and limits
   -> existing schema/reference/OCC/idempotency/provenance guarantees reused
   -> idempotent bulk replay verified against transaction + provenance state
   -> preview-created IDs never exposed as canonical identity
+
+Task 14 / 41 - COMPLETE
+Backup/export/import foundation
+  -> public @ai-verse/data/backup surface
+  -> consistent SQLite online backup
+  -> manifest, payload SHA-256, and artifact receipt
+  -> portable export from a consistent SQLite snapshot
+  -> schema history, tombstones, relations, idempotency, events, and receipts preserved
+  -> exact logical-state digest verification before and after import
+  -> workspace-binding and valid pre-binding provenance preservation
+  -> no-overwrite artifact and canonical destination rules
+  -> staged restore/import with post-install verification
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.4 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, and bounded review-before-commit bulk operations. Backup, migrations, and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.5 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, and verified portable export/import. Migrations and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -170,6 +182,7 @@ Phase 1 is complete. Phase 2.1 through 2.4 now add race-safe optimistic concurre
 @ai-verse/data/idempotency
 @ai-verse/data/provenance
 @ai-verse/data/bulk
+@ai-verse/data/backup
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
@@ -312,22 +325,33 @@ The bulk layer does not create a second synthetic audit event. Successful execut
 
 See [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md).
 
+## Backup, export, import, and restore
+
+Phase 2.5 adds `@ai-verse/data/backup`. Physical backup uses SQLite's online backup API. Portable export first captures the same kind of consistent SQLite snapshot, then produces deterministic canonical JSON containing Data Spaces, every schema version, active and deleted records, relation indexes, idempotency state, events, receipts, and event sequence.
+
+Each artifact contains a manifest, payload SHA-256, deterministic logical-state digest, and artifact receipt. Verification checks file integrity, database identity, trusted binding, SQLite integrity, historical schemas, relations, idempotency integrity, provenance digests, and receipt/event linkage.
+
+Restore and import require the same trusted binding, refuse existing canonical destinations, use staged materialization, and verify the installed canonical state again. Phase 2.5 does not add database migrations or cross-workspace remapping.
+
+See [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md).
+
 ### Latest verification
 
-Task 13 behavioral CI run: `34535289214`
+Task 14 behavioral CI run: `34588281966`  
+Behavioral commit: `ce03b101c3560825b0e994ca4b30a269c4e3c4a3`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-153 tests
-153 passed
+162 tests
+162 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The suite now additionally proves exact rollback-only bulk preview, zero durable preview effects including SQLite event-sequence state, hard count/byte ceilings, actor-bound preview digests, all-or-nothing commit, stale preview rejection, safe clientRef preview, bulk idempotent replay, and key-separation enforcement.
+The suite now additionally proves exact backup/restore state equality, portable export/import equality, schema-history and tombstone preservation, record and bulk replay after transfer, provenance preservation, tamper rejection, binding rejection, no-overwrite behavior, and preservation of valid pre-binding provenance.
 
 ## Why Data is separate from Memory
 
@@ -441,10 +465,11 @@ Normal install/update/uninstall must not modify tracked OS files or sibling repo
 - [`docs/IDEMPOTENCY-V0.1.md`](docs/IDEMPOTENCY-V0.1.md) - implemented durable mutation retry/replay contract
 - [`docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md`](docs/EVENTS-RECEIPTS-PROVENANCE-V0.1.md) - implemented immutable events, durable receipts, and provenance contract
 - [`docs/BULK-OPERATIONS-V0.1.md`](docs/BULK-OPERATIONS-V0.1.md) - implemented bounded preview/execute bulk safety contract
+- [`docs/BACKUP-EXPORT-IMPORT-V0.1.md`](docs/BACKUP-EXPORT-IMPORT-V0.1.md) - implemented backup, verification, restore, and portable export/import contract
 - [`docs/PHASE-2-STATUS.md`](docs/PHASE-2-STATUS.md) - Phase 2 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 14 / 41, Phase 2.5 - Backup/export/import foundation.**
+**Next: Task 15 / 41, Phase 2.6 - Internal migration framework.**

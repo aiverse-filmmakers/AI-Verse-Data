@@ -2,9 +2,9 @@
 
 **Phase:** 2 - Reliability + Agent Safety  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 4 / 9  
-**Overall implementation tasks completed:** 13 / 41  
-**Next:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation
+**Implementation tasks completed:** 5 / 9  
+**Overall implementation tasks completed:** 14 / 41  
+**Next:** Task 15 / 41, Phase 2.6 - Internal migration framework
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -375,16 +375,105 @@ Those remain later tasks. Task 14 / 41 is next.
 
 ---
 
+## Task 14 / 41 - Phase 2.5 Backup/export/import foundation
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 2.5 adds verified copy, transfer, and restore primitives without changing canonical mutation semantics.
+
+Public surface:
+
+```text
+@ai-verse/data/backup
+```
+
+Implemented guarantees:
+
+- physical SQLite backup uses SQLite's online backup API;
+- backup destinations are atomically reserved and never overwritten;
+- portable export is logically separate from a low-level SQLite backup;
+- portable export first captures a consistent SQLite snapshot, then reads from that snapshot;
+- backup/export artifacts contain a versioned manifest and versioned artifact receipt;
+- payload byte count and SHA-256 are recorded and verified;
+- the exact manifest bytes are SHA-256 bound into the receipt;
+- deterministic logical state receives its own SHA-256 digest;
+- complete schema history, records, tombstones, relation indexes, idempotency state, events, receipts, and event sequence are preserved;
+- stored records are revalidated against their historical schema versions;
+- relation indexes are checked against canonical references;
+- idempotency result digests and canonical JSON are checked;
+- event/receipt digests and linkage are checked;
+- historical provenance committed while a database was legitimately unbound remains valid after later binding;
+- artifacts fail closed on format, file, digest, binding, or semantic mismatch;
+- restore/import require the exact trusted destination binding;
+- restore/import refuse an already-existing canonical database;
+- transfer materializes into staging before canonical installation;
+- the staging database is sealed into a self-contained SQLite database;
+- canonical installation is no-replace;
+- installed canonical state is reopened and reverified;
+- import is exact transfer into an empty destination, not merge/import into existing Data.
+
+### Behavioral verification
+
+```text
+GitHub Actions run: 34588281966
+Commit:              ce03b101c3560825b0e994ca4b30a269c4e3c4a3
+Node 22:             PASS
+Node 24:             PASS
+Tests:               162 / 162 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+The added suite proves exact physical backup/restore state equality, deterministic portable export/import equality, schema-history and tombstone preservation, relation preservation, idempotent record replay after transfer, bulk replay after transfer, provenance preservation, payload-tamper rejection, workspace-binding rejection, existing-destination rejection, valid pre-binding provenance preservation, and low-level backup no-overwrite behavior.
+
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       115280c8edb21eeac272828a01e5c56cc2feea90
+GitHub Actions run:  34588699217
+Node 22:             PASS
+Node 24:             PASS
+Tests:               162 / 162 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed contract: `docs/BACKUP-EXPORT-IMPORT-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 2.5 does not implement:
+
+- database-format migration execution;
+- migration ledger/checkpoint semantics;
+- user-schema migrations/backfills;
+- cross-workspace remapping;
+- merge/import into an existing canonical database;
+- overwrite restore;
+- corruption repair;
+- background scheduling or cloud backup transport.
+
+Those remain later tasks. Task 15 / 41 is next.
+
+### Task 2.5 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 14 / 41 | 2.5 | NEXT | Backup/export/import foundation |
-| 15 / 41 | 2.6 | NOT STARTED | Internal migration framework |
+| 15 / 41 | 2.6 | NEXT | Internal migration framework |
 | 16 / 41 | 2.7 | NOT STARTED | User-schema migration framework |
 | 17 / 41 | 2.8 | NOT STARTED | Corruption/recovery behavior |
 | 18 / 41 | 2.9 | NOT STARTED | Phase 2 gate |
 
 ## Current boundary
 
-Do not begin Task 15 / 41 until Task 14 / 41 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 15 / 41 is next. Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
