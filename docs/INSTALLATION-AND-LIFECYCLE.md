@@ -72,6 +72,19 @@ Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
 
 ## 4. Native extension placement
 
+Phase 3.2 implements Data-owned local materialization under:
+
+```text
+.aiverse/extensions/ai-verse-data/
+├── INSTRUCTIONS.md
+├── engine.mjs
+└── extension.json
+```
+
+These are local extension files, not canonical workspace Data. Task 20 updates only these owned files and preserves unknown safe files already present in the extension directory.
+
+The general ownership rule remains:
+
 Extension-owned runtime material should live under:
 
 ```text
@@ -85,6 +98,8 @@ Extension-owned runtime material should live under:
 The exact packaged file layout may evolve, but all normal extension material must remain under its owned local extension path unless a separate OS contract explicitly authorizes another location.
 
 ## 5. Local extension registration
+
+Phase 3.2 implements hardened programmatic registration through `AiVerseDataExtensionInstaller`.
 
 Register only the `ai-verse-data` entry in:
 
@@ -120,7 +135,21 @@ Registration must:
 - use atomic replacement;
 - reject path traversal, absolute paths, unsafe symlinks, malformed files, and unsupported registry versions.
 
-The safest implementation should mirror the hardened registration behavior already proven by AI-Verse Multiple Bots rather than inventing a looser registry writer.
+Phase 3.2 now implements this safety class directly:
+
+- exact registry `schema_version: "1.0"`;
+- exclusive `registry.json.lock`;
+- latest registry re-read inside the lock;
+- unknown top-level/unrelated-entry/own-unknown-field preservation;
+- existing `enabled: false` preservation;
+- exact raw-text lost-update check before commit;
+- same-directory temp-file staging and rename replacement;
+- verified owned-file materialization;
+- pre-registry-commit owned-file rollback;
+- no stale-lock stealing;
+- no tracked OS edits.
+
+Detailed contract: `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`.
 
 ## 6. Canonical workspace Data creation
 
@@ -191,23 +220,11 @@ If an incompatible AI-Verse OS is detected, fail instead of creating a competing
 
 ## 9. Install behavior
 
-A safe native install should approximately:
+The Phase 3.2 programmatic installer now implements steps 1 through 11 for compatible native hosts, except standalone selection remains outside this native installer and live `doctor` remains Task 24.
 
-1. resolve the target root;
-2. detect whether it is AI-Verse OS v2, standalone, incompatible, or absent;
-3. fail on unsafe/incompatible AI-Verse host;
-4. stage Data-owned extension files;
-5. verify staged content/digests;
-6. acquire extension-registry mutation lock;
-7. re-read and validate latest registry;
-8. materialize/activate extension-owned files safely;
-9. merge only `ai-verse-data` registry entry;
-10. atomically commit registration;
-11. release lock;
-12. run Data `doctor` without mutating canonical user records;
-13. print exact mode/status and next steps.
+The later Task 23 native CLI will compose these primitives into lifecycle commands and user-facing status/next-step output.
 
-The installer should not initialize every workspace automatically.
+The installer does not initialize every workspace automatically.
 
 ## 10. Update behavior
 
