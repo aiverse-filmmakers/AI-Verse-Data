@@ -543,7 +543,7 @@ export class DataBackup implements DataBackupApi {
       await input.source.database.backupTo(payloadPath);
       const inspected = await this.inspectSqlitePayload(
         payloadPath,
-        input.scope.binding,
+        input.source.scope.binding,
       );
       const payload = await fileDigest(payloadPath);
       const createdAt = new Date().toISOString();
