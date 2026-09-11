@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 2 Reliability + Agent Safety in progress  
-**Completed implementation tasks:** 13 / 41  
-**Latest completed:** Task 13 / 41, Phase 2.4 - Bulk-operation safety and limits  
-**Next task:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
+**Completed implementation tasks:** 14 / 41  
+**Latest completed:** Task 14 / 41, Phase 2.5 - Backup/export/import foundation  
+**Next task:** Task 15 / 41, Phase 2.6 - Internal migration framework  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -152,9 +152,21 @@ Bulk-operation safety and limits
   -> existing schema/reference/OCC/idempotency/provenance guarantees reused
   -> idempotent bulk replay verified against transaction + provenance state
   -> preview-created IDs never exposed as canonical identity
+
+Task 14 / 41 - COMPLETE
+Backup/export/import foundation
+  -> public @ai-verse/data/backup surface
+  -> consistent SQLite online backup
+  -> manifest, payload SHA-256, and artifact receipt
+  -> portable export from a consistent SQLite snapshot
+  -> schema history, tombstones, relations, idempotency, events, and receipts preserved
+  -> exact logical-state digest verification before and after import
+  -> workspace-binding and valid pre-binding provenance preservation
+  -> no-overwrite artifact and canonical destination rules
+  -> staged restore/import with post-install verification
 ```
 
-Phase 1 is complete. Phase 2.1 through 2.4 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, and bounded review-before-commit bulk operations. Backup, migrations, and recovery remain later Phase 2 tasks.
+Phase 1 is complete. Phase 2.1 through 2.5 now add race-safe optimistic concurrency, durable idempotent mutation replay, immutable mutation events/receipts, provenance queries, bounded review-before-commit bulk operations, consistent backup, and verified portable export/import. Migrations and recovery remain later Phase 2 tasks.
 
 ## Public package surfaces
 
@@ -170,6 +182,7 @@ Phase 1 is complete. Phase 2.1 through 2.4 now add race-safe optimistic concurre
 @ai-verse/data/idempotency
 @ai-verse/data/provenance
 @ai-verse/data/bulk
+@ai-verse/data/backup
 ```
 
 The public Data protocol remains storage-neutral. SQLite is an implementation driver, not the API that Apps, Bots, Dashboard, Brain, Memory, or Connections are expected to depend upon.
