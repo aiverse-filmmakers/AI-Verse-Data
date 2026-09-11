@@ -77,6 +77,7 @@ interface SchemaMigrationPlan {
   readonly toSchemaDigest: string;
   readonly activeRecordCount: number;
   readonly scannedRecordBytes: number;
+  readonly rewrittenRecordBytes: number;
   readonly destructive: boolean;
   readonly approvalRequired: boolean;
   readonly records: readonly PlannedRecord[];
@@ -372,6 +373,7 @@ function previewFromPlan(plan: SchemaMigrationPlan): SchemaMigrationPreview {
     activeRecordCount: plan.activeRecordCount,
     rewrittenRecordCount: plan.records.length,
     scannedRecordBytes: plan.scannedRecordBytes,
+    rewrittenRecordBytes: plan.rewrittenRecordBytes,
     destructive: plan.destructive,
     approvalRequired: plan.approvalRequired,
     owner: { ...plan.payload.owner },
@@ -413,7 +415,10 @@ export class DataSchemaMigrations implements DataSchemaMigrationsApi {
 
   preview(input: SchemaMigrationPreviewInput): SchemaMigrationPreview {
     const validated = validatePreviewInput(input);
-    return previewFromPlan(this.buildPlan(validated.actor, validated.payload));
+    return this.database.transaction(
+      () => previewFromPlan(this.buildPlan(validated.actor, validated.payload)),
+      "deferred",
+    );
   }
 
   execute(input: SchemaMigrationExecuteInput): SchemaMigrationResult {
@@ -710,6 +715,7 @@ export class DataSchemaMigrations implements DataSchemaMigrationsApi {
     const records: PlannedRecord[] = [];
     let offset = 0;
     let scannedRecordBytes = 0;
+    let rewrittenRecordBytes = 0;
 
     for (;;) {
       const page = recordStore.listRecords(
@@ -774,6 +780,24 @@ export class DataSchemaMigrations implements DataSchemaMigrationsApi {
             normalized,
           );
 
+          rewrittenRecordBytes += Buffer.byteLength(
+            canonicalResultJson(normalized),
+            "utf8",
+          );
+          if (
+            rewrittenRecordBytes >
+            DATA_PROTOCOL_LIMITS.maxSchemaMigrationBytes
+          ) {
+            throw new DataSchemaMigrationError(
+              "SCHEMA_MIGRATION_LIMIT_EXCEEDED",
+              `Schema migration rewritten state exceeds the atomic limit of ${DATA_PROTOCOL_LIMITS.maxSchemaMigrationBytes} bytes.`,
+              {
+                maxBytes: DATA_PROTOCOL_LIMITS.maxSchemaMigrationBytes,
+                rewrittenBytes: rewrittenRecordBytes,
+              },
+            );
+          }
+
           records.push({
             before: stored,
             afterData: normalized,
@@ -837,6 +861,7 @@ export class DataSchemaMigrations implements DataSchemaMigrationsApi {
       toSchemaDigest: proposedDigest,
       activeRecordCount: records.length,
       scannedRecordBytes,
+      rewrittenRecordBytes,
       destructive,
       approvalRequired: destructive,
       records,
