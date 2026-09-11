@@ -456,12 +456,11 @@ Those remain later tasks. Task 15 / 41 is next.
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 14 / 41 | 2.5 | NEXT | Backup/export/import foundation |
-| 15 / 41 | 2.6 | NOT STARTED | Internal migration framework |
+| 15 / 41 | 2.6 | NEXT | Internal migration framework |
 | 16 / 41 | 2.7 | NOT STARTED | User-schema migration framework |
 | 17 / 41 | 2.8 | NOT STARTED | Corruption/recovery behavior |
 | 18 / 41 | 2.9 | NOT STARTED | Phase 2 gate |
 
 ## Current boundary
 
-Do not begin Task 15 / 41 until Task 14 / 41 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 15 / 41 is next. Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
