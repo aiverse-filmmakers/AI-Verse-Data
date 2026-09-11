@@ -2,9 +2,9 @@
 
 **Phase:** 3 - Native AI-Verse Integration  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 2 / 8  
-**Overall implementation tasks completed:** 20 / 41  
-**Next:** Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization
+**Implementation tasks completed:** 3 / 8  
+**Overall implementation tasks completed:** 21 / 41  
+**Next:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -198,12 +198,71 @@ Task 21 / 41 is next.
 
 ---
 
+## Task 21 / 41 - Phase 3.3 Native workspace resolver + Data initialization
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 3.3 resolves one native workspace by ID and explicitly initializes
+its canonical Data database without touching any other workspace.
+
+Core guarantees:
+
+- ID-only `resolveWorkspace` under `@ai-verse/data/native`;
+- active-only `initWorkspaceData`;
+- seven-state `discoverWorkspaceData`;
+- Task 19 `compatible` trusted OS root prerequisite;
+- no `no-os` or `incompatible` standalone fallback;
+- host-contract workspace ID validation before filesystem use;
+- requested-workspace-only inspection without enumeration;
+- real non-symlink workspace directory requirement;
+- regular non-symlink 1 MiB-bounded `WORKSPACE.yaml` requirement;
+- exact manifest `id` equality with requested ID and directory identity;
+- supported workspace schema major 2;
+- unknown additive manifest fields tolerated;
+- non-empty `name` and `type` plus string `purpose`;
+- `active`, `paused`, and `archived` resolution with active-only fresh init;
+- internally derived `workspaces/<id>/data/ai-verse-data.sqlite`;
+- symlink-safe `data/` parent and database handling;
+- single-workspace init with exact workspace binding reuse;
+- idempotent `unchanged` repeat initialization;
+- discovery `missing`, `compatible`, `migration_required`,
+  `quarantined`, `scope_conflict`, `unsupported`, and `unavailable`;
+- existing databases never silently truncated, replaced, migrated,
+  repaired, or rebound;
+- Task 17 recovery plus Task 15 migration contracts reused;
+- no Task 22 instruction/runtime discovery;
+- no Task 23 CLI lifecycle;
+- no sibling repository modifications.
+
+Detailed contract: `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 3.3 does not implement:
+
+- task-relevant extension instruction/runtime discovery;
+- native install/update/disable/uninstall CLI;
+- native doctor/status;
+- automatic migration, repair, promotion, or quarantine clearing;
+- multi-workspace initialization or workspace enumeration;
+- sibling repository modifications.
+
+Task 22 / 41 is next.
+
+### Task 3.3 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 3 tasks
 
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
-| 21 / 41 | 3.3 | NEXT | Native workspace resolver + Data initialization |
-| 22 / 41 | 3.4 | NOT STARTED | Extension instructions/runtime discovery |
+| 21 / 41 | 3.3 | COMPLETE | Native workspace resolver + Data initialization |
+| 22 / 41 | 3.4 | NEXT | Extension instructions/runtime discovery |
 | 23 / 41 | 3.5 | NOT STARTED | Native CLI install/update/disable/uninstall |
 | 24 / 41 | 3.6 | NOT STARTED | Native doctor + status |
 | 25 / 41 | 3.7 | NOT STARTED | Installation-order/registry coexistence suite |
@@ -211,6 +270,6 @@ Task 21 / 41 is next.
 
 ## Current boundary
 
-Task 21 / 41 is next.
+Task 22 / 41 is next.
 
-Do not begin Task 22 until Task 21 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 23 until Task 22 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

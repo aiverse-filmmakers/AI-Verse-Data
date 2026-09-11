@@ -414,6 +414,6 @@ Cancelled:           0
 
 ## 20. Next
 
-Task 21 / 41, Phase 3.3, owns native workspace resolution and Data initialization.
+Task 21 / 41, Phase 3.3, owned native workspace resolution and Data initialization and has since completed.
 
-Task 21 must consume the verified host/installation boundaries rather than allowing callers to supply arbitrary workspace database paths.
+Task 21 consumed the verified host/installation boundaries rather than allowing callers to supply arbitrary workspace database paths.

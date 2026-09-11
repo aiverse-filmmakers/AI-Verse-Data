@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 20 / 41 tasks complete  
-**Next:** Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization
+**Implementation progress:** 21 / 41 tasks complete  
+**Next:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    25%  (2/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    38%  (3/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **20 / 41 tasks complete**.
+Overall implementation: **21 / 41 tasks complete**.
 
 ---
 
@@ -813,7 +813,7 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 # Phase 3 - Native AI-Verse Integration
 
 **Status:** IN PROGRESS  
-**Progress:** 2 / 8 tasks complete
+**Progress:** 3 / 8 tasks complete
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
 
@@ -907,7 +907,38 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.2 gate: PASSED.**
 
 ## Task 21 / 41 - Phase 3.3 Native workspace resolver + Data initialization
-Trusted OS root, exact workspace identity/status checks, safe workspace Data path, explicit initialization, existing-DB discovery.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- ID-only `resolveWorkspace` plus `AiVerseWorkspaceResolver` under `@ai-verse/data/native`;
+- active-only `initWorkspaceData` plus `AiVerseWorkspaceDataInitializer`;
+- seven-state `discoverWorkspaceData` plus `AiVerseWorkspaceDiscovery`;
+- Task 19-compatible trusted OS root prerequisite with no standalone fallback;
+- host-contract workspace ID validation before filesystem inspection;
+- requested-workspace-only inspection with no cross-workspace enumeration;
+- real non-symlink workspace directory validation;
+- regular non-symlink bounded `WORKSPACE.yaml` validation;
+- exact manifest `id` match against requested ID and directory identity;
+- supported schema major 2 with additive manifest fields tolerated;
+- non-empty `name`/`type` plus string `purpose` validation;
+- resolution reports `active`, `paused`, and `archived`;
+- fresh init requires `active` and creates no paused/archived database;
+- internally derived `workspaces/<id>/data/ai-verse-data.sqlite` path;
+- `data/` parent and database symlink rejection;
+- single-workspace explicit init with no every-workspace side effect;
+- exact workspace binding reuse on fresh databases;
+- idempotent `unchanged` repeat init;
+- discovery states `missing`, `compatible`, `migration_required`, `quarantined`, `scope_conflict`, `unsupported`, and `unavailable`;
+- no silent replace, migrate, repair, rebind, or quarantine clearing;
+- no Task 22 runtime discovery or Task 23 CLI lifecycle;
+- no sibling repository modifications.
+
+Detailed contract: `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.3 gate: PASSED.**
 
 ## Task 22 / 41 - Phase 3.4 Extension instructions/runtime discovery
 Task-relevant extension instructions through the existing OS local extension hook.

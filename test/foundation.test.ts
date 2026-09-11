@@ -47,12 +47,12 @@ test("package metadata exposes all implemented Phase 3.2 public subpaths", () =>
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
 
-test("foundation surface reports Phase 3.2 native extension installation", () => {
+test("foundation surface reports Phase 3.3 native workspace init", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "3.2");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "3.3");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "3.2",
+    phase: "3.3",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
@@ -82,5 +82,8 @@ test("foundation surface reports Phase 3.2 native extension installation", () =>
     nativeExtensionMaterializationAvailable: true,
     nativeExtensionRegistrationAvailable: true,
     registryConcurrencySafetyAvailable: true,
+    nativeWorkspaceResolutionAvailable: true,
+    nativeWorkspaceInitAvailable: true,
+    nativeWorkspaceDiscoveryAvailable: true,
   });
 });

@@ -11,14 +11,55 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   IN PROGRESS  2 / 8
+Phase 3  Native AI-Verse Integration   IN PROGRESS  3 / 8
 
-Overall implementation: 20 / 41 tasks complete
+Overall implementation: 21 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 20 / 41 - Phase 3.2: Hardened extension materialization/registration**
+**Task 21 / 41 - Phase 3.3: Native workspace resolver + Data initialization**
+
+Implemented through Task 21:
+
+- complete host-neutral Data engine and Phase 2 reliability surface;
+- read-only AI-Verse OS v2 compatibility detection;
+- explicit `compatible`, `no-os`, and `incompatible` native host states;
+- public `AiVerseDataExtensionInstaller`;
+- read-only native installation planning;
+- exact AI-Verse OS registry schema `1.0` validation;
+- Data-owned materialization under `.aiverse/extensions/ai-verse-data/`;
+- deterministic `INSTRUCTIONS.md`, `engine.mjs`, and `extension.json`;
+- registration owns only `extensions["ai-verse-data"]`;
+- unknown registry top-level state preserved;
+- unrelated extension registrations preserved;
+- unknown existing Data-entry fields preserved;
+- existing `enabled: false` preserved;
+- unknown safe files in the Data-owned extension directory preserved;
+- exclusive `registry.json.lock`;
+- lock is never stolen automatically;
+- compatibility and registry are re-read inside the lock;
+- exact raw-registry lost-update protection;
+- same-directory temporary-file + rename registry replacement;
+- verified atomic Data-owned file replacement;
+- pre-registry-commit rollback of changed Data-owned files;
+- rollback refuses destructive guessing after external file changes;
+- absolute/traversal/drive/UNC/NUL path rejection;
+- extension-root/file symlink rejection;
+- persistent-state idempotent reinstall;
+- no tracked OS file mutation;
+- ID-only native workspace resolution under `src/native`;
+- exact `WORKSPACE.yaml` identity and status validation;
+- active-only explicit workspace Data initialization;
+- internally derived canonical workspace Data path;
+- exact workspace binding on fresh databases;
+- idempotent repeat initialization;
+- seven-state existing-database discovery;
+- no silent replace, migrate, repair, rebind, or quarantine clearing.
+
+Detailed Task 21 contract:
+
+`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
 
 Behavioral implementation verification:
 
@@ -74,11 +115,22 @@ Implemented through Task 20:
 - extension-root/file symlink rejection;
 - persistent-state idempotent reinstall;
 - no tracked OS file mutation;
-- no workspace Data initialization.
+- ID-only native workspace resolution under `src/native`;
+- exact `WORKSPACE.yaml` identity and status validation;
+- active-only explicit workspace Data initialization;
+- internally derived canonical workspace Data path;
+- exact workspace binding on fresh databases;
+- idempotent repeat initialization;
+- seven-state existing-database discovery;
+- no silent replace, migrate, repair, rebind, or quarantine clearing.
 
 Detailed Task 20 contract:
 
 `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`
+
+Detailed Task 21 contract:
+
+`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
 
 Phase status:
 
@@ -101,32 +153,11 @@ The Task 20 behavioral implementation and documentation closeout candidate are v
 
 ## NEXT
 
-**Task 21 / 41 - Phase 3.3: Native workspace resolver + Data initialization**
+**Task 22 / 41 - Phase 3.4: Extension instructions/runtime discovery**
 
-Canonical Build Map scope:
+Task-relevant extension instructions through the existing OS local extension hook.
 
-```text
-Trusted OS root
-Exact workspace identity/status checks
-Safe workspace Data path
-Explicit initialization
-Existing-DB discovery
-```
-
-The actual AI-Verse OS workspace manifest contract requires:
-
-```yaml
-schema_version: "2.0"
-id: "<workspace-slug>"
-name: "<non-empty>"
-type: "<non-empty>"
-status: active | paused | archived
-purpose: "<string>"
-```
-
-The workspace schema allows additional fields.
-
-Do not start Task 22 until Task 21 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Do not start Task 23 until Task 22 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
 ## Task 21 architectural laws
 

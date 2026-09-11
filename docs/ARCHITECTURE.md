@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection and Phase 3.2 hardened local extension materialization/registration implemented
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection, Phase 3.2 hardened local extension materialization/registration, and Phase 3.3 native workspace resolver plus Data initialization implemented
 
 ## 1. Architectural position
 
@@ -89,7 +89,7 @@ Phase 3.1 implements the first AI-Verse adapter boundary: a read-only compatibil
 
 Phase 3.2 builds on that result with hardened local extension materialization and registration. It owns only `.aiverse/extensions/ai-verse-data/` and the `ai-verse-data` registry entry, preserves unrelated/unknown registry state, serializes shared writes with the OS registry lock, detects lost updates, and never initializes workspace databases.
 
-Native workspace resolution and explicit database initialization remain Task 21.
+Phase 3.3 adds ID-only native workspace resolution plus active-only explicit Data initialization with seven-state existing-database discovery.
 
 ## 3. Canonical storage placement
 
