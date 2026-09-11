@@ -137,6 +137,8 @@ test("required-field migration previews and atomically backfills all active reco
     assert.equal(preview.toSchemaVersion, 2);
     assert.equal(preview.activeRecordCount, 2);
     assert.equal(preview.rewrittenRecordCount, 2);
+    assert.ok(preview.scannedRecordBytes > 0);
+    assert.ok(preview.rewrittenRecordBytes > preview.scannedRecordBytes);
     assert.equal(preview.destructive, false);
     assert.equal(preview.approvalRequired, false);
     assert.match(preview.previewDigest, /^[0-9a-f]{64}$/);
