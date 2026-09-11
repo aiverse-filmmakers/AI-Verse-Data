@@ -1,10 +1,10 @@
 # AI-Verse Data Phase 2 Status
 
 **Phase:** 2 - Reliability + Agent Safety  
-**Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 8 / 9  
-**Overall implementation tasks completed:** 17 / 41  
-**Next:** Task 18 / 41, Phase 2.9 - Phase 2 gate
+**Phase status:** COMPLETE  
+**Implementation tasks completed:** 9 / 9  
+**Overall implementation tasks completed:** 18 / 41  
+**Next:** Task 19 / 41, Phase 3.1 - AI-Verse OS compatibility detector
 
 This document records implementation evidence for Phase 2. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -722,12 +722,81 @@ Task 18 / 41 is next.
 
 ---
 
+## Task 18 / 41 - Phase 2.9 Phase 2 reliability/adversarial gate
+
+**Status:** COMPLETE
+
+### Implemented
+
+Task 18 adds the final Phase 2 cross-feature integration gate without introducing new product features.
+
+The new `test/phase2-integration.test.ts` composes:
+
+- optimistic concurrency;
+- durable idempotent replay;
+- immutable mutation provenance;
+- bounded bulk preview/execute;
+- governed user-schema migration;
+- physical backup + portable export verification;
+- close/reopen durability;
+- internal SQLite format migration;
+- corruption quarantine;
+- same-binding staged recovery.
+
+The integration gate proves that these mechanisms preserve their guarantees when sequenced together rather than only in isolated feature tests.
+
+It also verifies:
+
+- record/schema-migration replay survives recovered state without duplicate provenance;
+- stale OCC, idempotency conflict, bulk-preview staleness, and schema-migration staleness remain distinct failures;
+- internal database migration preserves replay/provenance and normal post-migration writes;
+- unrecognized existing files, migration-required state, and quarantined corruption remain distinct recovery states;
+- the original corrupt source is not silently replaced during recovery staging.
+
+The complete repository suite remains the authoritative adversarial surface and includes the dedicated process-race, rollback, tamper, limit, migration-failure, and corruption tests from Tasks 10 through 17.
+
+### Behavioral verification
+
+```text
+GitHub Actions run: 34600296642
+Behavioral commit:   d173e822d5a851051bdd1c3c9c9b4642ec1d58bc
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Detailed acceptance record: `docs/PHASE-2-ACCEPTANCE.md`.
+
+### Deliberately not implemented
+
+Task 2.9 does not implement:
+
+- Phase 3 native AI-Verse compatibility detection;
+- extension materialization/registration;
+- native workspace initialization lifecycle;
+- install/update/disable/uninstall;
+- native doctor/status CLI;
+- sibling-repository adapters;
+- hosted/multi-user synchronization;
+- automatic promotion over a corrupt canonical database.
+
+### Task 2.9 gate
+
+**PASSED.**
+
+### Phase 2 gate
+
+**PASSED.**
+
+---
+
 ## Remaining Phase 2 tasks
 
-| Overall task | Phase task | Status | Purpose |
-|---|---|---|---|
-| 18 / 41 | 2.9 | NEXT | Phase 2 gate |
+None. Phase 2 is complete at 9 / 9 tasks.
 
 ## Current boundary
 
-Task 18 / 41 is next. Do not begin Phase 3 until the complete Phase 2 reliability/adversarial gate is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 19 / 41, Phase 3.1 AI-Verse OS compatibility detector, is next. Phase 3 must begin from the final verified Task 18 `main` head.
