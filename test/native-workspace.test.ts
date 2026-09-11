@@ -662,6 +662,69 @@ test("repeated initialization of exact healthy binding is idempotent and never r
   }
 });
 
+test("concurrent explicit initializers converge without replacing the canonical workspace database", async () => {
+  const f = fixture();
+  try {
+    writeCompatibleHost(f.rootPath);
+    writeWorkspace(f.rootPath, "alpha");
+    installData(f.rootPath);
+
+    const left = new AiVerseDataWorkspaceManager();
+    const right = new AiVerseDataWorkspaceManager();
+
+    const results = await Promise.all([
+      left.initialize({
+        rootPath: f.rootPath,
+        workspaceId: "alpha",
+      }),
+      right.initialize({
+        rootPath: f.rootPath,
+        workspaceId: "alpha",
+      }),
+    ]);
+
+    assert.deepEqual(
+      results.map((result) => result.status).sort(),
+      ["already_initialized", "initialized"],
+    );
+    assert.ok(
+      results.every(
+        (result) =>
+          result.discovery.state === "healthy" &&
+          result.discovery.exactBinding,
+      ),
+    );
+    assert.equal(existsSync(databasePath(f.rootPath, "alpha")), true);
+
+    const entries = readdirSync(
+      join(f.rootPath, "workspaces", "alpha", "data"),
+    );
+    assert.ok(
+      entries.every(
+        (entry) => !entry.startsWith(".ai-verse-data-init-"),
+      ),
+    );
+
+    const driver = new SqliteStorageDriver();
+    const migration = driver.inspectMigration({
+      location: databasePath(f.rootPath, "alpha"),
+      expectedBinding: {
+        bindingVersion: AI_VERSE_DATA_SCOPE_BINDING_VERSION,
+        kind: "workspace",
+        workspaceId: "alpha",
+      },
+    });
+    assert.equal(migration.state, "current");
+    assert.deepEqual(migration.binding, {
+      bindingVersion: AI_VERSE_DATA_SCOPE_BINDING_VERSION,
+      kind: "workspace",
+      workspaceId: "alpha",
+    });
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("missing canonical database with SQLite sidecar residue is not treated as safe fresh initialization", async () => {
   const f = fixture();
   try {
