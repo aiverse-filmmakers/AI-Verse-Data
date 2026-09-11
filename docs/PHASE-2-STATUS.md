@@ -770,6 +770,19 @@ Cancelled:           0
 
 Detailed acceptance record: `docs/PHASE-2-ACCEPTANCE.md`.
 
+Documentation closeout candidate verification:
+
+```text
+Closeout head:       3a730282dfbebc15d3124b2e76882d50c198f5ac
+GitHub Actions run:  34600879830
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
 ### Deliberately not implemented
 
 Task 2.9 does not implement:
