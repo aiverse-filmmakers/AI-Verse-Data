@@ -416,7 +416,26 @@ Detailed contract: `docs/CORRUPTION-AND-RECOVERY-V0.1.md`.
 
 ## 6. Phase 2 Reliability and Agent Safety gate
 
-Must prove:
+**Status:** PASSED
+
+Final behavioral verification:
+
+```text
+Behavioral commit:   d173e822d5a851051bdd1c3c9c9b4642ec1d58bc
+GitHub Actions run:  34600296642
+Node 22:             PASS
+Node 24:             PASS
+Tests:               204 / 204 PASS
+Failures:            0
+Skipped:             0
+Cancelled:           0
+```
+
+Task 18 adds `test/phase2-integration.test.ts` and composes the full Phase 2 reliability surface. The dedicated feature/adversarial suites remain part of the same repository-wide gate.
+
+Detailed acceptance record: `docs/PHASE-2-ACCEPTANCE.md`.
+
+The gate proves:
 
 - stale write conflict does not overwrite current record;
 - retry with same idempotency key and same request returns one effect;
@@ -447,6 +466,10 @@ Must prove:
 - confirmed corruption creates durable quarantine and blocks unsafe writes;
 - physical and semantic corruption remain distinguishable from migration/scope/format failures;
 - staged recovery uses only verified same-binding backup/export artifacts and never overwrites the corrupt canonical source.
+
+Task 18 adds `test/phase2-integration.test.ts` to compose these guarantees across realistic lifecycle, migration, restart, corruption, and recovery sequences. The full repository suite retains the dedicated separate-process race, rollback-injection, tamper, hard-limit, interruption, approval, and quarantine tests from Tasks 10 through 17.
+
+**Phase 2 gate result: PASSED.**
 
 ## 7. Phase 3 Native Installation gate
 

@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 2.8 recovery boundary", () => {
+test("--help succeeds and identifies completed Phase 2 acceptance", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 2\.8 adds fail-closed corruption quarantine/);
+  assert.match(result.stdout, /Phase 2 is complete through the Phase 2\.9 reliability\/adversarial acceptance gate/);
   assert.equal(result.stderr, "");
 });
 
