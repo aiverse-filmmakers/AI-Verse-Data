@@ -270,6 +270,36 @@ Phase 1.4 does not implement:
 
 Those belong to later Build Map tasks.
 
+## 11.1 Phase 3.3 native workspace resolution
+
+The lower-level scope package remains host-neutral. Phase 3.3 now adds an AI-Verse-native workspace resolver above it through `@ai-verse/data/native`.
+
+Native callers provide:
+
+```text
+trusted OS root
+workspace ID
+```
+
+They do not provide a workspace path or SQLite path.
+
+The native resolver:
+
+- requires a Task 19-compatible AI-Verse OS host;
+- validates the host workspace slug contract;
+- verifies `workspaces/<id>/WORKSPACE.yaml`;
+- requires the manifest ID to exactly match the requested/directory ID;
+- preserves active/paused/archived status;
+- constructs the existing `createWorkspaceDataScope()` only after manifest validation;
+- derives only `workspaces/<id>/data/ai-verse-data.sqlite`;
+- classifies a healthy but unbound legacy Data database as `unbound` rather than silently adopting it;
+- initializes only a clean-missing active workspace;
+- publishes a staged exact-binding database without overwriting a concurrently appearing canonical file.
+
+The lower-level explicit one-time binding behavior remains available to host-neutral compatibility callers. Native Phase 3.3 deliberately does not use that behavior as implicit adoption.
+
+Detailed contract: `docs/NATIVE-WORKSPACE-INITIALIZATION-V0.1.md`.
+
 ## 12. Non-negotiable invariants
 
 1. A scoped database cannot be silently rebound.
