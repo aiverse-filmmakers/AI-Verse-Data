@@ -51,7 +51,7 @@ export interface FoundationStatus {
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations, corruption quarantine, recovery diagnosis, and verified staged recovery exist through Phase 2.8. Phase 2.9 verifies the complete reliability and agent-safety acceptance gate across those capabilities.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations, corruption quarantine, recovery diagnosis, and verified staged recovery are integrated and acceptance-gated through Phase 2.9. Phase 2.9 verifies the complete reliability and agent-safety acceptance gate across those capabilities.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
