@@ -244,7 +244,25 @@ denied
 
 No model may directly execute DDL.
 
-Destructive schema changes require an explicit migration plan and future approval/backup rules.
+Phase 2.7 implements an explicit review-before-commit user-schema migration path. Destructive remove/replace/rename changes and force-set backfills require validated approval metadata before execution. The trusted host still owns the policy decision about who may approve; Data records the supplied trusted owner/executor/approver provenance and enforces the structural migration safety rules.
+
+### Phase 2.7 schema-migration controls
+
+User-schema migration adds these safety boundaries:
+
+- preview runs against one consistent SQLite snapshot;
+- preview digest binds the trusted executor, declared owner, exact schema instructions, current schema digest, and every active record version/data/relation outcome;
+- execution recomputes the plan under immediate write intent;
+- stale preview or schema state fails before commit;
+- migrations are capped at 500 active records and 8 MiB of both source and rewritten record state;
+- no arbitrary SQL, JavaScript, or model-generated expression backfill is accepted;
+- deterministic constant backfills only;
+- destructive operations require approval metadata;
+- record rewrites, relation-index changes, idempotency, and immutable provenance share one transaction;
+- deleted records remain historical rather than being silently rewritten;
+- ordinary record-update authority does not by itself imply schema-migration authority at the host integration boundary.
+
+Detailed contract: `docs/USER-SCHEMA-MIGRATIONS-V0.1.md`.
 
 ## 13. Actor provenance
 
