@@ -92,6 +92,29 @@ export class SqliteIdempotencyStorage implements DataIdempotencyStorage {
     return row === undefined ? null : mapEntry(row);
   }
 
+  list(
+    afterKey: string | null,
+    limit: number,
+  ): readonly StoredIdempotencyEntry[] {
+    const rows = this.database
+      .prepare(
+        `SELECT
+           idempotency_key,
+           operation,
+           fingerprint_version,
+           request_fingerprint,
+           result_json,
+           result_digest,
+           created_at
+         FROM _idempotency
+         WHERE (? IS NULL OR idempotency_key > ?)
+         ORDER BY idempotency_key ASC
+         LIMIT ?`,
+      )
+      .all(afterKey, afterKey, limit) as IdempotencyRow[];
+    return rows.map(mapEntry);
+  }
+
   create(entry: StoredIdempotencyEntry): boolean {
     const result = this.database
       .prepare(
