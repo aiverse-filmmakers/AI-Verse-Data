@@ -457,7 +457,7 @@ Task 2.5 does not implement:
 - corruption repair;
 - background scheduling or cloud backup transport.
 
-Those remain later tasks. Task 15 / 41 is next.
+At the Task 2.5 boundary, Task 15 / 41 was next. Task 15 / Phase 2.6 has since completed the internal database-format migration framework; user-schema migrations, recovery, and the Phase 2 gate remain later tasks.
 
 ### Task 2.5 gate
 
