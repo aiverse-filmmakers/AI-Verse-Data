@@ -56,6 +56,7 @@ export interface TransactionCommitProvenanceInput {
   readonly childEventIds: readonly string[];
   readonly childReceiptIds: readonly string[];
   readonly operationCount: number;
+  readonly details?: JsonObject;
 }
 
 function eventTypeFor(
@@ -129,6 +130,7 @@ export class DataProvenanceWriter {
     validateRequestId(input.requestId);
     validateTransactionId(input.transactionId);
 
+    const extra = validateDetails(input.details);
     return this.append({
       eventType: "transaction.committed",
       operation: "data.transaction.execute",
@@ -143,6 +145,7 @@ export class DataProvenanceWriter {
       actor: input.actor,
       committedAt: input.committedAt,
       details: {
+        ...extra,
         operationCount: input.operationCount,
         childEventIds: [...input.childEventIds],
         childReceiptIds: [...input.childReceiptIds],
