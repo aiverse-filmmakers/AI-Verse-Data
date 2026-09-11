@@ -757,6 +757,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 14 / 41: Phase 2.5 - Backup/export/import foundation.**
+**Task 15 / 41: Phase 2.6 - Internal migration framework.**
 
-Do not begin Task 15 / 41 until Task 14 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 16 / 41 until Task 15 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
