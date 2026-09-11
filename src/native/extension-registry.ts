@@ -24,21 +24,21 @@ import {
   AI_VERSE_OS_EXTENSION_REGISTRY_LOCK_PATH,
   AI_VERSE_OS_EXTENSION_REGISTRY_SCHEMA,
   AiVerseDataExtensionInstallError,
-  type JsonObject,
+  type AiVerseDataExtensionJsonObject,
 } from "./extension-types.js";
 
 const MAX_REGISTRY_BYTES = 1024 * 1024;
 
 export interface RegistryDocumentSnapshot {
-  readonly document: JsonObject;
-  readonly extensions: JsonObject;
+  readonly document: AiVerseDataExtensionJsonObject;
+  readonly extensions: AiVerseDataExtensionJsonObject;
   readonly exists: boolean;
   readonly rawText: string | null;
 }
 
-function asObject(value: unknown): JsonObject | null {
+function asObject(value: unknown): AiVerseDataExtensionJsonObject | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? value as JsonObject
+    ? value as AiVerseDataExtensionJsonObject
     : null;
 }
 
@@ -162,7 +162,7 @@ export function readRegistryDocument(
   );
 
   if (!existsSync(registryPath)) {
-    const extensions: JsonObject = {};
+    const extensions: AiVerseDataExtensionJsonObject = {};
     return {
       document: {
         schema_version: AI_VERSE_OS_EXTENSION_REGISTRY_SCHEMA,
@@ -235,8 +235,8 @@ export function readRegistryDocument(
 }
 
 export function currentDataExtensionEntry(
-  extensions: JsonObject,
-): JsonObject | null {
+  extensions: AiVerseDataExtensionJsonObject,
+): AiVerseDataExtensionJsonObject | null {
   const raw = extensions[AI_VERSE_DATA_EXTENSION_ID];
   if (raw === undefined || raw === null) return null;
 
@@ -262,8 +262,8 @@ export function currentDataExtensionEntry(
 }
 
 export function buildDataExtensionEntry(
-  existing: JsonObject | null,
-): JsonObject {
+  existing: AiVerseDataExtensionJsonObject | null,
+): AiVerseDataExtensionJsonObject {
   const current = existing ?? {};
   const enabled =
     typeof current.enabled === "boolean" ? current.enabled : true;
@@ -301,8 +301,8 @@ export function canonicalJson(value: unknown): string {
 
 export function registryWithDataEntry(
   snapshot: RegistryDocumentSnapshot,
-  entry: JsonObject,
-): JsonObject {
+  entry: AiVerseDataExtensionJsonObject,
+): AiVerseDataExtensionJsonObject {
   return {
     ...snapshot.document,
     schema_version: AI_VERSE_OS_EXTENSION_REGISTRY_SCHEMA,
@@ -315,7 +315,7 @@ export function registryWithDataEntry(
 
 export function writeRegistryAtomic(
   root: TrustedDataRoot,
-  document: JsonObject,
+  document: AiVerseDataExtensionJsonObject,
   expectedRawText: string | null,
 ): void {
   ensureSafeDirectory(root, ".aiverse/extensions");
