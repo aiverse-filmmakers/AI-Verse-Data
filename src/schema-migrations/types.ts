@@ -17,6 +17,7 @@ export interface SchemaMigrationPreview {
   readonly activeRecordCount: number;
   readonly rewrittenRecordCount: number;
   readonly scannedRecordBytes: number;
+  readonly rewrittenRecordBytes: number;
   readonly destructive: boolean;
   readonly approvalRequired: boolean;
   readonly owner: DataActor;
