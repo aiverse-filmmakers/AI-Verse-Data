@@ -65,7 +65,7 @@ Release 0.1 / Phase 5.6 contract:
 - AI-Verse OS invokes the registered engine through protocol ai-verse-data-host/1.0; the engine delegates to the public Data host handlers;
 - the engine records the concrete Data runtime that installed it, so OS loading does not depend on ambient node_modules lookup;
 - use openAiVerseDataHostSession() for direct trusted-host workspace sessions;
-- initialization is explicit and is never performed by a normal data.request;
+- installation/materialization does not initialize any workspace database; initialization is explicit and is never performed by a normal data.request;
 - migration-required, quarantined, conflicting, unsupported, paused, or archived workspace state is never silently repaired or rebound;
 - Bots and Apps must use their bounded adapters rather than the raw client;
 - Brain is a trusted read surface and must only receive a client whose entire read scope was already authorized by the host.
