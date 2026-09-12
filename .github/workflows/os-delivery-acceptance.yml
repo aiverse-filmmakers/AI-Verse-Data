@@ -43,8 +43,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
-          cache-dependency-path: data/package-lock.json
 
       - name: Install Data dependencies
         working-directory: data
