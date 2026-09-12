@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 5 IN PROGRESS  
-**Implementation progress:** 37 / 41 tasks complete  
-**Next:** Task 38 / 41, Phase 5.3 - Performance baseline
+**Implementation progress:** 38 / 41 tasks complete  
+**Next:** Task 39 / 41, Phase 5.4 - Documentation/examples
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,10 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [IN PROGRESS]    33%  (2/6)
+Phase 5  Release Hardening             [IN PROGRESS]    50%  (3/6)
 ```
 
-Overall implementation: **37 / 41 tasks complete**.
+Overall implementation: **38 / 41 tasks complete**.
 
 ---
 
@@ -1303,7 +1303,35 @@ Phase status: `docs/PHASE-5-STATUS.md`.
 **Task 5.2 gate: PASSED.**
 
 ## Task 38 / 41 - Phase 5.3 Performance baseline
-Measure open/create/update/query/aggregate/transaction/event/doctor behavior and set evidence-based budgets.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/performance-baseline.test.ts` with 6 budget tests over
+  existing primitives with no new engine and no tuning:
+  cold open, 50 creates plus single update, query plus aggregate on
+  200 records, 5-op transaction plus 20-op bulk preview/execute,
+  bounded event pages on 100 records, native doctor plus status;
+- budgets set from measured local numbers with 10-50x headroom:
+  open 5000ms, creates50 30000ms, update 2000ms, query 5000ms,
+  aggregate 5000ms, transaction 10000ms, bulk preview 15000ms,
+  bulk execute 30000ms, events 10000ms, doctor 15000ms,
+  status 10000ms;
+- measured local (Node 22): open ~76ms, create ~2.4ms/op,
+  query50 ~3.4ms, agg ~1.3ms, events100 ~7ms, update ~4.5ms,
+  txn2 ~16ms, bulkPrev20 ~62ms, bulkExec20 ~118ms,
+  integrity25 ~2.5ms;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 6 / 6 PASS;
+- full `npm test`: 343 / 343 PASS.
+
+Phase status: `docs/PHASE-5-STATUS.md`.
+
+**Task 5.3 gate: PASSED.**
 
 ## Task 39 / 41 - Phase 5.4 Documentation/examples
 CRM, content planner, production tracker, Bot-safe operations, backup/reinstall, Data-vs-Memory guidance.

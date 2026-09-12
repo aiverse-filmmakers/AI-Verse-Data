@@ -13,16 +13,16 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
-Phase 5  Release Hardening             IN PROGRESS  2 / 6
+Phase 5  Release Hardening             IN PROGRESS  3 / 6
 
-Overall implementation: 37 / 41 tasks complete
+Overall implementation: 38 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 37 / 41 - Phase 5.2: Full adversarial filesystem/security suite**
+**Task 38 / 41 - Phase 5.3: Performance baseline**
 
-Implemented through Task 37:
+Implemented through Task 38:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -146,7 +146,10 @@ Implemented through Task 37:
 - no new engine, CI config plus smoke proof only;
 - adversarial attack suite proves traversal, symlink, Windows, malformed
   registry, stale lock, oversize, corrupt DB, and capability forgery
-  all fail closed with no mutation.
+  all fail closed with no mutation;
+- performance budgets measured from local numbers with 10-50x headroom
+  for open, create, update, query, aggregate, transaction, bulk,
+  events, doctor, and status.
 
 Detailed Task 21 contract:
 
@@ -302,6 +305,19 @@ Task 36 local verification: 329 / 329 PASS on Node 22 (suite unchanged); build p
 
 Task 37 local verification: 337 / 337 PASS on Node 22; focused adversarial file 8 / 8 PASS; exact-head CI cited on push.
 
+Task 38 local verification: 343 / 343 PASS on Node 22; focused perf file 6 / 6 PASS; exact-head CI cited on push.
+
+## Task 38 architectural laws
+
+Task 38 must preserve:
+
+1. No new engine and no tuning; the baseline measures existing primitives.
+2. Budgets set from measured local numbers with 10-50x headroom for the
+   OS x Node matrix.
+3. Full suite green with inherited Phase 1-4 gates.
+4. Exact-head CI cited before declaring complete.
+5. No sibling repository modifications are permitted.
+
 ## Task 37 architectural laws
 
 Task 37 must preserve:
@@ -339,11 +355,11 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 38 / 41 - Phase 5.3: Performance baseline**
+**Task 39 / 41 - Phase 5.4: Documentation/examples**
 
-Measure open/create/update/query/aggregate/transaction/event/doctor behavior and set evidence-based budgets.
+CRM, content planner, production tracker, Bot-safe operations, backup/reinstall, Data-vs-Memory guidance.
 
-Do not start Task 39 until Task 38 is explicitly tasked.
+Do not start Task 40 until Task 39 is explicitly tasked.
 
 ## Task 21 architectural laws
 

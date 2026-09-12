@@ -2,9 +2,9 @@
 
 **Phase:** 5 - Release Hardening
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 2 / 6
-**Overall implementation tasks completed:** 37 / 41
-**Next:** Task 38 / 41, Phase 5.3 - Performance baseline
+**Implementation tasks completed:** 3 / 6
+**Overall implementation tasks completed:** 38 / 41
+**Next:** Task 39 / 41, Phase 5.4 - Documentation/examples
 
 This document records implementation evidence for Phase 5. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -112,9 +112,50 @@ Task 5.2 does not implement:
 - packaging/install-command changes (Task 40);
 - release acceptance (Task 41).
 
-Task 38 / 41 is next.
+Task 38 / 41 was next at that boundary (now COMPLETE, see below).
 
 ### Task 5.2 gate
+
+**PASSED.**
+
+---
+
+## Task 38 / 41 - Phase 5.3 Performance baseline
+
+**Implementation status:** COMPLETE
+
+Phase 5.3 adds `test/performance-baseline.test.ts` with 6 budget
+tests over existing primitives with no new engine and no tuning.
+
+Core guarantees:
+
+- cold open, 50 creates plus single update, query plus aggregate
+  on 200 records, 5-op transaction plus 20-op bulk preview/execute,
+  bounded event pages on 100 records, native doctor plus status;
+- budgets set from measured local numbers with 10-50x headroom
+  (open 5000ms, creates50 30000ms, update 2000ms, query 5000ms,
+  aggregate 5000ms, transaction 10000ms, bulk preview 15000ms,
+  bulk execute 30000ms, events 10000ms, doctor 15000ms,
+  status 10000ms);
+- measure only: no optimization, no behavior change;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 6 / 6 PASS;
+- full `npm test`: 343 / 343 PASS.
+
+### Deliberately not implemented
+
+Task 5.3 does not implement:
+
+- documentation/examples (Task 39);
+- packaging/install-command changes (Task 40);
+- release acceptance (Task 41).
+
+Task 39 / 41 is next.
+
+### Task 5.3 gate
 
 **PASSED.**
 
@@ -126,13 +167,13 @@ Task 38 / 41 is next.
 |---|---|---|---|
 | 36 / 41 | 5.1 | COMPLETE | Cross-platform CI matrix |
 | 37 / 41 | 5.2 | COMPLETE | Adversarial filesystem/security suite |
-| 38 / 41 | 5.3 | NOT STARTED | Performance baseline |
+| 38 / 41 | 5.3 | COMPLETE | Performance baseline |
 | 39 / 41 | 5.4 | NOT STARTED | Documentation/examples |
 | 40 / 41 | 5.5 | NOT STARTED | Packaging and simple install command |
 | 41 / 41 | 5.6 | NOT STARTED | Full release acceptance suite |
 
 ## Current boundary
 
-Task 38 / 41 is next.
+Task 39 / 41 is next.
 
-Do not begin Task 38 until Task 37 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 39 until Task 38 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
