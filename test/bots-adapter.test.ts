@@ -215,6 +215,82 @@ test("read-only lease denies writes and wrong-entity access", () => {
   }
 });
 
+test("leased reads cannot inspect provenance from ungranted entities", () => {
+  const fix = workspaceScope();
+  const readCaps = ["data:crm:deals:read"] as const;
+  const client = createDataClient({
+    scope: fix.scope,
+    actor: { ...botActor },
+    authorization: { mode: "host-bound", capabilityRefs: [...readCaps] },
+  });
+  try {
+    bootstrap(client);
+    const visible = client.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "deals",
+      idempotencyKey: "bots:prov:visible",
+      data: {
+        title: "Visible",
+        value: 1,
+        stage: "lead",
+        company: client.records.create({
+          spaceId: "crm",
+          entity: "companies",
+          idempotencyKey: "bots:prov:company",
+          data: { name: "Company" },
+        }).result.recordId,
+      },
+    });
+    const hidden = client.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "companies",
+      idempotencyKey: "bots:prov:hidden",
+      data: { name: "Hidden" },
+    });
+    assert.equal(visible.ok, true);
+    assert.equal(hidden.ok, true);
+
+    const adapter = createBotsDataAdapter(
+      client,
+      lease({ capabilities: [...readCaps] }),
+    );
+
+    assert.equal(
+      adapter.provenance.getReceipt(visible.result.receipt.receiptId).ok,
+      true,
+    );
+    assert.throws(
+      () => adapter.provenance.getReceipt(hidden.result.receipt.receiptId),
+      (error: unknown) => {
+        assert.ok(isBotsDataAdapterError(error));
+        assert.equal(
+          (error as BotsDataAdapterError).code,
+          "CAPABILITY_DENIED",
+        );
+        return true;
+      },
+    );
+
+    const events = adapter.provenance.listEvents();
+    assert.equal(events.ok, true);
+    assert.ok(
+      events.result.items.every(
+        (event) =>
+          event.entity === "deals" ||
+          event.entity === null,
+      ),
+    );
+    assert.ok(
+      !events.result.items.some(
+        (event) => event.entity === "companies",
+      ),
+    );
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
 test("wrong task binding, expiry, and workspace mismatch fail closed", () => {
   const fix = workspaceScope();
   const client = botClient(fix.scope);
