@@ -10,7 +10,7 @@ import {
 export function createDashboardProjection(client: DataClient): DashboardProjection {
   const base = createBaseDashboardProjection(client);
 
-  return {
+  const secured: DashboardProjection = {
     ...base,
     records: {
       ...base.records,
@@ -71,4 +71,11 @@ export function createDashboardProjection(client: DataClient): DashboardProjecti
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
