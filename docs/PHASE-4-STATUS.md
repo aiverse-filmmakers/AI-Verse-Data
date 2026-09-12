@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 6 / 9
-**Overall implementation tasks completed:** 32 / 41
-**Next:** Task 33 / 41, Phase 4.7 - Connections authority boundary
+**Implementation tasks completed:** 7 / 9
+**Overall implementation tasks completed:** 33 / 41
+**Next:** Task 34 / 41, Phase 4.8 - Automation event adapter
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -284,9 +284,52 @@ Task 4.6 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 33 / 41 is next.
+Task 33 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.6 gate
+
+**PASSED.**
+
+---
+
+## Task 33 / 41 - Phase 4.7 Connections authority boundary
+
+**Implementation status:** COMPLETE
+
+Phase 4.7 draws the local-vs-external line over the Task 27
+client with no new engine and no new storage.
+
+Core guarantees:
+
+- `createConnectionsAuthority(client)` under
+  `@ai-verse/data/connections`;
+- `local_canonical` now with `external_canonical`,
+  `replicated`, `snapshot`, and `derived` named but not built;
+- strict `connections://` source refs with round-trip parse;
+- explicit one-way imports with external IDs plus authority
+  plus direction plus URI preserved in record source refs;
+- idempotent retries replay-safe; reads and bounded queries
+  stay local;
+- no silent copying, no implicit bidirectional sync, no sync
+  engine of any kind;
+- no raw SQL/paths, no Memory auto-write, no systemId
+  identity, no registry/OS mutation, no cross-workspace
+  access, no purge.
+
+Detailed contract: `docs/CONNECTIONS-AUTHORITY-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.7 does not implement:
+
+- automation adapters or sync engines;
+- Connections-side credential/transport behavior;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or authority models.
+
+Task 34 / 41 is next.
+
+### Task 4.7 gate
 
 **PASSED.**
 
@@ -302,12 +345,12 @@ Task 33 / 41 is next.
 | 30 / 41 | 4.4 | COMPLETE | Memory provenance/candidate bridge |
 | 31 / 41 | 4.5 | COMPLETE | Dashboard projection adapter |
 | 32 / 41 | 4.6 | COMPLETE | Apps Data contract |
-| 33 / 41 | 4.7 | NEXT | Connections authority boundary |
-| 34 / 41 | 4.8 | NOT STARTED | Automation event adapter |
+| 33 / 41 | 4.7 | COMPLETE | Connections authority boundary |
+| 34 / 41 | 4.8 | NEXT | Automation event adapter |
 | 35 / 41 | 4.9 | NOT STARTED | Phase 4 gate |
 
 ## Current boundary
 
-Task 33 / 41 is next.
+Task 34 / 41 is next.
 
-Do not begin Task 34 until Task 33 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 35 until Task 34 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

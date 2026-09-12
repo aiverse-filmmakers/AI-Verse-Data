@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 4 IN PROGRESS  
-**Implementation progress:** 32 / 41 tasks complete  
-**Next:** Task 33 / 41, Phase 4.7 - Connections authority boundary
+**Implementation progress:** 33 / 41 tasks complete  
+**Next:** Task 34 / 41, Phase 4.8 - Automation event adapter
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    67%  (6/9)
+Phase 4  Ecosystem Adapters            [IN PROGRESS]    78%  (7/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **32 / 41 tasks complete**.
+Overall implementation: **33 / 41 tasks complete**.
 
 ---
 
@@ -1187,7 +1187,25 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 **Task 4.6 gate: PASSED.**
 
 ## Task 33 / 41 - Phase 4.7 Connections authority boundary
-Local-vs-external authority metadata and import/source-reference contracts; no implicit bidirectional sync.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- local-vs-external authority metadata plus explicit one-way
+  import contracts under `@ai-verse/data/connections`;
+- `local_canonical` now with four future classes named but not
+  built and no sync engine;
+- external IDs plus authority plus direction plus URI preserved
+  in record source refs with Data provenance;
+- reads stay local, no silent copying, no implicit bidirectional
+  sync;
+- no Task 34+ behavior early, no sibling edits.
+
+Detailed contract: `docs/CONNECTIONS-AUTHORITY-V0.1.md`.
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.7 gate: PASSED.**
 
 ## Task 34 / 41 - Phase 4.8 Automation event adapter
 Committed Data event subscription for OS activation/automation without adding a scheduler to Data.
@@ -1247,6 +1265,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 33 / 41: Phase 4.7 - Connections authority boundary.**
+**Task 34 / 41: Phase 4.8 - Automation event adapter.**
 
-Do not begin Task 34 / 41 until Task 33 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 35 / 41 until Task 34 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

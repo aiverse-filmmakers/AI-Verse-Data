@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  6 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  7 / 9
 
-Overall implementation: 32 / 41 tasks complete
+Overall implementation: 33 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 32 / 41 - Phase 4.6: Apps Data contract**
+**Task 33 / 41 - Phase 4.7: Connections authority boundary**
 
-Implemented through Task 32:
+Implemented through Task 33:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -122,6 +122,13 @@ Implemented through Task 32:
 - uninstall removes app only, canonical records preserved, no
   purge;
 - no Task 33+ adapters early, no sibling edits.
+- local-vs-external authority metadata plus explicit one-way
+  imports with no new engine;
+- `local_canonical` now, four future classes named but not
+  built, no sync engine;
+- external IDs plus provenance preserved, reads stay local, no
+  silent copying, no implicit bidirectional sync;
+- no Task 34+ behavior early, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -171,11 +178,15 @@ Detailed Task 32 contract:
 
 `docs/APPS-DATA-CONTRACT-V0.1.md`
 
-Behavioral implementation verification (Task 32 local; exact-head CI cited on push):
+Detailed Task 33 contract:
+
+`docs/CONNECTIONS-AUTHORITY-V0.1.md`
+
+Behavioral implementation verification (Task 33 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               319 / 319 PASS
+Tests:               323 / 323 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -194,7 +205,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 32:
+Implemented through Task 33:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -255,13 +266,15 @@ Task 31 local verification: 313 / 313 PASS on Node 22; exact-head CI cited on pu
 
 Task 32 local verification: 319 / 319 PASS on Node 22; exact-head CI cited on push.
 
+Task 33 local verification: 323 / 323 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 33 / 41 - Phase 4.7: Connections authority boundary**
+**Task 34 / 41 - Phase 4.8: Automation event adapter**
 
-Local-vs-external authority metadata and import/source-reference contracts; no implicit bidirectional sync.
+Committed Data event subscription for OS activation/automation without adding a scheduler to Data.
 
-Do not start Task 34 until Task 33 is explicitly tasked.
+Do not start Task 35 until Task 34 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -433,6 +446,21 @@ Task 32 must preserve:
 5. Uninstall removes app only with canonical records preserved and no purge automation.
 6. Engine ceilings, digests, OCC, idempotency, receipts, and stable envelopes reused verbatim.
 7. No raw SQL/paths, no Memory auto-write, no systemId identity, no registry/OS mutation, no cross-workspace kits, no purge.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 33 architectural laws
+
+Task 33 must preserve:
+
+1. Local-vs-external metadata plus explicit imports compose the Task 27 client verbatim with no new engine or storage.
+2. `local_canonical` now with four future classes named but not built; no sync engine of any kind.
+3. Strict `connections://` source refs with round-trip parse; malformed shapes fail closed.
+4. Explicit one-way imports with external IDs plus authority plus direction plus URI preserved in record source refs with Data provenance.
+5. Reads and bounded queries stay local; no silent copying and no implicit bidirectional sync.
+6. Idempotent retries replay-safe; conflicts fail closed with stable codes.
+7. No Connections-side credential/transport behavior, no Memory auto-write, no systemId identity, no raw SQL/paths, no registry/OS mutation, no cross-workspace access, no purge.
 8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.

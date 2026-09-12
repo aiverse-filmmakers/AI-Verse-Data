@@ -88,6 +88,10 @@
       "types": "./dist/src/apps/index.d.ts",
       "import": "./dist/src/apps/index.js"
     },
+    "./connections": {
+      "types": "./dist/src/connections/index.d.ts",
+      "import": "./dist/src/connections/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"
