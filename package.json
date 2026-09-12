@@ -92,6 +92,10 @@
       "types": "./dist/src/connections/index.d.ts",
       "import": "./dist/src/connections/index.js"
     },
+    "./automation": {
+      "types": "./dist/src/automation/index.d.ts",
+      "import": "./dist/src/automation/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"

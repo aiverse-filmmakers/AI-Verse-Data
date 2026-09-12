@@ -20,6 +20,7 @@ export * from "./memory/index.js";
 export * from "./dashboard/index.js";
 export * from "./apps/index.js";
 export * from "./connections/index.js";
+export * from "./automation/index.js";
 export * from "./native/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
@@ -71,6 +72,7 @@ export interface FoundationStatus {
   readonly dashboardProjectionAvailable: true;
   readonly appsDataContractAvailable: true;
   readonly connectionsAuthorityAvailable: true;
+  readonly automationEventsAvailable: true;
 }
 
 /**
@@ -124,5 +126,6 @@ export function getFoundationStatus(): FoundationStatus {
     dashboardProjectionAvailable: true,
     appsDataContractAvailable: true,
     connectionsAuthorityAvailable: true,
+    automationEventsAvailable: true,
   };
 }

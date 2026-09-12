@@ -50,6 +50,7 @@ test("package metadata exposes all implemented Phase 3.2 public subpaths", () =>
   assert.ok("./dashboard" in packageJson.exports);
   assert.ok("./apps" in packageJson.exports);
   assert.ok("./connections" in packageJson.exports);
+  assert.ok("./automation" in packageJson.exports);
   assert.ok("./native" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
@@ -102,5 +103,6 @@ test("foundation surface reports Phase 4.1 typed client SDK", () => {
     dashboardProjectionAvailable: true,
     appsDataContractAvailable: true,
     connectionsAuthorityAvailable: true,
+    automationEventsAvailable: true,
   });
 });

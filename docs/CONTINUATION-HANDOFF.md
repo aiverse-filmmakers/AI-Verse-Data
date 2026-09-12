@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  7 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  8 / 9
 
-Overall implementation: 33 / 41 tasks complete
+Overall implementation: 34 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 33 / 41 - Phase 4.7: Connections authority boundary**
+**Task 34 / 41 - Phase 4.8: Automation event adapter**
 
-Implemented through Task 33:
+Implemented through Task 34:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -128,7 +128,17 @@ Implemented through Task 33:
   built, no sync engine;
 - external IDs plus provenance preserved, reads stay local, no
   silent copying, no implicit bidirectional sync;
-- no Task 34+ behavior early, no sibling edits.
+- committed-event subscription surface over existing Data events
+  with no new engine;
+- subscription declare/poll/describe/unsubscribe over client
+  `events.*` verbatim;
+- facts only: no scheduler, no trigger engine, OS owns activation
+  policy;
+- bounded types/limits with mismatch cursors local-only and no
+  catch-up writes into Data;
+- cursors only ever move forward, no deletes, no mutations;
+- mismatch catch-ups never synthesized into missing records;
+- no Task 35+ behavior early, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -182,11 +192,15 @@ Detailed Task 33 contract:
 
 `docs/CONNECTIONS-AUTHORITY-V0.1.md`
 
-Behavioral implementation verification (Task 33 local; exact-head CI cited on push):
+Detailed Task 34 contract:
+
+`docs/AUTOMATION-EVENTS-V0.1.md`
+
+Behavioral implementation verification (Task 34 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               323 / 323 PASS
+Tests:               327 / 327 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -205,7 +219,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 33:
+Implemented through Task 34:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -268,13 +282,15 @@ Task 32 local verification: 319 / 319 PASS on Node 22; exact-head CI cited on pu
 
 Task 33 local verification: 323 / 323 PASS on Node 22; exact-head CI cited on push.
 
+Task 34 local verification: 327 / 327 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 34 / 41 - Phase 4.8: Automation event adapter**
+**Task 35 / 41 - Phase 4.9: Phase 4 integration gate**
 
-Committed Data event subscription for OS activation/automation without adding a scheduler to Data.
+Prove adapters preserve ownership, scope, permissions, receipts, and optionality.
 
-Do not start Task 35 until Task 34 is explicitly tasked.
+Do not start Task 36 until Task 35 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -461,6 +477,21 @@ Task 33 must preserve:
 5. Reads and bounded queries stay local; no silent copying and no implicit bidirectional sync.
 6. Idempotent retries replay-safe; conflicts fail closed with stable codes.
 7. No Connections-side credential/transport behavior, no Memory auto-write, no systemId identity, no raw SQL/paths, no registry/OS mutation, no cross-workspace access, no purge.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 34 architectural laws
+
+Task 34 must preserve:
+
+1. Committed-event subscription surface composes the Task 27 client verbatim with no new engine or storage.
+2. Subscription declare/poll/describe/unsubscribe reuse client `events.*` verbatim; unsubscribe only clears local listeners.
+3. Facts only: no scheduler, no trigger engine, OS owns activation policy; no Automation-side execution inside Data.
+4. Bounded event types/limits with mismatch absences **local-only**; never writes catch-ups into Data; cursors only move forward.
+5. Mismatch catch-ups never synthesized into missing records; only received envelopes are delivered.
+6. Engine ceilings, envelopes, receipts, and stable codes reused verbatim; unknown types and bad filters fail closed.
+7. No raw SQL/paths, no Memory auto-write, no systemId identity, no scheduler, no registry/OS mutation, no cross-workspace access, no purge, no deletes.
 8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.

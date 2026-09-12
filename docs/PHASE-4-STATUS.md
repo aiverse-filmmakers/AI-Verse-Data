@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 7 / 9
-**Overall implementation tasks completed:** 33 / 41
-**Next:** Task 34 / 41, Phase 4.8 - Automation event adapter
+**Implementation tasks completed:** 8 / 9
+**Overall implementation tasks completed:** 34 / 41
+**Next:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -327,9 +327,50 @@ Task 4.7 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 34 / 41 is next.
+Task 34 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.7 gate
+
+**PASSED.**
+
+---
+
+## Task 34 / 41 - Phase 4.8 Automation event adapter
+
+**Implementation status:** COMPLETE
+
+Phase 4.8 exposes committed Data events to ecosystem activators
+over the Task 27 client with no scheduler and no trigger engine.
+
+Core guarantees:
+
+- `createAutomationEvents(client)` under
+  `@ai-verse/data/automation`;
+- subscription declare/poll/describe/unsubscribe over existing
+  committed events; facts only, OS owns activation policy;
+- bounded event types/limits with mismatch cursors kept local-only;
+- mismatch absences never written into Data; cursors only ever
+  move forward; no deletes, no mutations;
+- envelopes, ceilings, and cursors reused verbatim and
+  fail-closed with stable codes;
+- no raw SQL/paths, no Memory auto-write, no systemId identity,
+  no scheduler, no registry/OS mutation, no cross-workspace
+  access, no purge.
+
+Detailed contract: `docs/AUTOMATION-EVENTS-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.8 does not implement:
+
+- scheduler or trigger-execution behavior;
+- Automation-side action/side-effect execution;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or event transports.
+
+Task 35 / 41 is next.
+
+### Task 4.8 gate
 
 **PASSED.**
 
@@ -346,11 +387,11 @@ Task 34 / 41 is next.
 | 31 / 41 | 4.5 | COMPLETE | Dashboard projection adapter |
 | 32 / 41 | 4.6 | COMPLETE | Apps Data contract |
 | 33 / 41 | 4.7 | COMPLETE | Connections authority boundary |
-| 34 / 41 | 4.8 | NEXT | Automation event adapter |
+| 34 / 41 | 4.8 | COMPLETE | Automation event adapter |
 | 35 / 41 | 4.9 | NOT STARTED | Phase 4 gate |
 
 ## Current boundary
 
-Task 34 / 41 is next.
+Task 35 / 41 is next.
 
 Do not begin Task 35 until Task 34 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

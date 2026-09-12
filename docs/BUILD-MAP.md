@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 4 IN PROGRESS  
-**Implementation progress:** 33 / 41 tasks complete  
-**Next:** Task 34 / 41, Phase 4.8 - Automation event adapter
+**Implementation progress:** 34 / 41 tasks complete  
+**Next:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    78%  (7/9)
+Phase 4  Ecosystem Adapters            [IN PROGRESS]    89%  (8/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **33 / 41 tasks complete**.
+Overall implementation: **34 / 41 tasks complete**.
 
 ---
 
@@ -1209,6 +1209,25 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 
 ## Task 34 / 41 - Phase 4.8 Automation event adapter
 Committed Data event subscription for OS activation/automation without adding a scheduler to Data.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- committed-event subscription surface over existing Data events
+  under `@ai-verse/data/automation`;
+- facts only: no scheduler, no trigger engine, OS owns activation policy;
+- subscription declare/poll/describe/unsubscribe over client `events.*` verbatim;
+- bounded types/limits, mismatch absences applied locally only with no catch-up writes;
+- cursors only ever move forward, no deletes, no mutations;
+- mismatch catch-ups never synthesized into missing records;
+- envelopes/ceilings/cursors fail-closed with stable codes;
+- no Task 35+ behavior early, no sibling edits.
+
+Detailed contract: `docs/AUTOMATION-EVENTS-V0.1.md`.
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.8 gate: PASSED.**
 
 ## Task 35 / 41 - Phase 4.9 Phase 4 gate
 Prove adapters preserve ownership, scope, permissions, receipts, and optionality.
