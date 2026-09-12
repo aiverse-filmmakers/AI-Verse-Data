@@ -2,9 +2,9 @@
 
 **Phase:** 3 - Native AI-Verse Integration  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 3 / 8  
-**Overall implementation tasks completed:** 21 / 41  
-**Next:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery
+**Implementation tasks completed:** 4 / 8  
+**Overall implementation tasks completed:** 22 / 41  
+**Next:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -249,9 +249,63 @@ Task 3.3 does not implement:
 - multi-workspace initialization or workspace enumeration;
 - sibling repository modifications.
 
-Task 22 / 41 is next.
+Task 22 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 3.3 gate
+
+**PASSED.**
+
+---
+
+## Task 22 / 41 - Phase 3.4 Extension instructions/runtime discovery
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 3.4 exposes Data's own installed extension instructions to a
+native runtime through the existing OS local extension hook, read-only.
+
+Core guarantees:
+
+- read-only `discoverExtensionInstructions` under
+  `@ai-verse/data/native`;
+- Task 19 `compatible` trusted OS root prerequisite;
+- `no-os` and `incompatible` fail closed with no standalone masking;
+- schema-`1.0` registry parsed read-only with no writes or locks;
+- only `extensions["ai-verse-data"]` read; unrelated entries preserved
+  and never loaded;
+- boolean `supported` plus `installed` plus `enabled` gate with existing
+  `enabled: false` respected;
+- `ready`, `disabled`, and `not-installed` states;
+- instruction, engine, adapter, and manifest paths repo-relative and
+  contained inside `.aiverse/extensions/ai-verse-data/`;
+- traversal, absolute, drive, UNC, NUL, symlink, oversize, unreadable,
+  and missing-file rejection;
+- contents plus provenance plus task-hint matched terms;
+- engine file returned as data and never executed;
+- fixture trees byte-identical after discovery;
+- zero `.sqlite` files created or opened;
+- no tracked OS mutation;
+- no Task 23 CLI lifecycle or Task 24 doctor behavior;
+- no sibling repository modifications.
+
+Detailed contract: `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 3.4 does not implement:
+
+- native install/update/disable/uninstall CLI;
+- native doctor/status;
+- workspace database initialization, migration, repair, or promotion;
+- health or permission assertions from registration;
+- permanent `AGENTS.md` blocks;
+- sibling repository modifications.
+
+Task 23 / 41 is next.
+
+### Task 3.4 gate
 
 **PASSED.**
 
@@ -262,14 +316,14 @@ Task 22 / 41 is next.
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
 | 21 / 41 | 3.3 | COMPLETE | Native workspace resolver + Data initialization |
-| 22 / 41 | 3.4 | NEXT | Extension instructions/runtime discovery |
-| 23 / 41 | 3.5 | NOT STARTED | Native CLI install/update/disable/uninstall |
+| 22 / 41 | 3.4 | COMPLETE | Extension instructions/runtime discovery |
+| 23 / 41 | 3.5 | NEXT | Native CLI install/update/disable/uninstall |
 | 24 / 41 | 3.6 | NOT STARTED | Native doctor + status |
 | 25 / 41 | 3.7 | NOT STARTED | Installation-order/registry coexistence suite |
 | 26 / 41 | 3.8 | NOT STARTED | Phase 3 gate |
 
 ## Current boundary
 
-Task 22 / 41 is next.
+Task 23 / 41 is next.
 
-Do not begin Task 23 until Task 22 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 24 until Task 23 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

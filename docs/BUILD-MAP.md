@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 21 / 41 tasks complete  
-**Next:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery
+**Implementation progress:** 22 / 41 tasks complete  
+**Next:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    38%  (3/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    50%  (4/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **21 / 41 tasks complete**.
+Overall implementation: **22 / 41 tasks complete**.
 
 ---
 
@@ -813,7 +813,7 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 # Phase 3 - Native AI-Verse Integration
 
 **Status:** IN PROGRESS  
-**Progress:** 3 / 8 tasks complete
+**Progress:** 4 / 8 tasks complete
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
 
@@ -941,7 +941,29 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.3 gate: PASSED.**
 
 ## Task 22 / 41 - Phase 3.4 Extension instructions/runtime discovery
-Task-relevant extension instructions through the existing OS local extension hook.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- read-only `discoverExtensionInstructions` plus `AiVerseDataInstructionDiscovery` under `@ai-verse/data/native`;
+- Task 19-compatible trusted OS root prerequisite with no standalone masking;
+- exact schema-`1.0` registry parsing without writes or locks;
+- `extensions["ai-verse-data"]` only; unrelated extensions preserved and never loaded;
+- boolean `supported` plus `installed` plus `enabled` gate with `enabled: false` respected;
+- `ready`, `disabled`, and `not-installed` discovery states;
+- Data-owned directory containment for instructions, engine, adapters, and manifest;
+- traversal, absolute, drive, UNC, NUL, symlink, oversize, and unreadable rejection;
+- contents plus provenance plus task-hint relevance with sorted matched terms;
+- engine file never executed;
+- no registry write, no tracked OS mutation, no workspace database create or open;
+- no Task 23 CLI lifecycle or Task 24 doctor behavior;
+- no sibling repository modifications.
+
+Detailed contract: `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.4 gate: PASSED.**
 
 ## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
 Lifecycle commands while preserving canonical workspace databases; purge stays separate/destructive.
@@ -1042,6 +1064,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 19 / 41: Phase 3.1 - AI-Verse OS compatibility detector.**
+**Task 23 / 41: Phase 3.5 - Native CLI install/update/disable/uninstall.**
 
-Do not begin Task 20 / 41 until Task 19 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 24 / 41 until Task 23 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

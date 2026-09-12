@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection, Phase 3.2 hardened local extension materialization/registration, and Phase 3.3 native workspace resolver plus Data initialization implemented
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection, Phase 3.2 hardened local extension materialization/registration, Phase 3.3 native workspace resolver plus Data initialization, and Phase 3.4 read-only extension instruction/runtime discovery implemented
 
 ## 1. Architectural position
 

@@ -11,16 +11,16 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   IN PROGRESS  3 / 8
+Phase 3  Native AI-Verse Integration   IN PROGRESS  4 / 8
 
-Overall implementation: 21 / 41 tasks complete
+Overall implementation: 22 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 21 / 41 - Phase 3.3: Native workspace resolver + Data initialization**
+**Task 22 / 41 - Phase 3.4: Extension instructions/runtime discovery**
 
-Implemented through Task 21:
+Implemented through Task 22:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -55,11 +55,18 @@ Implemented through Task 21:
 - exact workspace binding on fresh databases;
 - idempotent repeat initialization;
 - seven-state existing-database discovery;
-- no silent replace, migrate, repair, rebind, or quarantine clearing.
+- no silent replace, migrate, repair, rebind, or quarantine clearing;
+- read-only task-relevant extension instruction/runtime discovery;
+- ready/disabled/not-installed instruction states with enabled:false respected;
+- Data-owned instruction files only with byte-identical read-only proof.
 
 Detailed Task 21 contract:
 
 `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
+
+Detailed Task 22 contract:
+
+`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
 
 Behavioral implementation verification:
 
@@ -153,11 +160,11 @@ The Task 20 behavioral implementation and documentation closeout candidate are v
 
 ## NEXT
 
-**Task 22 / 41 - Phase 3.4: Extension instructions/runtime discovery**
+**Task 23 / 41 - Phase 3.5: Native CLI install/update/disable/uninstall**
 
-Task-relevant extension instructions through the existing OS local extension hook.
+Lifecycle commands while preserving canonical workspace databases; purge stays separate/destructive.
 
-Do not start Task 23 until Task 22 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Do not start Task 24 until Task 23 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
 ## Task 21 architectural laws
 
@@ -183,16 +190,31 @@ Task 21 must preserve:
 18. Task 21 must not add Task 23 native CLI lifecycle commands early.
 19. No sibling repository modifications are permitted.
 
-## Canonical documents to read before Task 21
+## Task 22 architectural laws
+
+Task 22 must preserve:
+
+1. Discovery starts from a Task 19-compatible trusted OS root; incompatible hosts fail closed with no standalone masking.
+2. The schema-`1.0` registry is parsed read-only with no writes or locks.
+3. Only `extensions["ai-verse-data"]` is read; unrelated entries are preserved and never loaded.
+4. Boolean `supported` plus `installed` plus `enabled` gate; existing `enabled: false` is respected.
+5. Instruction/engine/adapter paths resolve repo-relative inside the Data-owned extension directory only.
+6. Traversal, absolute, drive, UNC, NUL, symlink, oversize, and unreadable states fail closed.
+7. Contents plus provenance returned with task-hint relevance; engine file never executed.
+8. No registry write, no tracked OS mutation, no workspace database created or opened.
+9. Task 22 must not implement Task 23 CLI lifecycle or Task 24 doctor behavior early.
+10. No sibling repository modifications are permitted.
+
+## Canonical documents to read before Task 23
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-3-STATUS.md`
-4. `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`
-5. `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`
-6. `docs/INSTALLATION-AND-LIFECYCLE.md`
-7. `docs/SCOPE-AND-IDENTITY-V0.1.md`
-8. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
+4. `docs/INSTALLATION-AND-LIFECYCLE.md`
+5. `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`
+6. `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`
+7. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
+8. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
 9. `docs/SECURITY-AND-AUTHORITY.md`
 10. `docs/TESTING-AND-ACCEPTANCE.md`
 

@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 Native AI-Verse Integration in progress  
-**Completed implementation tasks:** 21 / 41  
-**Latest completed:** Task 21 / 41, Phase 3.3 - Native workspace resolver + Data initialization  
-**Next task:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery  
+**Completed implementation tasks:** 22 / 41  
+**Latest completed:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery  
+**Next task:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -275,9 +275,22 @@ Native workspace resolver + Data initialization
   -> no Task 22 runtime discovery
   -> no Task 23 CLI lifecycle
   -> no sibling edits
+
+Task 22 / 41 - COMPLETE
+Extension instructions/runtime discovery
+  -> read-only discoverExtensionInstructions under src/native
+  -> ready/disabled/not-installed states
+  -> supported+installed+enabled gate with enabled:false respected
+  -> Data-owned files only, unrelated extensions never loaded
+  -> task-relevant hint filtering with matched terms
+  -> traversal/absolute/symlink/oversize rejection
+  -> byte-identical fixture after discovery, zero sqlite created
+  -> no registry write, no tracked OS mutation
+  -> no Task 23 CLI lifecycle
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Task 22 extension instructions/runtime discovery is next.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Task 23 native CLI lifecycle is next.
 
 ## Public package surfaces
 
@@ -504,11 +517,26 @@ Task 20 does not edit tracked OS files and does not create any workspace Data da
 
 Phase 3.3 adds ID-only `resolveWorkspace`, active-only `initWorkspaceData`, and seven-state `discoverWorkspaceData` under `@ai-verse/data/native`. Resolution starts from a Task 19-compatible trusted OS root, inspects only `workspaces/<requested-id>/WORKSPACE.yaml`, requires an exact manifest ID match, tolerates additive manifest fields, reports paused/archived status, derives the canonical `workspaces/<id>/data/ai-verse-data.sqlite` path internally, reuses the workspace-scoped binding contract, stays idempotent on repeat init, and never silently replaces, migrates, repairs, or rebounds an existing database. Discovery reports `missing`, `compatible`, `migration_required`, `quarantined`, `scope_conflict`, `unsupported`, and `unavailable` by reusing the storage/recovery contracts.
 
-See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), and [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md).
+See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md), and [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md).
+
+Phase 3.4 adds read-only `discoverExtensionInstructions` under `@ai-verse/data/native`. It requires a Task 19-compatible host, parses the schema-`1.0` registry read-only, reads only `extensions["ai-verse-data"]`, requires supported plus installed plus enabled (respecting `enabled: false`), resolves instruction/engine/adapter paths as repo-relative inside the Data-owned extension directory, rejects traversal/absolute/symlink/oversize states, returns contents plus provenance with task-hint relevance, never executes the engine, never writes the registry, never touches tracked OS files, and never creates or opens any workspace database.
 
 ### Latest verification
 
-Task 20 behavioral CI run: `34606467549`  
+Task 22 local verification (exact-head CI to be cited on push):
+
+```text
+Node 22  PASS (local)
+Node 24  pending CI
+
+253 tests
+253 passed
+0 failed
+0 skipped
+0 cancelled
+```
+
+Prior Task 20 behavioral CI run: `34606467549`
 Behavioral commit: `1e88ba758dcc1151b4de6f60e8c3b2a9822afad7`
 
 ```text
@@ -588,7 +616,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, and explicit Data initialization are implemented. Task 22 adds extension instructions/runtime discovery.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, and read-only extension instruction discovery are implemented. Task 23 adds native CLI lifecycle commands.
 
 ## Technology direction
 
@@ -645,10 +673,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md) - implemented native OS compatibility detector contract
 - [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md) - implemented hardened local extension installation contract
 - [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md) - implemented native workspace resolver + Data initialization contract
+- [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md) - implemented read-only extension instruction/runtime discovery contract
 - [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery.**
+**Next: Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall.**

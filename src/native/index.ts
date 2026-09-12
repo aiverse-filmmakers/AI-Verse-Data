@@ -3,6 +3,7 @@ export { AiVerseOsCompatibilityDetector } from "./compatibility.js";
 export * from "./extension-types.js";
 export { AiVerseDataExtensionInstaller } from "./extension-installer.js";
 export * from "./workspace-types.js";
+export * from "./instruction-types.js";
 export {
   AiVerseWorkspaceResolver,
   resolveWorkspace,
@@ -15,3 +16,7 @@ export {
   AiVerseWorkspaceDataInitializer,
   initWorkspaceData,
 } from "./workspace-init.js";
+export {
+  AiVerseDataInstructionDiscovery,
+  discoverExtensionInstructions,
+} from "./instruction-discovery.js";

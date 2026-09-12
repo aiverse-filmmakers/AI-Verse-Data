@@ -19,11 +19,11 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 3.3 workspace boundary", () => {
+test("--help succeeds and identifies the Phase 3.4 instruction boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 3\.3 adds ID-only native workspace resolution/);
+  assert.match(result.stdout, /Phase 3\.4 adds read-only task-relevant extension instruction/);
   assert.equal(result.stderr, "");
 });
 
