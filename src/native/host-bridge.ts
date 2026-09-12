@@ -178,14 +178,6 @@ function protocolEnvelope(
   return validateRequestEnvelope(envelope);
 }
 
-function requireInitialized(
-  rootPath: string,
-  workspaceId: string,
-): void {
-  void rootPath;
-  void workspaceId;
-}
-
 function dispatch(
   client: ReturnType<typeof createDataClient>,
   request: DataRequestEnvelope,
@@ -311,7 +303,6 @@ export async function handleNativeDataHostRequest(
     authorization: { mode: "local-operator" },
   });
   try {
-    requireInitialized(request.rootPath, workspaceId);
     return dispatch(client, envelope);
   } finally {
     client.close();
