@@ -126,24 +126,53 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
       entity: input.entity,
       recordId: input.recordId,
     });
-    let receipt: DataMutationReceipt | null = null;
-    if (input.includeReceipt ?? false) {
-      if (input.idempotencyKey !== undefined) {
-        receipt = client.provenance.getReceiptByIdempotencyKey(input.idempotencyKey).result;
-        requireReceiptForRecord(client, receipt, input);
-      } else if (input.receiptId !== undefined && input.receiptId !== null) {
-        receipt = client.provenance.getReceipt(input.receiptId).result;
-        requireReceiptForRecord(client, receipt, input);
-      } else if (input.eventId !== undefined && input.eventId !== null) {
-        const event = findEvent(client, input.eventId, {
-          spaceId: input.spaceId,
-          entity: input.entity,
-          recordId: input.recordId,
-        }).result;
-        receipt = client.provenance.getReceiptByIdempotencyKey(event.idempotencyKey).result;
-        requireReceiptForRecord(client, receipt, input);
+    let evidenceReceipt: DataMutationReceipt | null = null;
+
+    function acceptReceipt(candidate: DataMutationReceipt, source: string): void {
+      requireReceiptForRecord(client, candidate, input);
+      if (
+        evidenceReceipt !== null &&
+        (
+          evidenceReceipt.receiptId !== candidate.receiptId ||
+          evidenceReceipt.eventId !== candidate.eventId ||
+          evidenceReceipt.idempotencyKey !== candidate.idempotencyKey
+        )
+      ) {
+        invalid(`Supplied record evidence identifiers disagree at ${source}.`);
       }
+      evidenceReceipt = candidate;
     }
+
+    if (input.idempotencyKey !== undefined) {
+      acceptReceipt(
+        client.provenance.getReceiptByIdempotencyKey(input.idempotencyKey).result,
+        "idempotencyKey",
+      );
+    }
+
+    if (input.receiptId !== undefined && input.receiptId !== null) {
+      acceptReceipt(
+        client.provenance.getReceipt(checkOpaqueId(input.receiptId, "receiptId")).result,
+        "receiptId",
+      );
+    }
+
+    if (input.eventId !== undefined && input.eventId !== null) {
+      const event = findEvent(client, checkOpaqueId(input.eventId, "eventId"), {
+        spaceId: input.spaceId,
+        entity: input.entity,
+        recordId: input.recordId,
+      }).result;
+      const eventReceipt = client.provenance.getReceiptByIdempotencyKey(
+        event.idempotencyKey,
+      ).result;
+      if (eventReceipt.eventId !== event.eventId) {
+        invalid("Event evidence does not match its canonical receipt.");
+      }
+      acceptReceipt(eventReceipt, "eventId");
+    }
+
+    const receipt = (input.includeReceipt ?? false) ? evidenceReceipt : null;
     const reference = base.references.forRecord({
       spaceId: input.spaceId,
       entity: input.entity,
