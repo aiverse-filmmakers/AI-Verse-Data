@@ -217,6 +217,46 @@ test("event evidence resolves by event, receipt, and idempotency key", () => {
   }
 });
 
+test("event lookup remains exact beyond the first 200 events", () => {
+  const { fix, client } = memorySetup();
+  try {
+    let lastEventId = "";
+    for (let index = 0; index < 205; index += 1) {
+      const created = client.records.createWithReceipt({
+        spaceId: "crm",
+        entity: "companies",
+        idempotencyKey: `memory:page:${index}`,
+        data: { name: `Company ${index}` },
+      });
+      assert.equal(created.ok, true);
+      lastEventId = created.result.receipt.eventId;
+    }
+
+    const firstPage = client.provenance.listEvents({ limit: 200 });
+    assert.equal(firstPage.ok, true);
+    assert.equal(firstPage.result.items.length, 200);
+    assert.ok(
+      !firstPage.result.items.some((event) => event.eventId === lastEventId),
+    );
+
+    const bridge = createMemoryBridge(client);
+    const evidence = bridge.evidence.lookupEvent({ eventId: lastEventId });
+    assert.equal(evidence.ok, true);
+    assert.equal(evidence.result.event.eventId, lastEventId);
+
+    const candidate = bridge.candidates.proposeEventCandidate({
+      eventId: lastEventId,
+      title: "Late event",
+      summary: "Canonical event lookup must not depend on the first page.",
+    });
+    assert.equal(candidate.ok, true);
+    assert.equal(candidate.result.reference.eventId, lastEventId);
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
 test("candidates propose without writing Memory and carry provenance", () => {
   const { fix, client } = memorySetup();
   try {
