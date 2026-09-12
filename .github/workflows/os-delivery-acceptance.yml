@@ -46,7 +46,7 @@ jobs:
 
       - name: Install Data dependencies
         working-directory: data
-        run: npm ci
+        run: npm install --ignore-scripts
 
       - name: Build Data
         working-directory: data
