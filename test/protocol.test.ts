@@ -152,6 +152,19 @@ test("in operator enforces bounded non-empty arrays", () => {
   );
 });
 
+test("record list rejects cursor fields; cursor pagination belongs to data.query", () => {
+  rejects(() =>
+    validateRequestEnvelope(
+      base("data.record.list", {
+        spaceId: "crm",
+        entity: "deals",
+        limit: 10,
+        cursor: "opaque-cursor",
+      }),
+    ),
+  );
+});
+
 test("query, aggregate and transaction limits are enforced", () => {
   rejects(() =>
     validateRequestEnvelope(
