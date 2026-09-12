@@ -159,13 +159,28 @@ Installation makes the capability available.
 
 A workspace database is created only when Data is explicitly initialized or first used through a deliberate creation path.
 
-Preferred command shape:
+Workspace initialization is deliberately separate from extension
+installation. In v0.1 the supported programmatic Data API is:
 
-```bash
-ai-verse-data init --root /path/to/AI-Verse-OS --workspace <id>
+```ts
+import { initWorkspaceData } from "@ai-verse/data/native";
+
+await initWorkspaceData({
+  rootPath: "/path/to/AI-Verse-OS",
+  workspaceId: "<id>",
+});
 ```
 
-or equivalent native runtime invocation.
+When Data is incorporated into a current AI-Verse OS, the supported native
+runtime path is the OS-owned registered-engine boundary:
+
+```text
+node scripts/data-host.mjs --root /path/to/AI-Verse-OS
+```
+
+with an `ai-verse-os-data-host/1.0` request using `operation: "init"` and
+`scope: "workspace:<id>"`. The v0.1 `ai-verse-data` CLI does not advertise
+a separate `init` command.
 
 The engine resolves the workspace from the trusted OS root, validates `WORKSPACE.yaml`, and creates:
 
