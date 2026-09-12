@@ -1174,14 +1174,13 @@ function validatePayload(operation: DataOperation, input: unknown): void {
     case "data.record.list":
       keysOnly(
         value,
-        ["spaceId", "entity", "limit", "cursor", "includeDeleted"],
+        ["spaceId", "entity", "limit", "includeDeleted"],
         path,
       );
       requireSpaceEntity(value, path);
       if (value.limit !== undefined) {
         positiveInt(value.limit, `${path}.limit`, DATA_PROTOCOL_LIMITS.maxQueryPageSize);
       }
-      if (value.cursor !== undefined) validateCursor(value.cursor, `${path}.cursor`);
       if (value.includeDeleted !== undefined) {
         boolean(value.includeDeleted, `${path}.includeDeleted`);
       }
