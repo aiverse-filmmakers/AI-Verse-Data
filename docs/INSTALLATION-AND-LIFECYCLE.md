@@ -197,7 +197,7 @@ and validate:
 
 The Data package/runtime may be installed or made available before AI-Verse OS exists. That package-level availability grants no OS authority and creates no native workspace database.
 
-The first member beta does **not** silently create a competing standalone Data store when the native lifecycle is pointed at a non-OS or incompatible AI-Verse root. Native `install/update/disable/uninstall/doctor/status` require a compatible AI-Verse OS root and fail closed otherwise.
+The first member beta does **not** silently create a competing standalone Data store when the native lifecycle is pointed at a non-OS or incompatible AI-Verse root. Native `install/update/enable/disable/uninstall/doctor/status` require a compatible AI-Verse OS root and fail closed otherwise.
 
 A future portable standalone product may use a separate explicit scope model, but it must remain distinct from AI-Verse workspace authorization and must include an explicit migration/adoption contract before it is treated as part of the beta install-order guarantee.
 
@@ -249,13 +249,13 @@ Destructive changes should require a separate explicit migration request with pr
 
 The installer must never alter user entity schemas merely because the package version changed.
 
-## 12. Disable behavior
+## 12. Enable / disable behavior
 
-Disabling the extension should change only its enabled state/availability.
+Disabling the extension changes only its enabled state/availability.
 
 Canonical Data remains untouched.
 
-Expected outcome:
+Expected disabled outcome:
 
 ```text
 engine installed
@@ -263,6 +263,14 @@ registry enabled = false
 workspace databases preserved
 normal runtime does not select Data
 ```
+
+Re-enable is explicit:
+
+```bash
+ai-verse-data enable --root <os-root>
+```
+
+`install` and `update` deliberately preserve an existing `enabled: false`; they do not reinterpret an update as operator intent to reactivate Data. `enable` flips only Data's own registry entry back to `enabled: true`, preserves unknown sibling/entry fields, and leaves canonical databases and extension files unchanged.
 
 ## 13. Uninstall behavior
 
@@ -384,7 +392,7 @@ Canonical databases are user-owned even if Data created them.
 
 ## 20. Crash/concurrency safety
 
-Install/update/uninstall operations should serialize their own lifecycle mutations.
+Install/update/enable/disable/uninstall operations should serialize their own lifecycle mutations.
 
 Extension registry mutations must use the OS's safe lock/atomic replace rules.
 
@@ -426,7 +434,7 @@ The distribution format should not change canonical database paths or public pro
 
 1. Install never deletes canonical Data.
 2. Update never silently changes user schemas.
-3. Disable never changes records.
+3. Enable/disable never changes records or canonical databases.
 4. Uninstall preserves canonical databases by default.
 5. Purge is explicit and separate.
 6. Other extension registrations are preserved.
