@@ -210,6 +210,28 @@ jobs:
           MEMORY="$RUNNER_TEMP/AI-Verse-Memory"
           DATA_ROOT="$GITHUB_WORKSPACE"
 
+          # Prove Brain cannot be removed while it owns strategic direction, then
+          # explicitly export/hand back before detach.
+          ai-verse-brain direction-owner "$OS_ROOT" --scope operator --handover-to-brain --apply --confirm-import
+          cat > "$RUNNER_TEMP/brain-handback.json" <<'JSON'
+          {
+            "desired_state": "Five-component beta is safely shippable",
+            "success_definition": "Install, detach and reinstall preserve authority and canonical state",
+            "goals": ["Finish the five-component release gate"]
+          }
+          JSON
+          ai-verse-brain onboard "$OS_ROOT" --scope operator --answers "$RUNNER_TEMP/brain-handback.json" --apply
+
+          set +e
+          ai-verse-brain detach "$OS_ROOT" --apply > "$RUNNER_TEMP/brain-detach-blocked.out" 2>&1
+          detach_status=$?
+          set -e
+          test "$detach_status" -eq 2
+          grep -Fq "Transfer direction ownership" "$RUNNER_TEMP/brain-detach-blocked.out"
+
+          ai-verse-brain direction-owner "$OS_ROOT" --scope operator --handover-to-os --apply --confirm-export
+          grep -Fq "Five-component beta is safely shippable" "$OS_ROOT/operator/context/CURRENT.md"
+
           python "$MEMORY/scripts/install.py" --target "$OS_ROOT" --source-dir "$MEMORY" --action detach
           find "$OS_ROOT/workspaces/alpha/memory/atomic" -type f -name '*.md' | grep -q .
 
