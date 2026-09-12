@@ -72,6 +72,10 @@
       "types": "./dist/src/bots/index.d.ts",
       "import": "./dist/src/bots/index.js"
     },
+    "./brain": {
+      "types": "./dist/src/brain/index.d.ts",
+      "import": "./dist/src/brain/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"

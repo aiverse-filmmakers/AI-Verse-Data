@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 2 / 9
-**Overall implementation tasks completed:** 28 / 41
-**Next:** Task 29 / 41, Phase 4.3 - Brain structured-data adapter contract
+**Implementation tasks completed:** 3 / 9
+**Overall implementation tasks completed:** 29 / 41
+**Next:** Task 30 / 41, Phase 4.4 - Memory provenance/candidate bridge
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -109,9 +109,51 @@ Task 4.2 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 29 / 41 is next.
+Task 29 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.2 gate
+
+**PASSED.**
+
+---
+
+## Task 29 / 41 - Phase 4.3 Brain structured-data adapter contract
+
+**Implementation status:** COMPLETE
+
+Phase 4.3 adds read-only Brain answers over the Task 27 client with
+no new engine and no new storage.
+
+Core guarantees:
+
+- `createBrainDataAdapter(client)` under `@ai-verse/data/brain`;
+- space get/list/summarize, schema get/list/summarize, record
+  get/list, bounded query (`ask`) plus aggregates (`summarize`),
+  provenance events plus receipts, and health reads only;
+- every answer carries question provenance with answered-at time,
+  scope, actor, authorization, and record count;
+- engine ceilings, cursors, validation, and stable envelopes reused
+  verbatim, with ceiling fail-closed;
+- no mutations of any kind, no Brain-goal persistence, Brain's
+  canonical strategic object stays Brain-owned, no copying Data into
+  Brain state;
+- no Memory auto-write, no systemId identity, no raw SQL/paths, no
+  registry/OS mutation, no cross-workspace access, no purge.
+
+Detailed contract: `docs/BRAIN-DATA-ADAPTER-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.3 does not implement:
+
+- Memory, Dashboard, Apps, Connections, or automation adapters;
+- Brain-side goal/reasoning behavior;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or authority models.
+
+Task 30 / 41 is next.
+
+### Task 4.3 gate
 
 **PASSED.**
 
@@ -123,8 +165,8 @@ Task 29 / 41 is next.
 |---|---|---|---|
 | 27 / 41 | 4.1 | COMPLETE | Typed Data client SDK |
 | 28 / 41 | 4.2 | COMPLETE | Multiple Bots Data adapter |
-| 29 / 41 | 4.3 | NEXT | Brain structured-data adapter contract |
-| 30 / 41 | 4.4 | NOT STARTED | Memory provenance/candidate bridge |
+| 29 / 41 | 4.3 | COMPLETE | Brain structured-data adapter contract |
+| 30 / 41 | 4.4 | NEXT | Memory provenance/candidate bridge |
 | 31 / 41 | 4.5 | NOT STARTED | Dashboard projection adapter |
 | 32 / 41 | 4.6 | NOT STARTED | Apps Data contract |
 | 33 / 41 | 4.7 | NOT STARTED | Connections authority boundary |
@@ -133,6 +175,6 @@ Task 29 / 41 is next.
 
 ## Current boundary
 
-Task 29 / 41 is next.
+Task 30 / 41 is next.
 
-Do not begin Task 30 until Task 29 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 31 until Task 30 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
