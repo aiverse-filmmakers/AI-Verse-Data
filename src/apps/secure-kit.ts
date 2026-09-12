@@ -1,6 +1,6 @@
 import type { DataClient } from "../client/index.js";
 import type { BulkMutationOperation, EventsListPayload, TransactionExecutePayload } from "../protocol/index.js";
-import type { DataMutationReceipt } from "../provenance/index.js";
+import { DataProvenanceError, type DataMutationReceipt } from "../provenance/index.js";
 import type { BulkExecuteParams } from "../client/types.js";
 import { AppsDataError } from "./errors.js";
 import {
@@ -32,7 +32,7 @@ function requireReceiptRead(kit: AppsDataKit, receipt: DataMutationReceipt): voi
     receipt.entity === null ||
     !hasRead(kit, receipt.spaceId, receipt.entity)
   ) {
-    deny("App is not allowed to read provenance outside its granted space/entity scope.");
+    deny("App is not allowed to access this provenance receipt.");
   }
 }
 
@@ -104,14 +104,34 @@ export function createAppsDataKit(
         return base.provenance.listEvents(input);
       },
       getReceipt(receiptId: string) {
-        const out = base.provenance.getReceipt(receiptId);
-        requireReceiptRead(base, out.result);
-        return out;
+        try {
+          const out = base.provenance.getReceipt(receiptId);
+          requireReceiptRead(base, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            deny("App is not allowed to access this provenance receipt.");
+          }
+          throw error;
+        }
       },
       getReceiptByIdempotencyKey(idempotencyKey: string) {
-        const out = base.provenance.getReceiptByIdempotencyKey(idempotencyKey);
-        requireReceiptRead(base, out.result);
-        return out;
+        try {
+          const out = base.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+          requireReceiptRead(base, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            deny("App is not allowed to access this provenance receipt.");
+          }
+          throw error;
+        }
       },
     },
   };
