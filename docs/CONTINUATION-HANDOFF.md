@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  4 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  5 / 9
 
-Overall implementation: 30 / 41 tasks complete
+Overall implementation: 31 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 30 / 41 - Phase 4.4: Memory provenance/candidate bridge**
+**Task 31 / 41 - Phase 4.5: Dashboard projection adapter**
 
-Implemented through Task 30:
+Implemented through Task 31:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -106,6 +106,13 @@ Implemented through Task 30:
 - no automatic Memory writes of any kind; Data events stay audit
   facts;
 - no Task 31+ adapters early, no sibling edits.
+- read-only Dashboard projections over the Task 27 client with no
+  new engine;
+- spaces, tables, details, relations, charts, events, health with
+  provenance;
+- no raw DB paths, `systemId` stays Dashboard-local, caches
+  derived only;
+- no Task 32+ adapters early, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -147,11 +154,15 @@ Detailed Task 30 contract:
 
 `docs/MEMORY-BRIDGE-V0.1.md`
 
-Behavioral implementation verification (Task 30 local; exact-head CI cited on push):
+Detailed Task 31 contract:
+
+`docs/DASHBOARD-PROJECTION-V0.1.md`
+
+Behavioral implementation verification (Task 31 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               309 / 309 PASS
+Tests:               313 / 313 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -170,7 +181,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 30:
+Implemented through Task 31:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -227,13 +238,15 @@ Task 29 local verification: 305 / 305 PASS on Node 22; exact-head CI cited on pu
 
 Task 30 local verification: 309 / 309 PASS on Node 22; exact-head CI cited on push.
 
+Task 31 local verification: 313 / 313 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 31 / 41 - Phase 4.5: Dashboard projection adapter**
+**Task 32 / 41 - Phase 4.6: Apps Data contract**
 
-Data-side query/health/provenance surfaces; browser never receives raw DB paths.
+App-friendly schema/client/permission metadata so Apps use Data rather than hidden competing databases.
 
-Do not start Task 32 until Task 31 is explicitly tasked.
+Do not start Task 33 until Task 32 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -375,6 +388,21 @@ Task 30 must preserve:
 5. Candidates are proposals only with title, summary, provenance, and expiry; they write no Memory entries and no Data events.
 6. No automatic Memory writes of any kind; Data events stay audit facts.
 7. No Memory index use as Data authority; no Data database treated as disposable cache.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 31 architectural laws
+
+Task 31 must preserve:
+
+1. Read-only projections compose the Task 27 client verbatim with no new engine or storage.
+2. Spaces, tables, details, relations, charts, events, receipts, and health only; no mutation paths are exposed.
+3. Tables bind schema plus page plus provenance; forms expose field metadata only; details resolve declared references with null on miss.
+4. Every bounded answer carries generated-at time, scope, actor, authorization, and record count.
+5. Engine ceilings, cursors, validation, and stable envelopes reused verbatim, with ceiling fail-closed.
+6. No raw DB paths anywhere; `systemId` stays Dashboard-local; metadata carries no `databasePath`; caches stay derived and disposable.
+7. No Memory auto-write, no raw SQL/paths, no registry/OS mutation, no cross-workspace access, no purge.
 8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.

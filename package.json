@@ -80,6 +80,10 @@
       "types": "./dist/src/memory/index.d.ts",
       "import": "./dist/src/memory/index.js"
     },
+    "./dashboard": {
+      "types": "./dist/src/dashboard/index.d.ts",
+      "import": "./dist/src/dashboard/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"

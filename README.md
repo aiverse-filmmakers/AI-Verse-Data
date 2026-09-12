@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 COMPLETE, Phase 4 IN PROGRESS  
-**Completed implementation tasks:** 30 / 41  
-**Latest completed:** Task 30 / 41, Phase 4.4 - Memory provenance/candidate bridge  
-**Next task:** Task 31 / 41, Phase 4.5 - Dashboard projection adapter  
+**Completed implementation tasks:** 31 / 41  
+**Latest completed:** Task 31 / 41, Phase 4.5 - Dashboard projection adapter  
+**Next task:** Task 32 / 41, Phase 4.6 - Apps Data contract  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -366,9 +366,17 @@ Memory provenance/candidate bridge
   -> no automatic Memory writes, Data events stay audit facts
   -> no Task 31+ adapters early
   -> no sibling edits
+
+Task 31 / 41 - COMPLETE
+Dashboard projection adapter
+  -> read-only views over the Task 27 client under @ai-verse/data/dashboard
+  -> spaces, tables, details, relations, charts, events, health — all bounded
+  -> no raw DB paths, systemId stays Dashboard-local, caches derived only
+  -> no Task 32+ adapters early
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local.
 
 ## Public package surfaces
 
@@ -391,6 +399,7 @@ Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS com
 @ai-verse/data/bots
 @ai-verse/data/brain
 @ai-verse/data/memory
+@ai-verse/data/dashboard
 @ai-verse/data/native
 ```
 
@@ -703,7 +712,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, read-only doctor plus status, installation-order coexistence, the Phase 3 acceptance gate, the Phase 4.1 typed client SDK, the Phase 4.2 Multiple Bots Data adapter, the Phase 4.3 Brain structured-data answers, and the Phase 4.4 Memory provenance/candidate bridge are implemented. Task 31 adds the Dashboard projection adapter.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, read-only doctor plus status, installation-order coexistence, the Phase 3 acceptance gate, the Phase 4.1 typed client SDK, the Phase 4.2 Multiple Bots Data adapter, the Phase 4.3 Brain structured-data answers, the Phase 4.4 Memory provenance/candidate bridge, and the Phase 4.5 Dashboard projections are implemented. Task 32 adds the Apps Data contract.
 
 ## Technology direction
 
@@ -770,10 +779,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/BOTS-DATA-ADAPTER-V0.1.md`](docs/BOTS-DATA-ADAPTER-V0.1.md) - implemented Multiple Bots Data adapter contract
 - [`docs/BRAIN-DATA-ADAPTER-V0.1.md`](docs/BRAIN-DATA-ADAPTER-V0.1.md) - implemented Brain structured-data adapter contract
 - [`docs/MEMORY-BRIDGE-V0.1.md`](docs/MEMORY-BRIDGE-V0.1.md) - implemented Memory provenance/candidate bridge contract
+- [`docs/DASHBOARD-PROJECTION-V0.1.md`](docs/DASHBOARD-PROJECTION-V0.1.md) - implemented Dashboard projection adapter contract
 - [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 31 / 41, Phase 4.5 - Dashboard projection adapter.**
+**Next: Task 32 / 41, Phase 4.6 - Apps Data contract.**

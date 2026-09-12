@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 4 / 9
-**Overall implementation tasks completed:** 30 / 41
-**Next:** Task 31 / 41, Phase 4.5 - Dashboard projection adapter
+**Implementation tasks completed:** 5 / 9
+**Overall implementation tasks completed:** 31 / 41
+**Next:** Task 32 / 41, Phase 4.6 - Apps Data contract
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -195,9 +195,53 @@ Task 4.4 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 31 / 41 is next.
+Task 31 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.4 gate
+
+**PASSED.**
+
+---
+
+## Task 31 / 41 - Phase 4.5 Dashboard projection adapter
+
+**Implementation status:** COMPLETE
+
+Phase 4.5 adds read-only Dashboard projections over the Task 27
+client with no new engine and no new storage.
+
+Core guarantees:
+
+- `createDashboardProjection(client)` under
+  `@ai-verse/data/dashboard`;
+- space get/list/card, schema get/list/form, bounded table views,
+  record detail with resolved references plus list, aggregate
+  charts, event history, receipt views, and health summaries, all
+  with provenance;
+- tables bind schema plus page plus provenance in one envelope;
+  forms expose field name/type/required/default only;
+- engine ceilings, cursors, validation, and stable envelopes
+  reused verbatim, with ceiling fail-closed;
+- no raw DB paths anywhere; `systemId` stays Dashboard-local and
+  metadata carries no `databasePath`; Dashboard caches stay
+  derived and disposable;
+- no mutations, no Memory auto-write, no raw SQL/paths, no
+  registry/OS mutation, no cross-workspace access, no purge.
+
+Detailed contract: `docs/DASHBOARD-PROJECTION-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.5 does not implement:
+
+- Apps, Connections, or automation adapters;
+- Dashboard-side gateway/UI behavior;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or authority models.
+
+Task 32 / 41 is next.
+
+### Task 4.5 gate
 
 **PASSED.**
 
@@ -211,14 +255,14 @@ Task 31 / 41 is next.
 | 28 / 41 | 4.2 | COMPLETE | Multiple Bots Data adapter |
 | 29 / 41 | 4.3 | COMPLETE | Brain structured-data adapter contract |
 | 30 / 41 | 4.4 | COMPLETE | Memory provenance/candidate bridge |
-| 31 / 41 | 4.5 | NEXT | Dashboard projection adapter |
-| 32 / 41 | 4.6 | NOT STARTED | Apps Data contract |
+| 31 / 41 | 4.5 | COMPLETE | Dashboard projection adapter |
+| 32 / 41 | 4.6 | NEXT | Apps Data contract |
 | 33 / 41 | 4.7 | NOT STARTED | Connections authority boundary |
 | 34 / 41 | 4.8 | NOT STARTED | Automation event adapter |
 | 35 / 41 | 4.9 | NOT STARTED | Phase 4 gate |
 
 ## Current boundary
 
-Task 31 / 41 is next.
+Task 32 / 41 is next.
 
-Do not begin Task 32 until Task 31 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 33 until Task 32 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
