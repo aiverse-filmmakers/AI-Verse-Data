@@ -7,7 +7,7 @@ import {
 
 export function createConnectionsAuthority(client: DataClient): ConnectionsAuthority {
   const base = createBaseConnectionsAuthority(client);
-  return {
+  const secured: ConnectionsAuthority = {
     ...base,
     sources: {
       ...base.sources,
@@ -28,4 +28,11 @@ export function createConnectionsAuthority(client: DataClient): ConnectionsAutho
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
