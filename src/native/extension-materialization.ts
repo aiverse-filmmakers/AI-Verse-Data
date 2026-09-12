@@ -38,7 +38,7 @@ interface OwnedFileSpec {
   readonly contents: string;
 }
 
-interface OwnedFileSnapshot {
+export interface OwnedFileSnapshot {
   readonly relativePath: string;
   readonly existed: boolean;
   readonly previousContents: string | null;
@@ -108,7 +108,8 @@ const MANIFEST_CONTENT = `${JSON.stringify(
     host_adapter: "openAiVerseDataHostSession",
     adapters: ["host-session"],
     tracked_os_files_mutated: [],
-    initializes_workspace_data: "explicit-only",
+    initializes_workspace_data: false,
+    workspace_initialization: "explicit-only",
     registration_grants_permissions: false,
     registration_asserts_health: false,
     owns_os_canonical_state: false,
@@ -287,4 +288,8 @@ function restoreSnapshot(root: TrustedDataRoot, snapshot: OwnedFileSnapshot): vo
 
 export function rollbackOwnedFiles(root: TrustedDataRoot, snapshots: readonly OwnedFileSnapshot[]): void {
   for (const snapshot of [...snapshots].reverse()) restoreSnapshot(root, snapshot);
+}
+
+export function ownedFileContentsForTesting(relativePath: string): string | null {
+  return OWNED_FILES.find((file) => file.relativePath === relativePath)?.contents ?? null;
 }
