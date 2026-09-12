@@ -217,6 +217,81 @@ test("record details resolve relations with provenance, charts aggregate", () =>
   }
 });
 
+test("record details resolve declared cross-space references", () => {
+  const { fix, client } = dashboardSetup();
+  try {
+    assert.equal(
+      client.spaces.create({
+        spaceId: "accounts",
+        name: "Accounts",
+        authority: "local_canonical",
+      }).ok,
+      true,
+    );
+    assert.equal(
+      client.schemas.create({
+        spaceId: "accounts",
+        entity: "clients",
+        name: "Clients",
+        fields: { name: { type: "string", required: true } },
+      }).ok,
+      true,
+    );
+    assert.equal(
+      client.schemas.create({
+        spaceId: "crm",
+        entity: "cross-deals",
+        name: "Cross Deals",
+        fields: {
+          title: { type: "string", required: true },
+          client: {
+            type: "reference",
+            spaceId: "accounts",
+            entity: "clients",
+            required: true,
+          },
+        },
+      }).ok,
+      true,
+    );
+
+    const target = client.records.create({
+      spaceId: "accounts",
+      entity: "clients",
+      idempotencyKey: "dash:cross:client",
+      data: { name: "Cross-space Co" },
+    });
+    assert.equal(target.ok, true);
+    const source = client.records.create({
+      spaceId: "crm",
+      entity: "cross-deals",
+      idempotencyKey: "dash:cross:deal",
+      data: {
+        title: "Cross-space deal",
+        client: target.result.recordId,
+      },
+    });
+    assert.equal(source.ok, true);
+
+    const detail = createDashboardProjection(client).records.detail({
+      spaceId: "crm",
+      entity: "cross-deals",
+      recordId: source.result.recordId,
+    });
+    assert.equal(detail.ok, true);
+    const resolved = detail.result.references.find(
+      (reference) => reference.field === "client",
+    );
+    assert.ok(resolved !== undefined);
+    assert.equal(resolved.target?.spaceId, "accounts");
+    assert.equal(resolved.target?.entity, "clients");
+    assert.equal(resolved.target?.recordId, target.result.recordId);
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
 test("events, receipts, and health stay read-only with no systemId", () => {
   const { fix, client } = dashboardSetup();
   try {
