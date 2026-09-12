@@ -60,8 +60,9 @@ Release 0.1 / Phase 5.6 contract:
 
 - use the public @ai-verse/data surfaces instead of opening canonical SQLite files directly;
 - AI-Verse OS remains authoritative for host identity, workspace identity, actor identity, and host-bound authorization;
-- use openAiVerseDataHostSession() for the supported OS-to-Data workspace bridge;
-- initialization is explicit: a host must pass initializeIfMissing: true before a genuinely missing active-workspace database may be created;
+- AI-Verse OS invokes the registered engine through protocol ai-verse-data-host/1.0; the engine delegates to the public Data host handlers;
+- use openAiVerseDataHostSession() for direct trusted-host workspace sessions;
+- initialization is explicit and is never performed by a normal data.request;
 - migration-required, quarantined, conflicting, unsupported, paused, or archived workspace state is never silently repaired or rebound;
 - Bots and Apps must use their bounded adapters rather than the raw client;
 - Brain is a trusted read surface and must only receive a client whose entire read scope was already authorized by the host.
@@ -74,11 +75,37 @@ const ENGINE_CONTENT = `export const aiVerseDataExtension = Object.freeze({
   source: "AI-Verse-Data",
   phase: "5.6",
   registrationOnly: false,
-  hostAdapter: "openAiVerseDataHostSession"
+  protocol: "ai-verse-data-host/1.0"
 });
 
-export async function openDataHostSession(input) {
+async function dataPackage() {
   const data = await import("@ai-verse/data");
+  if (
+    typeof data.describeAiVerseDataHostEngine !== "function" ||
+    typeof data.handleAiVerseDataHostRequest !== "function"
+  ) {
+    throw new Error("Installed @ai-verse/data package does not expose the required AI-Verse OS host-engine interface.");
+  }
+  return data;
+}
+
+export function describe() {
+  return {
+    protocol: "ai-verse-data-host/1.0",
+    extensionId: "ai-verse-data",
+    actorBinding: "human:local-operator",
+    authorizationBinding: "local-operator",
+    workspaceInitialization: "explicit"
+  };
+}
+
+export async function handleRequest(input) {
+  const data = await dataPackage();
+  return data.handleAiVerseDataHostRequest(input);
+}
+
+export async function openDataHostSession(input) {
+  const data = await dataPackage();
   if (typeof data.openAiVerseDataHostSession !== "function") {
     throw new Error("Installed @ai-verse/data package does not expose openAiVerseDataHostSession().");
   }
@@ -105,6 +132,7 @@ const MANIFEST_CONTENT = `${JSON.stringify(
     installation_root: AI_VERSE_DATA_EXTENSION_ROOT,
     instructions: AI_VERSE_DATA_EXTENSION_INSTRUCTIONS_PATH,
     engine: AI_VERSE_DATA_EXTENSION_ENGINE_PATH,
+    host_protocol: "ai-verse-data-host/1.0",
     host_adapter: "openAiVerseDataHostSession",
     adapters: ["host-session"],
     tracked_os_files_mutated: [],
