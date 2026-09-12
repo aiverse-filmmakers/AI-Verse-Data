@@ -76,6 +76,10 @@
       "types": "./dist/src/brain/index.d.ts",
       "import": "./dist/src/brain/index.js"
     },
+    "./memory": {
+      "types": "./dist/src/memory/index.d.ts",
+      "import": "./dist/src/memory/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"

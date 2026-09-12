@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 4 IN PROGRESS  
-**Implementation progress:** 29 / 41 tasks complete  
-**Next:** Task 30 / 41, Phase 4.4 - Memory provenance/candidate bridge
+**Implementation progress:** 30 / 41 tasks complete  
+**Next:** Task 31 / 41, Phase 4.5 - Dashboard projection adapter
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    33%  (3/9)
+Phase 4  Ecosystem Adapters            [IN PROGRESS]    44%  (4/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **29 / 41 tasks complete**.
+Overall implementation: **30 / 41 tasks complete**.
 
 ---
 
@@ -1124,7 +1124,23 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 **Task 4.3 gate: PASSED.**
 
 ## Task 30 / 41 - Phase 4.4 Memory provenance/candidate bridge
-Stable Data references/evidence lookup/candidate-memory shape, no automatic Memory writes.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- stable `data://` references plus evidence lookup over the Task 27
+  client under `@ai-verse/data/memory`;
+- record, event, and aggregate-summary candidate proposals with
+  title, summary, provenance, and expiry;
+- no automatic Memory writes of any kind; Data events stay audit
+  facts;
+- no Task 31+ adapters early, no sibling edits.
+
+Detailed contract: `docs/MEMORY-BRIDGE-V0.1.md`.
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.4 gate: PASSED.**
 
 ## Task 31 / 41 - Phase 4.5 Dashboard projection adapter
 Data-side query/health/provenance surfaces; browser never receives raw DB paths.
@@ -1193,6 +1209,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 30 / 41: Phase 4.4 - Memory provenance/candidate bridge.**
+**Task 31 / 41: Phase 4.5 - Dashboard projection adapter.**
 
-Do not begin Task 31 / 41 until Task 30 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 32 / 41 until Task 31 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

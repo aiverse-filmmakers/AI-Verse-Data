@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  3 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  4 / 9
 
-Overall implementation: 29 / 41 tasks complete
+Overall implementation: 30 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 29 / 41 - Phase 4.3: Brain structured-data adapter contract**
+**Task 30 / 41 - Phase 4.4: Memory provenance/candidate bridge**
 
-Implemented through Task 29:
+Implemented through Task 30:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -99,6 +99,13 @@ Implemented through Task 29:
 - no mutations, no Brain-goal persistence, Brain objects stay
   Brain-owned;
 - no Task 30+ adapters early, no sibling edits.
+- stable `data://` references plus evidence lookup with no new
+  engine;
+- record, event, and aggregate-summary candidates as proposals
+  only;
+- no automatic Memory writes of any kind; Data events stay audit
+  facts;
+- no Task 31+ adapters early, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -136,11 +143,15 @@ Detailed Task 29 contract:
 
 `docs/BRAIN-DATA-ADAPTER-V0.1.md`
 
-Behavioral implementation verification (Task 29 local; exact-head CI cited on push):
+Detailed Task 30 contract:
+
+`docs/MEMORY-BRIDGE-V0.1.md`
+
+Behavioral implementation verification (Task 30 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               305 / 305 PASS
+Tests:               309 / 309 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -159,7 +170,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 29:
+Implemented through Task 30:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -214,13 +225,15 @@ Task 28 local verification: 301 / 301 PASS on Node 22; exact-head CI cited on pu
 
 Task 29 local verification: 305 / 305 PASS on Node 22; exact-head CI cited on push.
 
+Task 30 local verification: 309 / 309 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 30 / 41 - Phase 4.4: Memory provenance/candidate bridge**
+**Task 31 / 41 - Phase 4.5: Dashboard projection adapter**
 
-Stable Data references/evidence lookup/candidate-memory shape, no automatic Memory writes.
+Data-side query/health/provenance surfaces; browser never receives raw DB paths.
 
-Do not start Task 31 until Task 30 is explicitly tasked.
+Do not start Task 32 until Task 31 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -347,6 +360,21 @@ Task 29 must preserve:
 5. No Brain-goal persistence of any kind; Brain's canonical strategic object stays Brain-owned.
 6. No copying Data into Brain state; Brain requests bounded current state and reasons over the returned answer.
 7. No Memory auto-write, no systemId identity, no raw SQL/paths, no registry/OS mutation, no cross-workspace access, no purge.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 30 architectural laws
+
+Task 30 must preserve:
+
+1. References, evidence, and candidates compose the Task 27 client verbatim with no new engine or storage.
+2. Stable `data://` references with strict parse; unknown extras and malformed shapes fail closed.
+3. Evidence re-opens live records, events, and receipts by reference or by exactly one key; misses fail closed.
+4. Cross-workspace evidence is denied; isolation is enforced technically.
+5. Candidates are proposals only with title, summary, provenance, and expiry; they write no Memory entries and no Data events.
+6. No automatic Memory writes of any kind; Data events stay audit facts.
+7. No Memory index use as Data authority; no Data database treated as disposable cache.
 8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.

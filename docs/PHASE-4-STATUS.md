@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 3 / 9
-**Overall implementation tasks completed:** 29 / 41
-**Next:** Task 30 / 41, Phase 4.4 - Memory provenance/candidate bridge
+**Implementation tasks completed:** 4 / 9
+**Overall implementation tasks completed:** 30 / 41
+**Next:** Task 31 / 41, Phase 4.5 - Dashboard projection adapter
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -151,9 +151,53 @@ Task 4.3 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 30 / 41 is next.
+Task 30 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.3 gate
+
+**PASSED.**
+
+---
+
+## Task 30 / 41 - Phase 4.4 Memory provenance/candidate bridge
+
+**Implementation status:** COMPLETE
+
+Phase 4.4 adds stable references, evidence lookup, and
+candidate-memory proposals over the Task 27 client with no new
+engine and no new storage.
+
+Core guarantees:
+
+- `createMemoryBridge(client)` under `@ai-verse/data/memory`;
+- stable `data://` references plus strict parse with workspace,
+  space, entity, record, version, event, and receipt;
+- evidence re-opens live records, events, and receipts by
+  reference or by exactly one of event, receipt, or idempotency
+  key, with cross-workspace denial and fail-closed misses;
+- record, event, and aggregate-summary candidates with title,
+  summary, provenance, and expiry as proposals only;
+- no automatic Memory writes of any kind; Data events stay audit
+  facts;
+- no Memory SQLite index use as Data authority, no Data database
+  treated as disposable cache;
+- no raw SQL/paths, no registry/OS mutation, no cross-workspace
+  access, no purge.
+
+Detailed contract: `docs/MEMORY-BRIDGE-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.4 does not implement:
+
+- Dashboard, Apps, Connections, or automation adapters;
+- Memory-side entry creation or Memory behavior;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or authority models.
+
+Task 31 / 41 is next.
+
+### Task 4.4 gate
 
 **PASSED.**
 
@@ -166,8 +210,8 @@ Task 30 / 41 is next.
 | 27 / 41 | 4.1 | COMPLETE | Typed Data client SDK |
 | 28 / 41 | 4.2 | COMPLETE | Multiple Bots Data adapter |
 | 29 / 41 | 4.3 | COMPLETE | Brain structured-data adapter contract |
-| 30 / 41 | 4.4 | NEXT | Memory provenance/candidate bridge |
-| 31 / 41 | 4.5 | NOT STARTED | Dashboard projection adapter |
+| 30 / 41 | 4.4 | COMPLETE | Memory provenance/candidate bridge |
+| 31 / 41 | 4.5 | NEXT | Dashboard projection adapter |
 | 32 / 41 | 4.6 | NOT STARTED | Apps Data contract |
 | 33 / 41 | 4.7 | NOT STARTED | Connections authority boundary |
 | 34 / 41 | 4.8 | NOT STARTED | Automation event adapter |
@@ -175,6 +219,6 @@ Task 30 / 41 is next.
 
 ## Current boundary
 
-Task 30 / 41 is next.
+Task 31 / 41 is next.
 
-Do not begin Task 31 until Task 30 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 32 until Task 31 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

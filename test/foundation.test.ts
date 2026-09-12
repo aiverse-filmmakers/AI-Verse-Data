@@ -46,6 +46,7 @@ test("package metadata exposes all implemented Phase 3.2 public subpaths", () =>
   assert.ok("./client" in packageJson.exports);
   assert.ok("./bots" in packageJson.exports);
   assert.ok("./brain" in packageJson.exports);
+  assert.ok("./memory" in packageJson.exports);
   assert.ok("./native" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
@@ -94,5 +95,6 @@ test("foundation surface reports Phase 4.1 typed client SDK", () => {
     typedClientAvailable: true,
     botsDataAdapterAvailable: true,
     brainDataAdapterAvailable: true,
+    memoryBridgeAvailable: true,
   });
 });
