@@ -1,4 +1,4 @@
-import type { DataClient, DataSuccessResult } from "../client/index.js";
+import type { DataClient } from "../client/index.js";
 import type { BulkMutationOperation, EventsListPayload, TransactionExecutePayload } from "../protocol/index.js";
 import type { DataMutationReceipt } from "../provenance/index.js";
 import type { BulkExecuteParams } from "../client/types.js";
@@ -89,20 +89,19 @@ export function createAppsDataKit(
     },
     provenance: {
       listEvents(input?: EventsListPayload) {
-        const out = base.provenance.listEvents(input);
-        const items = out.result.items.filter(
-          (event) =>
-            event.spaceId !== null &&
-            event.entity !== null &&
-            hasRead(base, event.spaceId, event.entity),
-        );
-        return {
-          ...out,
-          result: {
-            ...out.result,
-            items,
-          },
-        } as DataSuccessResult<typeof out.result>;
+        if (
+          input === undefined ||
+          typeof input.spaceId !== "string" ||
+          typeof input.entity !== "string"
+        ) {
+          deny(
+            "App provenance listing requires an explicit permitted spaceId and entity so pagination cannot reveal hidden activity.",
+          );
+        }
+        if (!hasRead(base, input.spaceId, input.entity)) {
+          deny("App is not allowed to read provenance for this space/entity.");
+        }
+        return base.provenance.listEvents(input);
       },
       getReceipt(receiptId: string) {
         const out = base.provenance.getReceipt(receiptId);
