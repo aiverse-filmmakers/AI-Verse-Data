@@ -140,9 +140,21 @@ test("Apps and Bots cannot read provenance outside granted entity scope", () => 
     });
     assert.equal(allowed.ok, true);
 
+    let appHiddenReceiptMessage = "";
     assert.throws(
       () => kit.provenance.getReceipt(secret.result.receipt.receiptId),
-      (error: unknown) => isAppsDataError(error) && error.code === "APPS_PERMISSION_DENIED",
+      (error: unknown) => {
+        if (!isAppsDataError(error) || error.code !== "APPS_PERMISSION_DENIED") return false;
+        appHiddenReceiptMessage = error.message;
+        return true;
+      },
+    );
+    assert.throws(
+      () => kit.provenance.getReceipt("rcpt_nonexistent"),
+      (error: unknown) =>
+        isAppsDataError(error) &&
+        error.code === "APPS_PERMISSION_DENIED" &&
+        error.message === appHiddenReceiptMessage,
     );
     assert.throws(
       () => kit.provenance.listEvents(),
@@ -182,9 +194,21 @@ test("Apps and Bots cannot read provenance outside granted entity scope", () => 
       taskId: "audit-task",
       capabilities: ["data:allowed:items:read"],
     });
+    let botHiddenReceiptMessage = "";
     assert.throws(
       () => bot.provenance.getReceipt(secretReceipt.receiptId),
-      (error: unknown) => isBotsDataAdapterError(error) && error.code === "CAPABILITY_DENIED",
+      (error: unknown) => {
+        if (!isBotsDataAdapterError(error) || error.code !== "CAPABILITY_DENIED") return false;
+        botHiddenReceiptMessage = error.message;
+        return true;
+      },
+    );
+    assert.throws(
+      () => bot.provenance.getReceipt("rcpt_nonexistent"),
+      (error: unknown) =>
+        isBotsDataAdapterError(error) &&
+        error.code === "CAPABILITY_DENIED" &&
+        error.message === botHiddenReceiptMessage,
     );
     assert.throws(
       () => bot.provenance.listEvents(),
