@@ -23,6 +23,7 @@ Usage:
   ai-verse-data --version
   ai-verse-data install --root <os-root> [--json]
   ai-verse-data update --root <os-root> [--json]
+  ai-verse-data enable --root <os-root> [--json]
   ai-verse-data disable --root <os-root> [--json]
   ai-verse-data uninstall --root <os-root> [--json]
   ai-verse-data doctor --root <os-root> [--workspace <id>] [--json]
@@ -41,13 +42,14 @@ Release 0.1 / Phase 5.6 includes the completed native lifecycle, doctor/status, 
 const LIFECYCLE_COMMANDS = new Set([
   "install",
   "update",
+  "enable",
   "disable",
   "uninstall",
 ]);
 
 const READ_COMMANDS = new Set(["doctor", "status"]);
 
-type LifecycleCommand = "install" | "update" | "disable" | "uninstall";
+type LifecycleCommand = "install" | "update" | "enable" | "disable" | "uninstall";
 type ReadCommand = "doctor" | "status";
 
 function packageVersion(): string {
@@ -187,9 +189,11 @@ function runLifecycle(
         ? lifecycle.install({ rootPath })
         : command === "update"
           ? lifecycle.update({ rootPath })
-          : command === "disable"
-            ? lifecycle.disable({ rootPath })
-            : lifecycle.uninstall({ rootPath });
+          : command === "enable"
+            ? lifecycle.enable({ rootPath })
+            : command === "disable"
+              ? lifecycle.disable({ rootPath })
+              : lifecycle.uninstall({ rootPath });
 
     if (json) {
       process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -319,6 +323,7 @@ export function main(argv: readonly string[]): number | Promise<number> {
       if (
         raw.command !== "install" &&
         raw.command !== "update" &&
+        raw.command !== "enable" &&
         raw.command !== "disable" &&
         raw.command !== "uninstall"
       ) {
