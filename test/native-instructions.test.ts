@@ -90,17 +90,18 @@ function snapshotTree(rootPath: string): readonly string[] {
         relativePath.length === 0
           ? entry.name
           : join(relativePath, entry.name);
+      const display = child.split("\\").join("/");
       if (entry.isDirectory()) {
-        output.push(`dir:${child}`);
+        output.push(`dir:${display}`);
         walk(child);
       } else if (entry.isSymbolicLink()) {
-        output.push(`symlink:${child}`);
+        output.push(`symlink:${display}`);
       } else if (entry.isFile()) {
         output.push(
-          `file:${child}:${readFileSync(join(rootPath, child), "utf8")}`,
+          `file:${display}:${readFileSync(join(rootPath, child), "utf8")}`,
         );
       } else {
-        output.push(`other:${child}`);
+        output.push(`other:${display}`);
       }
     }
   }

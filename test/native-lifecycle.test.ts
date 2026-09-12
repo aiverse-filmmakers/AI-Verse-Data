@@ -121,21 +121,22 @@ function snapshotTree(rootPath: string): readonly string[] {
     for (const entry of entries) {
       const child =
         relativePath.length === 0 ? entry.name : join(relativePath, entry.name);
+      const display = child.split("\\").join("/");
       if (entry.isDirectory()) {
-        output.push(`dir:${child}`);
+        output.push(`dir:${display}`);
         walk(child);
       } else if (entry.isSymbolicLink()) {
-        output.push(`symlink:${child}`);
+        output.push(`symlink:${display}`);
       } else if (entry.isFile()) {
-        if (child.endsWith(".sqlite") || child.endsWith(".sqlite-wal") || child.endsWith(".sqlite-shm") || child.endsWith(".sqlite-journal")) {
-          output.push(`file:${child}:<sqlite-binary>`);
+        if (display.endsWith(".sqlite") || display.endsWith(".sqlite-wal") || display.endsWith(".sqlite-shm") || display.endsWith(".sqlite-journal")) {
+          output.push(`file:${display}:<sqlite-binary>`);
         } else {
           output.push(
-            `file:${child}:${readFileSync(join(rootPath, child), "utf8")}`,
+            `file:${display}:${readFileSync(join(rootPath, child), "utf8")}`,
           );
         }
       } else {
-        output.push(`other:${child}`);
+        output.push(`other:${display}`);
       }
     }
   }
