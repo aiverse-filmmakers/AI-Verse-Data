@@ -7,7 +7,7 @@ import {
 
 export function createAutomationEvents(client: DataClient): AutomationEvents {
   const base = createBaseAutomationEvents(client);
-  return {
+  const secured: AutomationEvents = {
     ...base,
     events: {
       poll(filter, cursor) {
@@ -39,4 +39,11 @@ export function createAutomationEvents(client: DataClient): AutomationEvents {
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
