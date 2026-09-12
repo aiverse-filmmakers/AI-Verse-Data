@@ -33,6 +33,7 @@ import {
 import { AI_VERSE_OS_EXTENSION_REGISTRY_PATH } from "./types.js";
 import {
   disableDataExtension as disableBase,
+  enableDataExtension as enableBase,
   installDataExtension as installBase,
   updateDataExtension as updateBase,
 } from "./lifecycle.js";
@@ -171,6 +172,7 @@ function rollback(
 
 export const installDataExtension = installBase;
 export const updateDataExtension = updateBase;
+export const enableDataExtension = enableBase;
 export const disableDataExtension = disableBase;
 
 export function uninstallDataExtension(input: AiVerseDataLifecycleInput): AiVerseDataLifecycleResult {
@@ -253,6 +255,9 @@ export class AiVerseDataExtensionLifecycle {
   }
   update(input: AiVerseDataLifecycleInput): AiVerseDataLifecycleResult {
     return updateDataExtension(input);
+  }
+  enable(input: AiVerseDataLifecycleInput): AiVerseDataLifecycleResult {
+    return enableDataExtension(input);
   }
   disable(input: AiVerseDataLifecycleInput): AiVerseDataLifecycleResult {
     return disableDataExtension(input);
