@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { fork, type ChildProcess } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -70,7 +70,7 @@ function openFixture(): {
   readonly records: DataRecords;
   readonly transactions: DataTransactions;
 } {
-  const directory = mkdtempSync(join(tmpdir(), "ai-verse-data-idempotency-"));
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-idempotency-")));
   const databasePath = join(directory, "data.sqlite");
   const database = new SqliteStorageDriver().open({ location: databasePath });
   const catalog = new DataCatalog(database);
@@ -181,7 +181,46 @@ async function releaseWorkers(
 ): Promise<readonly WorkerResult[]> {
   await Promise.all(workers.map((worker) => worker.ready));
   for (const worker of workers) worker.child.send({ type: "go" });
-  return Promise.all(workers.map((worker) => worker.result));
+  // Wait for the results first (workers disconnect themselves after reply),
+  // then wait for child exit so the OS releases file handles before the
+  // caller deletes the temp folder (Windows locks open files).
+  const results = await Promise.all(workers.map((worker) => worker.result));
+  await Promise.all(
+    workers.map(
+      (worker) =>
+        new Promise<void>((resolve) => {
+          if (worker.child.exitCode !== null || worker.child.signalCode !== null) {
+            resolve();
+            return;
+          }
+          const done = (): void => resolve();
+          worker.child.once("exit", done);
+          setTimeout(done, 15_000).unref?.();
+        }),
+    ),
+  );
+  return results;
+}
+
+function removeTempDirectory(directory: string): void {
+  // Windows keeps file locks briefly after child exit; retry a few times.
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      rmSync(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      return;
+    } catch (error) {
+      lastError = error;
+      const wait = (milliseconds: number): void => {
+        const end = Date.now() + milliseconds;
+        while (Date.now() < end) {
+          // Busy wait: keeps the fix dependency-free on all platforms.
+        }
+      };
+      wait(200);
+    }
+  }
+  throw lastError;
 }
 
 test("canonical fingerprints ignore object key order but bind operation, actor, and semantic payload", () => {
@@ -764,7 +803,7 @@ test("concurrent duplicate delivery across separate processes creates one record
     assert.ok(stored !== null);
   } finally {
     fixture.database.close();
-    rmSync(fixture.directory, { recursive: true, force: true });
+    removeTempDirectory(fixture.directory);
   }
 });
 
@@ -805,7 +844,7 @@ test("concurrent same-key different-payload delivery commits one request and rej
     );
   } finally {
     fixture.database.close();
-    rmSync(fixture.directory, { recursive: true, force: true });
+    removeTempDirectory(fixture.directory);
   }
 });
 
