@@ -68,6 +68,7 @@ First-release boundary:
 - AI-Verse OS remains authoritative for host identity, workspace scope, permissions, and routing;
 - extension installation is registration-only with respect to workspace data: it never creates a workspace database implicitly;
 - workspace discovery and initialization are explicit native operations, and doctor/status are read-only health operations;
+- on a current AI-Verse OS, interactive structured-data requests are dispatched through the OS-owned `scripts/data-host.mjs` boundary, which loads this registered engine and applies OS action-permission policy before effects;
 - Bots, Brain, Memory, Dashboard, Apps, Connections, and Automation integrations must use their scoped Data adapters rather than bypassing them.
 
 Canonical Data remains user-owned and must not be deleted merely because extension software is updated or removed.
