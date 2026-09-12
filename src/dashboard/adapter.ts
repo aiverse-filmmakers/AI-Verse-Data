@@ -21,6 +21,7 @@ import type {
   DataAggregateResult,
   DataQueryPage,
 } from "../query/index.js";
+import { isDataRecordError } from "../records/index.js";
 import type { DataRecordSnapshot } from "../records/index.js";
 import type {
   DataEventPage,
@@ -295,7 +296,7 @@ export function createDashboardProjection(
         });
         const fields = schema.result.fields as unknown as Record<
           string,
-          { type?: unknown; entity?: unknown; space?: unknown }
+          { type?: unknown; entity?: unknown; spaceId?: unknown }
         >;
         const references: DashboardResolvedReference[] = [];
         const data = out.result.data as unknown as Record<string, unknown>;
@@ -311,8 +312,8 @@ export function createDashboardProjection(
               ? definition.entity
               : input.entity;
           const targetSpace =
-            typeof definition.space === "string"
-              ? definition.space
+            typeof definition.spaceId === "string"
+              ? definition.spaceId
               : input.spaceId;
           try {
             const target = client.records.get({
@@ -321,8 +322,12 @@ export function createDashboardProjection(
               recordId: targetId,
             }).result;
             references.push({ field: name, target });
-          } catch {
-            references.push({ field: name, target: null });
+          } catch (error) {
+            if (isDataRecordError(error) && error.code === "RECORD_NOT_FOUND") {
+              references.push({ field: name, target: null });
+              continue;
+            }
+            throw error;
           }
         }
         return {
