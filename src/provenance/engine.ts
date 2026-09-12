@@ -18,10 +18,13 @@ import {
   hydrateStoredReceipt,
 } from "./integrity.js";
 import {
+  validateEventId,
   validateReceiptId,
   validateTransactionId,
 } from "./identifiers.js";
 import type {
+  DataEvent,
+  DataEventGetInput,
   DataEventListInput,
   DataEventPage,
   DataMutationReceipt,
@@ -146,6 +149,22 @@ export class DataProvenance implements DataProvenanceApi {
           : null,
       hasMore,
     };
+  }
+
+  getEvent(input: DataEventGetInput): DataEvent {
+    try {
+      validateEventId(input.eventId);
+    } catch {
+      queryInvalid("eventId is invalid.");
+    }
+    const stored = this.store.getEvent(input.eventId);
+    if (stored === null) {
+      throw new DataProvenanceError(
+        "QUERY_INVALID",
+        `Event '${input.eventId}' does not exist.`,
+      );
+    }
+    return hydrateStoredEvent(stored);
   }
 
   getReceipt(input: DataReceiptGetInput): DataMutationReceipt {
