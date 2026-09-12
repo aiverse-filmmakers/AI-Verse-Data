@@ -67,19 +67,19 @@ export function createBotsDataAdapter(
     ...base,
     provenance: {
       listEvents(input?: EventsListPayload) {
-        const out = base.provenance.listEvents(input);
-        return {
-          ...out,
-          result: {
-            ...out.result,
-            items: out.result.items.filter(
-              (event) =>
-                event.spaceId !== null &&
-                event.entity !== null &&
-                hasRead(lease, event.spaceId, event.entity),
-            ),
-          },
-        };
+        if (
+          input === undefined ||
+          typeof input.spaceId !== "string" ||
+          typeof input.entity !== "string"
+        ) {
+          denied(
+            "Capability lease provenance listing requires an explicit permitted spaceId and entity so pagination cannot reveal hidden activity.",
+          );
+        }
+        if (!hasRead(lease, input.spaceId, input.entity)) {
+          denied("Capability lease does not permit reading provenance for this space/entity.");
+        }
+        return base.provenance.listEvents(input);
       },
       getReceipt(receiptId: string) {
         const out = base.provenance.getReceipt(receiptId);
