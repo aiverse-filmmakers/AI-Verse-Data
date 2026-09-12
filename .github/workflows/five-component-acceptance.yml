@@ -34,18 +34,27 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Clone public release-hardening components
+      - name: Clone pinned public release components
         shell: bash
+        env:
+          OS_SHA: a076fe730b2e53919c7be9ed6f359b04e795c6bf
+          BRAIN_SHA: 9ca1b5d5103e68b85d170660ffea85669533b41a
+          MEMORY_SHA: f5b417f9e7ce1b3f05bc80d10a483d10f6ad10ee
+          SKILLS_SHA: 3ab838e6e64561bbb7cea8f85d0ebc75b9e84337
         run: |
           set -euo pipefail
-          git clone --depth 1 --branch release/five-component-hardening https://github.com/aiverse-filmmakers/AI-Verse-OS.git "$RUNNER_TEMP/AI-Verse-OS"
-          git clone --depth 1 --branch release/five-component-hardening https://github.com/aiverse-filmmakers/AI-Verse-Brain.git "$RUNNER_TEMP/AI-Verse-Brain"
-          git clone --depth 1 --branch release/five-component-hardening https://github.com/aiverse-filmmakers/AI-Verse-Memory.git "$RUNNER_TEMP/AI-Verse-Memory"
-          git clone --depth 1 --branch release/five-component-hardening https://github.com/aiverse-filmmakers/AI-Verse-Skills.git "$RUNNER_TEMP/AI-Verse-Skills"
-          git -C "$RUNNER_TEMP/AI-Verse-OS" rev-parse HEAD
-          git -C "$RUNNER_TEMP/AI-Verse-Brain" rev-parse HEAD
-          git -C "$RUNNER_TEMP/AI-Verse-Memory" rev-parse HEAD
-          git -C "$RUNNER_TEMP/AI-Verse-Skills" rev-parse HEAD
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-OS.git "$RUNNER_TEMP/AI-Verse-OS"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Brain.git "$RUNNER_TEMP/AI-Verse-Brain"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Memory.git "$RUNNER_TEMP/AI-Verse-Memory"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Skills.git "$RUNNER_TEMP/AI-Verse-Skills"
+          git -C "$RUNNER_TEMP/AI-Verse-OS" checkout --detach "$OS_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Brain" checkout --detach "$BRAIN_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Memory" checkout --detach "$MEMORY_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Skills" checkout --detach "$SKILLS_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-OS" rev-parse HEAD)" = "$OS_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Brain" rev-parse HEAD)" = "$BRAIN_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Memory" rev-parse HEAD)" = "$MEMORY_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Skills" rev-parse HEAD)" = "$SKILLS_SHA"
           git rev-parse HEAD
 
       - name: Build Data candidate and install Brain package
