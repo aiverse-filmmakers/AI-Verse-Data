@@ -63,7 +63,7 @@ export function createBotsDataAdapter(
   validatePrincipalShape(lease);
   const base = createBaseBotsDataAdapter(client, lease);
 
-  return {
+  const secured: BotsDataAdapter = {
     ...base,
     provenance: {
       listEvents(input?: EventsListPayload) {
@@ -105,4 +105,11 @@ export function createBotsDataAdapter(
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
