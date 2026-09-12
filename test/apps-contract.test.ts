@@ -251,6 +251,133 @@ test("out-of-grant space, entity, and delete stay denied", () => {
   }
 });
 
+test("update grants cannot tunnel delete through transactions or bulk", () => {
+  const fix = workspaceScope();
+  const caps = refsFor("production", ["productions"], ["read", "create", "update"]);
+  const client = appClient(fix.scope, caps);
+  try {
+    bootstrap(client);
+    const created = client.records.create({
+      spaceId: "production",
+      entity: "productions",
+      idempotencyKey: "apps:delete-bypass:seed",
+      data: { title: "Must survive" },
+    });
+    assert.equal(created.ok, true);
+
+    const kit = createAppsDataKit(
+      client,
+      manifest({
+        data: {
+          spaces: { production: { schemas: ["productions"] } },
+          capabilities: ["read", "create", "update"],
+        },
+      }),
+    );
+    const deletion = {
+      operation: "data.record.delete" as const,
+      payload: {
+        spaceId: "production",
+        entity: "productions",
+        recordId: created.result.recordId,
+        expectedVersion: 1,
+        idempotencyKey: "apps:delete-bypass:delete",
+      },
+    };
+
+    assert.throws(
+      () =>
+        kit.transactions.execute({
+          idempotencyKey: "apps:delete-bypass:txn",
+          operations: [deletion],
+        }),
+      (error: unknown) => {
+        assert.ok(isAppsDataError(error));
+        assert.equal(
+          (error as AppsDataError).code,
+          "APPS_PERMISSION_DENIED",
+        );
+        return true;
+      },
+    );
+    assert.throws(
+      () => kit.bulk.preview([deletion]),
+      (error: unknown) => isAppsDataError(error),
+    );
+
+    const stillThere = client.records.get({
+      spaceId: "production",
+      entity: "productions",
+      recordId: created.result.recordId,
+    });
+    assert.equal(stillThere.ok, true);
+    assert.equal(stillThere.result.deletedAt, null);
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
+test("provenance is limited to entities the App may read", () => {
+  const fix = workspaceScope();
+  const caps = refsFor("production", ["productions"], ["read"]);
+  const client = appClient(fix.scope, caps);
+  try {
+    bootstrap(client);
+    const allowed = client.records.createWithReceipt({
+      spaceId: "production",
+      entity: "productions",
+      idempotencyKey: "apps:prov:allowed",
+      data: { title: "Allowed" },
+    });
+    const hidden = client.records.createWithReceipt({
+      spaceId: "production",
+      entity: "crew",
+      idempotencyKey: "apps:prov:hidden",
+      data: { title: "Hidden" },
+    });
+    assert.equal(allowed.ok, true);
+    assert.equal(hidden.ok, true);
+
+    const kit = createAppsDataKit(
+      client,
+      manifest({
+        data: {
+          spaces: { production: { schemas: ["productions"] } },
+          capabilities: ["read"],
+        },
+      }),
+    );
+
+    assert.equal(
+      kit.provenance.getReceipt(allowed.result.receipt.receiptId).ok,
+      true,
+    );
+    assert.throws(
+      () => kit.provenance.getReceipt(hidden.result.receipt.receiptId),
+      (error: unknown) => {
+        assert.ok(isAppsDataError(error));
+        assert.equal(
+          (error as AppsDataError).code,
+          "APPS_PERMISSION_DENIED",
+        );
+        return true;
+      },
+    );
+
+    const events = kit.provenance.listEvents();
+    assert.equal(events.ok, true);
+    assert.ok(
+      events.result.items.every(
+        (event) => event.entity === "productions",
+      ),
+    );
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
 test("model-written manifests never grant access", () => {
   const fix = workspaceScope();
   const client = appClient(fix.scope, refsFor("production", ["productions"], ["read"]));
