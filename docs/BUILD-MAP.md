@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 4 IN PROGRESS  
-**Implementation progress:** 31 / 41 tasks complete  
-**Next:** Task 32 / 41, Phase 4.6 - Apps Data contract
+**Implementation progress:** 32 / 41 tasks complete  
+**Next:** Task 33 / 41, Phase 4.7 - Connections authority boundary
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    56%  (5/9)
+Phase 4  Ecosystem Adapters            [IN PROGRESS]    67%  (6/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **31 / 41 tasks complete**.
+Overall implementation: **32 / 41 tasks complete**.
 
 ---
 
@@ -1165,7 +1165,26 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 **Task 4.5 gate: PASSED.**
 
 ## Task 32 / 41 - Phase 4.6 Apps Data contract
-App-friendly schema/client/permission metadata so Apps use Data rather than hidden competing databases.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- manifest-shaped App declarations plus scoped kit under
+  `@ai-verse/data/apps`;
+- host-granted `data:<space>:<entity>:<cap>` refs required;
+  model-written manifests never grant access;
+- read/create/update only with delete never granted; grants
+  reduce authority and never increase it;
+- schema-origin tracking without record ownership transfer;
+- uninstall removes app only with canonical records preserved
+  and no purge;
+- no Task 33+ adapters early, no sibling edits.
+
+Detailed contract: `docs/APPS-DATA-CONTRACT-V0.1.md`.
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.6 gate: PASSED.**
 
 ## Task 33 / 41 - Phase 4.7 Connections authority boundary
 Local-vs-external authority metadata and import/source-reference contracts; no implicit bidirectional sync.
@@ -1228,6 +1247,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 32 / 41: Phase 4.6 - Apps Data contract.**
+**Task 33 / 41: Phase 4.7 - Connections authority boundary.**
 
-Do not begin Task 33 / 41 until Task 32 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 34 / 41 until Task 33 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

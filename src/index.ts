@@ -18,6 +18,7 @@ export * from "./bots/index.js";
 export * from "./brain/index.js";
 export * from "./memory/index.js";
 export * from "./dashboard/index.js";
+export * from "./apps/index.js";
 export * from "./native/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
@@ -67,6 +68,7 @@ export interface FoundationStatus {
   readonly brainDataAdapterAvailable: true;
   readonly memoryBridgeAvailable: true;
   readonly dashboardProjectionAvailable: true;
+  readonly appsDataContractAvailable: true;
 }
 
 /**
@@ -118,5 +120,6 @@ export function getFoundationStatus(): FoundationStatus {
     brainDataAdapterAvailable: true,
     memoryBridgeAvailable: true,
     dashboardProjectionAvailable: true,
+    appsDataContractAvailable: true,
   };
 }

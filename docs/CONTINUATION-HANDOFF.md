@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  5 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  6 / 9
 
-Overall implementation: 31 / 41 tasks complete
+Overall implementation: 32 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 31 / 41 - Phase 4.5: Dashboard projection adapter**
+**Task 32 / 41 - Phase 4.6: Apps Data contract**
 
-Implemented through Task 31:
+Implemented through Task 32:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -113,6 +113,15 @@ Implemented through Task 31:
 - no raw DB paths, `systemId` stays Dashboard-local, caches
   derived only;
 - no Task 32+ adapters early, no sibling edits.
+- manifest-shaped App declarations plus scoped kit with no new
+  engine;
+- host-granted refs only, model-written manifests never grant
+  access;
+- delete never granted, grants only reduce authority;
+- schema-origin tracking without record ownership transfer;
+- uninstall removes app only, canonical records preserved, no
+  purge;
+- no Task 33+ adapters early, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -158,11 +167,15 @@ Detailed Task 31 contract:
 
 `docs/DASHBOARD-PROJECTION-V0.1.md`
 
-Behavioral implementation verification (Task 31 local; exact-head CI cited on push):
+Detailed Task 32 contract:
+
+`docs/APPS-DATA-CONTRACT-V0.1.md`
+
+Behavioral implementation verification (Task 32 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               313 / 313 PASS
+Tests:               319 / 319 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -181,7 +194,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 31:
+Implemented through Task 32:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -240,13 +253,15 @@ Task 30 local verification: 309 / 309 PASS on Node 22; exact-head CI cited on pu
 
 Task 31 local verification: 313 / 313 PASS on Node 22; exact-head CI cited on push.
 
+Task 32 local verification: 319 / 319 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 32 / 41 - Phase 4.6: Apps Data contract**
+**Task 33 / 41 - Phase 4.7: Connections authority boundary**
 
-App-friendly schema/client/permission metadata so Apps use Data rather than hidden competing databases.
+Local-vs-external authority metadata and import/source-reference contracts; no implicit bidirectional sync.
 
-Do not start Task 33 until Task 32 is explicitly tasked.
+Do not start Task 34 until Task 33 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -403,6 +418,21 @@ Task 31 must preserve:
 5. Engine ceilings, cursors, validation, and stable envelopes reused verbatim, with ceiling fail-closed.
 6. No raw DB paths anywhere; `systemId` stays Dashboard-local; metadata carries no `databasePath`; caches stay derived and disposable.
 7. No Memory auto-write, no raw SQL/paths, no registry/OS mutation, no cross-workspace access, no purge.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 32 architectural laws
+
+Task 32 must preserve:
+
+1. Manifest-shaped declarations plus scoped kit compose the Task 27 client verbatim with no new engine or storage.
+2. Every manifest capability must also be host-granted as `data:<space>:<entity>:<cap>` refs; model-written manifests never grant access.
+3. Read/create/update only with delete never granted; grants reduce authority and never increase it.
+4. Schema-origin tracking without record ownership transfer; canonical records stay Data-owned.
+5. Uninstall removes app only with canonical records preserved and no purge automation.
+6. Engine ceilings, digests, OCC, idempotency, receipts, and stable envelopes reused verbatim.
+7. No raw SQL/paths, no Memory auto-write, no systemId identity, no registry/OS mutation, no cross-workspace kits, no purge.
 8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.
