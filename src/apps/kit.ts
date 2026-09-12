@@ -385,7 +385,59 @@ export function createAppsDataKit(
 
   function operationCap(operation: string): AppsDataCapability {
     if (operation === "data.record.create") return "create";
-    return "update";
+    if (operation === "data.record.update") return "update";
+    fail(
+      "APPS_PERMISSION_DENIED",
+      `App '${grant.app}' cannot delete canonical Data records. Delete is never granted to Apps.`,
+    );
+  }
+
+  function canRead(spaceId: string, entity: string): boolean {
+    const space = findGrant(grant, spaceId, entity);
+    return space !== null && space.capabilities.includes("read");
+  }
+
+  function transactionReceiptsReadable(transactionId: string): boolean {
+    const receipts =
+      client.provenance.listTransactionReceipts(transactionId).result;
+    const targeted = receipts.filter(
+      (receipt) => receipt.spaceId !== null && receipt.entity !== null,
+    );
+    return (
+      targeted.length > 0 &&
+      targeted.every((receipt) =>
+        canRead(receipt.spaceId as string, receipt.entity as string),
+      )
+    );
+  }
+
+  function receiptReadable(receipt: DataMutationReceipt): boolean {
+    if (receipt.spaceId !== null && receipt.entity !== null) {
+      return canRead(receipt.spaceId, receipt.entity);
+    }
+    return (
+      receipt.transactionId !== null &&
+      transactionReceiptsReadable(receipt.transactionId)
+    );
+  }
+
+  function eventReadable(event: import("../provenance/index.js").DataEvent): boolean {
+    if (event.spaceId !== null && event.entity !== null) {
+      return canRead(event.spaceId, event.entity);
+    }
+    return (
+      event.transactionId !== null &&
+      transactionReceiptsReadable(event.transactionId)
+    );
+  }
+
+  function requireReadableReceipt(receipt: DataMutationReceipt): void {
+    if (!receiptReadable(receipt)) {
+      fail(
+        "APPS_PERMISSION_DENIED",
+        `App '${grant.app}' cannot read provenance outside its granted Data entities.`,
+      );
+    }
   }
 
   function originKey(spaceId: string, entity: string): string {
@@ -532,47 +584,38 @@ export function createAppsDataKit(
     },
     provenance: {
       listEvents(input?: EventsListPayload) {
+        assertUsable();
         if (input?.spaceId !== undefined) {
           requireRead(input.spaceId, input.entity ?? "*");
-        } else {
-          assertUsable();
-          const covered = grant.spaces.some((space) =>
-            space.capabilities.includes("read"),
+        } else if (
+          !grant.spaces.some((space) => space.capabilities.includes("read"))
+        ) {
+          fail(
+            "APPS_PERMISSION_DENIED",
+            `App '${grant.app}' has no read grant anywhere.`,
           );
-          if (!covered) {
-            fail(
-              "APPS_PERMISSION_DENIED",
-              `App '${grant.app}' has no read grant anywhere.`,
-            );
-          }
         }
-        return client.provenance.listEvents(input);
+        const out = client.provenance.listEvents(input);
+        return {
+          ...out,
+          result: {
+            ...out.result,
+            items: out.result.items.filter(eventReadable),
+          },
+        };
       },
       getReceipt(receiptId: string) {
         assertUsable();
-        const covered = grant.spaces.some((space) =>
-          space.capabilities.includes("read"),
-        );
-        if (!covered) {
-          fail(
-            "APPS_PERMISSION_DENIED",
-            `App '${grant.app}' has no read grant anywhere.`,
-          );
-        }
-        return client.provenance.getReceipt(receiptId);
+        const out = client.provenance.getReceipt(receiptId);
+        requireReadableReceipt(out.result);
+        return out;
       },
       getReceiptByIdempotencyKey(idempotencyKey: string) {
         assertUsable();
-        const covered = grant.spaces.some((space) =>
-          space.capabilities.includes("read"),
-        );
-        if (!covered) {
-          fail(
-            "APPS_PERMISSION_DENIED",
-            `App '${grant.app}' has no read grant anywhere.`,
-          );
-        }
-        return client.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+        const out =
+          client.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+        requireReadableReceipt(out.result);
+        return out;
       },
     },
     permissions: {
