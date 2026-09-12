@@ -34,6 +34,7 @@ export * from "./lifecycle-types.js";
 export {
   AiVerseDataExtensionLifecycle,
   disableDataExtension,
+  enableDataExtension,
   installDataExtension,
   uninstallDataExtension,
   updateDataExtension,
