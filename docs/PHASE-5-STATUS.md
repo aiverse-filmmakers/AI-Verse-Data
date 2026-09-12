@@ -2,9 +2,9 @@
 
 **Phase:** 5 - Release Hardening
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 3 / 6
-**Overall implementation tasks completed:** 38 / 41
-**Next:** Task 39 / 41, Phase 5.4 - Documentation/examples
+**Implementation tasks completed:** 4 / 6
+**Overall implementation tasks completed:** 39 / 41
+**Next:** Task 40 / 41, Phase 5.5 - Packaging and simple install command
 
 This document records implementation evidence for Phase 5. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -153,9 +153,51 @@ Task 5.3 does not implement:
 - packaging/install-command changes (Task 40);
 - release acceptance (Task 41).
 
-Task 39 / 41 is next.
+Task 39 / 41 was next at that boundary (now COMPLETE, see below).
 
 ### Task 5.3 gate
+
+**PASSED.**
+
+---
+
+## Task 39 / 41 - Phase 5.4 Documentation/examples
+
+**Implementation status:** COMPLETE
+
+Phase 5.4 adds `examples/` plus `docs/EXAMPLES-V0.1.md` with 6
+runnable samples over existing primitives and no new engine.
+
+Core guarantees:
+
+- CRM tracker, content planner, production tracker, Bot-safe
+  operations, backup/reinstall, Data-vs-Memory;
+- every sample runs against `dist/` on a temp root, asserts each
+  step, prints one `*-OK` line, and cleans up;
+- production tracker uses a manifest-declared Apps kit with
+  `preserve-data` uninstall proof;
+- Bot sample proves lease-floor delete denial with task receipts;
+- Memory sample proves stable refs plus proposals-only with
+  event-count invariance;
+- no raw paths/SQL, no cross-workspace, no purge, no sibling writes;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- `npm run build`: PASS;
+- all 6 examples runnable: PASS;
+- full `npm test`: 343 / 343 PASS (suite unchanged).
+
+### Deliberately not implemented
+
+Task 5.4 does not implement:
+
+- packaging/install-command changes (Task 40);
+- release acceptance (Task 41).
+
+Task 40 / 41 is next.
+
+### Task 5.4 gate
 
 **PASSED.**
 
@@ -168,12 +210,12 @@ Task 39 / 41 is next.
 | 36 / 41 | 5.1 | COMPLETE | Cross-platform CI matrix |
 | 37 / 41 | 5.2 | COMPLETE | Adversarial filesystem/security suite |
 | 38 / 41 | 5.3 | COMPLETE | Performance baseline |
-| 39 / 41 | 5.4 | NOT STARTED | Documentation/examples |
+| 39 / 41 | 5.4 | COMPLETE | Documentation/examples |
 | 40 / 41 | 5.5 | NOT STARTED | Packaging and simple install command |
 | 41 / 41 | 5.6 | NOT STARTED | Full release acceptance suite |
 
 ## Current boundary
 
-Task 39 / 41 is next.
+Task 40 / 41 is next.
 
-Do not begin Task 39 until Task 38 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 40 until Task 39 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

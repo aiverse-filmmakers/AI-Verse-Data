@@ -13,16 +13,16 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
-Phase 5  Release Hardening             IN PROGRESS  3 / 6
+Phase 5  Release Hardening             IN PROGRESS  4 / 6
 
-Overall implementation: 38 / 41 tasks complete
+Overall implementation: 39 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 38 / 41 - Phase 5.3: Performance baseline**
+**Task 39 / 41 - Phase 5.4: Documentation/examples**
 
-Implemented through Task 38:
+Implemented through Task 39:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -149,7 +149,9 @@ Implemented through Task 38:
   all fail closed with no mutation;
 - performance budgets measured from local numbers with 10-50x headroom
   for open, create, update, query, aggregate, transaction, bulk,
-  events, doctor, and status.
+  events, doctor, and status;
+- runnable examples plus guide for CRM, content, production, Bot-safe
+  ops, backup/reinstall, and Data-vs-Memory with no new engine.
 
 Detailed Task 21 contract:
 
@@ -211,6 +213,10 @@ Detailed Task 35 contract:
 
 `docs/PHASE-4-ACCEPTANCE.md`
 
+Detailed Task 39 contract:
+
+`docs/EXAMPLES-V0.1.md`
+
 Behavioral implementation verification (Task 35 local; exact-head CI cited on push):
 
 ```text
@@ -234,7 +240,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 38:
+Implemented through Task 39:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -307,6 +313,19 @@ Task 37 local verification: 337 / 337 PASS on Node 22; focused adversarial file 
 
 Task 38 local verification: 343 / 343 PASS on Node 22; focused perf file 6 / 6 PASS; exact-head CI cited on push.
 
+Task 39 local verification: 343 / 343 PASS on Node 22 (suite unchanged); all 6 examples runnable; exact-head CI cited on push.
+
+## Task 39 architectural laws
+
+Task 39 must preserve:
+
+1. Docs plus runnable samples only; no new engine, no new `src/`.
+2. Every sample runs on a temp root, asserts each step, prints one
+   `*-OK` line, and cleans up.
+3. Full suite green with inherited Phase 1-4 gates.
+4. Exact-head CI cited before declaring complete.
+5. No sibling repository modifications are permitted.
+
 ## Task 38 architectural laws
 
 Task 38 must preserve:
@@ -355,11 +374,11 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 39 / 41 - Phase 5.4: Documentation/examples**
+**Task 40 / 41 - Phase 5.5: Packaging and simple install command**
 
-CRM, content planner, production tracker, Bot-safe operations, backup/reinstall, Data-vs-Memory guidance.
+Stable distribution metadata and clean GitHub install path, then optional npm publication when appropriate.
 
-Do not start Task 40 until Task 39 is explicitly tasked.
+Do not start Task 41 until Task 40 is explicitly tasked.
 
 ## Task 21 architectural laws
 

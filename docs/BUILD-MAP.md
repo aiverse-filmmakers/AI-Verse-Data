@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 5 IN PROGRESS  
-**Implementation progress:** 38 / 41 tasks complete  
-**Next:** Task 39 / 41, Phase 5.4 - Documentation/examples
+**Implementation progress:** 39 / 41 tasks complete  
+**Next:** Task 40 / 41, Phase 5.5 - Packaging and simple install command
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,10 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [IN PROGRESS]    50%  (3/6)
+Phase 5  Release Hardening             [IN PROGRESS]    67%  (4/6)
 ```
 
-Overall implementation: **38 / 41 tasks complete**.
+Overall implementation: **39 / 41 tasks complete**.
 
 ---
 
@@ -1334,7 +1334,29 @@ Phase status: `docs/PHASE-5-STATUS.md`.
 **Task 5.3 gate: PASSED.**
 
 ## Task 39 / 41 - Phase 5.4 Documentation/examples
-CRM, content planner, production tracker, Bot-safe operations, backup/reinstall, Data-vs-Memory guidance.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `examples/`: CRM tracker, content planner, production tracker,
+  Bot-safe operations, backup/reinstall, Data-vs-Memory (6 runnable
+  `.mjs` samples against `dist/`, each printing one `*-OK` line);
+- `docs/EXAMPLES-V0.1.md`: runnable guide with run command,
+  per-sample scope, and boundary (verbatim Tasks 27-34 surface,
+  no raw paths/SQL, no cross-workspace, no purge, no sibling writes);
+- docs plus runnable samples only, no new engine, no new `src/`;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- `npm run build`: PASS;
+- all 6 examples runnable: PASS;
+- full `npm test`: 343 / 343 PASS (suite unchanged).
+
+Phase status: `docs/PHASE-5-STATUS.md`.
+
+**Task 5.4 gate: PASSED.**
 
 ## Task 40 / 41 - Phase 5.5 Packaging and simple install command
 Stable distribution metadata and clean GitHub install path, then optional npm publication when appropriate.
