@@ -273,7 +273,6 @@ export interface RecordListPayload {
   readonly spaceId: DataSpaceId;
   readonly entity: EntityId;
   readonly limit?: number;
-  readonly cursor?: string | null;
   readonly includeDeleted?: boolean;
 }
 
