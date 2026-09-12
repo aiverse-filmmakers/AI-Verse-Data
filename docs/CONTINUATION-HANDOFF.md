@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  8 / 9
+Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
 
-Overall implementation: 34 / 41 tasks complete
+Overall implementation: 35 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 34 / 41 - Phase 4.8: Automation event adapter**
+**Task 35 / 41 - Phase 4.9: Phase 4 integration gate**
 
-Implemented through Task 34:
+Implemented through Task 35:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -138,7 +138,8 @@ Implemented through Task 34:
   catch-up writes into Data;
 - cursors only ever move forward, no deletes, no mutations;
 - mismatch catch-ups never synthesized into missing records;
-- no Task 35+ behavior early, no sibling edits.
+- complete Phase 4 integration gate composing Task 27-34 with no new engine;
+- ownership, scope, permissions, receipts, and optionality preserved.
 
 Detailed Task 21 contract:
 
@@ -196,11 +197,15 @@ Detailed Task 34 contract:
 
 `docs/AUTOMATION-EVENTS-V0.1.md`
 
-Behavioral implementation verification (Task 34 local; exact-head CI cited on push):
+Detailed Task 35 contract:
+
+`docs/PHASE-4-ACCEPTANCE.md`
+
+Behavioral implementation verification (Task 35 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               327 / 327 PASS
+Tests:               329 / 329 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -219,7 +224,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 34:
+Implemented through Task 35:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -266,7 +271,7 @@ Detailed Task 21 contract:
 
 Phase status:
 
-`docs/PHASE-3-STATUS.md` (Phase 3 COMPLETE) and `docs/PHASE-4-STATUS.md` (Phase 4 IN PROGRESS)
+`docs/PHASE-3-STATUS.md` (Phase 3 COMPLETE) and `docs/PHASE-4-STATUS.md` (Phase 4 COMPLETE)
 
 Task 27 local verification: 295 / 295 PASS on Node 22; exact-head CI cited on push.
 
@@ -284,13 +289,26 @@ Task 33 local verification: 323 / 323 PASS on Node 22; exact-head CI cited on pu
 
 Task 34 local verification: 327 / 327 PASS on Node 22; exact-head CI cited on push.
 
+Task 35 local verification: 329 / 329 PASS on Node 22; exact-head CI cited on push.
+
+## Task 35 architectural laws
+
+Task 35 must preserve:
+
+1. No new engine or surface; the gate composes Task 27-34 verbatim.
+2. Ownership, scope, permissions, receipts, and optionality preserved across all adapters.
+3. Negative branches fail closed without mutation.
+4. Full suite green with inherited Phase 1-3 gates.
+5. Exact-head CI cited before declaring complete.
+6. No sibling repository modifications are permitted.
+
 ## NEXT
 
-**Task 35 / 41 - Phase 4.9: Phase 4 integration gate**
+**Task 36 / 41 - Phase 5.1: Cross-platform CI matrix**
 
-Prove adapters preserve ownership, scope, permissions, receipts, and optionality.
+macOS, Linux, Windows, supported Node versions, build/package/install smoke tests.
 
-Do not start Task 36 until Task 35 is explicitly tasked.
+Do not start Task 37 until Task 36 is explicitly tasked.
 
 ## Task 21 architectural laws
 

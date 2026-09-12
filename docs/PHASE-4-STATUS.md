@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 8 / 9
-**Overall implementation tasks completed:** 34 / 41
-**Next:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate
+**Implementation tasks completed:** 9 / 9
+**Overall implementation tasks completed:** 35 / 41
+**Next:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -359,22 +359,29 @@ Core guarantees:
 
 Detailed contract: `docs/AUTOMATION-EVENTS-V0.1.md`.
 
-### Deliberately not implemented
-
-Task 4.8 does not implement:
-
-- scheduler or trigger-execution behavior;
-- Automation-side action/side-effect execution;
-- consumer-side adoption in any sibling repository;
-- new storage drivers or event transports.
-
-Task 35 / 41 is next.
+Phase 4 is COMPLETE. Remaining Task 35 detail is tracked below.
 
 ### Task 4.8 gate
 
 **PASSED.**
 
 ---
+
+## Task 35 / 41 - Phase 4.9 Phase 4 gate
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/phase4-integration.test.ts` end-to-end gate composing Task 27-34 verbatim with no new engine or surface;
+- ownership, scope, permissions, receipts, and optionality preserved across Bots, Brain, Memory, Dashboard, Apps, Connections, and automation adapters;
+- negative branches fail closed without mutation;
+- full suite green with inherited Phase 1-3 gates.
+
+Detailed contract: `docs/PHASE-4-ACCEPTANCE.md` (see gate section below).
+Phase status: this file.
+
+**Task 4.9 gate: PASSED.**
 
 ## Remaining Phase 4 tasks
 
@@ -388,10 +395,12 @@ Task 35 / 41 is next.
 | 32 / 41 | 4.6 | COMPLETE | Apps Data contract |
 | 33 / 41 | 4.7 | COMPLETE | Connections authority boundary |
 | 34 / 41 | 4.8 | COMPLETE | Automation event adapter |
-| 35 / 41 | 4.9 | NOT STARTED | Phase 4 gate |
+| 35 / 41 | 4.9 | COMPLETE | Phase 4 gate |
 
 ## Current boundary
 
-Task 35 / 41 is next.
+Phase 4 is COMPLETE.
 
-Do not begin Task 35 until Task 34 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Task 36 / 41 is next.
+
+Do not begin Task 37 until Task 36 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

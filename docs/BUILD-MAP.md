@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-12  
-**Status:** Phase 4 IN PROGRESS  
-**Implementation progress:** 34 / 41 tasks complete  
-**Next:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate
+**Status:** Phase 4 COMPLETE, Phase 5 NOT STARTED  
+**Implementation progress:** 35 / 41 tasks complete  
+**Next:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    89%  (8/9)
+Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **34 / 41 tasks complete**.
+Overall implementation: **35 / 41 tasks complete**.
 
 ---
 
@@ -812,8 +812,8 @@ Phase status: `docs/PHASE-2-STATUS.md`.
 
 # Phase 3 - Native AI-Verse Integration
 
-**Status:** IN PROGRESS  
-**Progress:** 4 / 8 tasks complete
+**Status:** COMPLETE
+**Progress:** 8 / 8 tasks complete
 
 ## Task 19 / 41 - Phase 3.1 AI-Verse OS compatibility detector
 
@@ -1230,7 +1230,20 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 **Task 4.8 gate: PASSED.**
 
 ## Task 35 / 41 - Phase 4.9 Phase 4 gate
-Prove adapters preserve ownership, scope, permissions, receipts, and optionality.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/phase4-integration.test.ts` end-to-end gate composing Task 27-34 verbatim with no new engine or surface;
+- ownership, scope, permissions, receipts, and optionality preserved across Bots, Brain, Memory, Dashboard, Apps, Connections, and automation adapters;
+- negative branches fail closed without mutation;
+- full suite green with inherited Phase 1-3 gates.
+
+Detailed contract: `docs/PHASE-4-ACCEPTANCE.md` (see `docs/PHASE-4-STATUS.md` gate section).
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.9 gate: PASSED.**
 
 ---
 
@@ -1284,6 +1297,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 34 / 41: Phase 4.8 - Automation event adapter.**
+**Task 36 / 41: Phase 5.1 - Cross-platform CI matrix.**
 
-Do not begin Task 35 / 41 until Task 34 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 37 / 41 until Task 36 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

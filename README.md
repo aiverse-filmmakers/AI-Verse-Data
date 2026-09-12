@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 3 COMPLETE, Phase 4 IN PROGRESS  
-**Completed implementation tasks:** 34 / 41  
-**Latest completed:** Task 34 / 41, Phase 4.8 - Automation event adapter  
-**Next task:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate  
+**Status:** Phase 4 COMPLETE, Phase 5 NOT STARTED  
+**Completed implementation tasks:** 35 / 41  
+**Latest completed:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate  
+**Next task:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -397,11 +397,17 @@ Automation event adapter
   -> committed-event subscription surface over existing events under @ai-verse/data/automation
   -> facts only, no scheduler, no trigger engine, OS owns activation policy
   -> mismatches absent locally only, cursor never synthesized into missing records
-  -> no Task 35+ behavior early
+  -> no sibling edits
+
+Task 35 / 41 - COMPLETE
+Phase 4 integration gate
+  -> test/phase4-integration.test.ts end-to-end, no new engine or surface
+  -> ownership, scope, permissions, receipts, optionality preserved
+  -> negative branches fail closed without mutation
   -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
 
 ## Public package surfaces
 
@@ -647,33 +653,32 @@ Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.m
 
 ### Latest verification
 
-Task 27 local verification (exact-head CI to be cited on push):
+Task 35 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
 
-295 tests
-295 passed
+329 tests
+329 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-Prior Task 26 CI run: `34680605380`
-Task 26 head: `78d8fbb`
+Prior Task 34 CI run: `34686629124`
 
 ```text
 Node 22  PASS
 Node 24  PASS
 
-288 tests
-288 passed
+327 tests
+327 passed
 0 failed
 0 skipped
 0 cancelled
 ```
 
-The Task 27 client SDK proves the stable typed wrapper over the protocol with scope-first trusted access, host-bound actor plus authorization, engine-verbatim ceilings plus digests plus receipts plus provenance, and no consumer-repo changes.
+The Task 35 gate proves the complete Phase 4 adapter story: typed client plus Bots plus Brain plus Memory plus Dashboard plus Apps plus Connections plus automation with ownership plus scope plus permissions plus receipts plus optionality preserved, and isolated negative branches that fail closed without mutation.
 
 ## Why Data is separate from Memory
 
@@ -810,10 +815,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/APPS-DATA-CONTRACT-V0.1.md`](docs/APPS-DATA-CONTRACT-V0.1.md) - implemented Apps Data contract
 - [`docs/CONNECTIONS-AUTHORITY-V0.1.md`](docs/CONNECTIONS-AUTHORITY-V0.1.md) - implemented Connections authority boundary
 - [`docs/AUTOMATION-EVENTS-V0.1.md`](docs/AUTOMATION-EVENTS-V0.1.md) - implemented Automation event adapter
+- [`docs/PHASE-4-ACCEPTANCE.md`](docs/PHASE-4-ACCEPTANCE.md) - Phase 4 integration gate and evidence
 - [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 35 / 41, Phase 4.9 - Phase 4 integration gate.**
+**Next: Task 36 / 41, Phase 5.1 - Cross-platform CI matrix.**
