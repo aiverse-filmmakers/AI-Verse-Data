@@ -253,7 +253,7 @@ A missing or normally hidden record returns `RECORD_NOT_FOUND`.
 
 The default list size reuses the protocol's safe default page size, and callers cannot exceed the protocol maximum.
 
-Phase 1.6 intentionally does not implement the general query/filter/sort/cursor engine. That belongs to Task 7 / 41.
+The basic record-list surface remains intentionally non-paginated beyond its bounded `limit`. It does not accept a cursor. Cursor-based pagination belongs to `data.query`, which was added later in Phase 1.
 
 Normal lists hide soft-deleted records. `includeDeleted: true` includes them.
 
