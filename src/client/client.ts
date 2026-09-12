@@ -740,6 +740,14 @@ export function createDataClient(options: CreateDataClientOptions): DataClient {
           state.provenance.listEvents(input ?? {}),
         );
       },
+      getEvent(eventId: string) {
+        assertOpen(state);
+        return success(
+          state,
+          "data.events.list",
+          state.provenance.getEvent({ eventId }),
+        );
+      },
       getReceipt(receiptId: string) {
         assertOpen(state);
         return success(
