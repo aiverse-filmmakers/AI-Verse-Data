@@ -35,7 +35,7 @@ Options:
   --workspace <id> Workspace id for database state (optional for doctor/status)
   --json           Machine-readable JSON output
 
-Phase 3.6 adds read-only native doctor plus status composing Task 19-23 primitives without mutating registries, tracked files, or canonical databases. Task 25 coexistence suite remains next.
+First release is complete through Phase 5.6. Lifecycle commands preserve canonical workspace databases; doctor/status are read-only; workspace initialization remains explicit through the native package API.
 `;
 
 const LIFECYCLE_COMMANDS = new Set([
