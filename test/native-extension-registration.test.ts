@@ -889,11 +889,16 @@ test("materialized file constants are deterministic and do not expose workspace 
   );
 
   assert.match(instructions ?? "", /does not initialize any workspace database/);
-  assert.match(engine ?? "", /registrationOnly: true/);
+  assert.match(engine ?? "", /registrationOnly: false/);
+  assert.match(engine ?? "", /phase: "5\.6"/);
+  assert.match(instructions ?? "", /workspace discovery and initialization are explicit native operations/);
   const parsed = JSON.parse(manifest ?? "{}") as Record<string, unknown>;
   assert.equal(parsed.id, AI_VERSE_DATA_EXTENSION_ID);
   assert.equal(parsed.package_version, AI_VERSE_DATA_EXTENSION_VERSION);
   assert.equal(parsed.initializes_workspace_data, false);
+  assert.equal(parsed.workspace_initialization, "explicit");
+  assert.equal(parsed.release_phase, "5.6");
+  assert.equal(parsed.release_complete, true);
   assert.equal(parsed.registration_grants_permissions, false);
   assert.equal(parsed.registration_asserts_health, false);
 });
