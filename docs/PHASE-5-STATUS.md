@@ -2,9 +2,9 @@
 
 **Phase:** 5 - Release Hardening
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 1 / 6
-**Overall implementation tasks completed:** 36 / 41
-**Next:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite
+**Implementation tasks completed:** 2 / 6
+**Overall implementation tasks completed:** 37 / 41
+**Next:** Task 38 / 41, Phase 5.3 - Performance baseline
 
 This document records implementation evidence for Phase 5. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -66,9 +66,55 @@ Task 5.1 does not implement:
 - packaging/install-command changes (Task 40);
 - release acceptance (Task 41).
 
-Task 37 / 41 is next.
+Task 37 / 41 was next at that boundary (now COMPLETE, see below).
 
 ### Task 5.1 gate
+
+**PASSED.**
+
+---
+
+## Task 37 / 41 - Phase 5.2 Full adversarial filesystem/security suite
+
+**Implementation status:** COMPLETE
+
+Phase 5.2 adds `test/adversarial-security.test.ts` with 8 fail-closed
+attack tests over existing primitives with no new engine.
+
+Core guarantees:
+
+- traversal segments rejected (`WORKSPACE_ID_UNSAFE`,
+  `INVALID_EXTENSION_PATH`, NUL roots);
+- symlink components refuse escape (`PATH_SYMLINK_UNSAFE`);
+- Windows drive/UNC/reserved/trailing/unsafe paths rejected;
+- 8 malformed registry shapes fail closed with no owned files;
+- 30-day-aged stale locks never stolen, lock file preserved;
+- oversized registry/record/bulk/key ceilings fail closed;
+- 4 corrupt database shapes fail closed with bytes preserved;
+- capability escalation, unknown actions, wildcard smuggling,
+  unknown-field injection, and oversized auth refs all denied;
+- every branch asserts no mutation: registries byte-identical,
+  stale locks preserved, corrupt bytes preserved, events unchanged,
+  no prototype pollution;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 8 / 8 PASS;
+- full `npm test`: 337 / 337 PASS.
+
+### Deliberately not implemented
+
+Task 5.2 does not implement:
+
+- performance baselines (Task 38);
+- documentation/examples (Task 39);
+- packaging/install-command changes (Task 40);
+- release acceptance (Task 41).
+
+Task 38 / 41 is next.
+
+### Task 5.2 gate
 
 **PASSED.**
 
@@ -79,7 +125,7 @@ Task 37 / 41 is next.
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
 | 36 / 41 | 5.1 | COMPLETE | Cross-platform CI matrix |
-| 37 / 41 | 5.2 | NOT STARTED | Adversarial filesystem/security suite |
+| 37 / 41 | 5.2 | COMPLETE | Adversarial filesystem/security suite |
 | 38 / 41 | 5.3 | NOT STARTED | Performance baseline |
 | 39 / 41 | 5.4 | NOT STARTED | Documentation/examples |
 | 40 / 41 | 5.5 | NOT STARTED | Packaging and simple install command |
@@ -87,6 +133,6 @@ Task 37 / 41 is next.
 
 ## Current boundary
 
-Task 37 / 41 is next.
+Task 38 / 41 is next.
 
-Do not begin Task 37 until Task 36 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 38 until Task 37 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

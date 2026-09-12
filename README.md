@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 4 COMPLETE, Phase 5 IN PROGRESS  
-**Completed implementation tasks:** 36 / 41  
-**Latest completed:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix  
-**Next task:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite  
+**Completed implementation tasks:** 37 / 41  
+**Latest completed:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite  
+**Next task:** Task 38 / 41, Phase 5.3 - Performance baseline  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -412,6 +412,12 @@ Cross-platform CI matrix
   -> every leg runs build plus full suite plus pack plus CLI plus install smoke
   -> no new engine, CI config plus smoke proof only
   -> no sibling edits
+
+Task 37 / 41 - COMPLETE
+Full adversarial filesystem/security suite
+  -> test/adversarial-security.test.ts: traversal, symlink, Windows, malformed registry, stale lock, oversize, corrupt DB, capability forgery
+  -> no new engine, tests plus hardening proof only
+  -> no sibling edits
 ```
 
 Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
@@ -660,13 +666,13 @@ Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.m
 
 ### Latest verification
 
-Task 36 local verification (exact-head CI to be cited on push):
+Task 37 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
 
-329 tests
-329 passed
+337 tests
+337 passed
 0 failed
 0 skipped
 0 cancelled
@@ -830,4 +836,4 @@ Programmatic materialization/registration is implemented with hardened shared-re
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite.**
+**Next: Task 38 / 41, Phase 5.3 - Performance baseline.**

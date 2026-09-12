@@ -13,16 +13,16 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
-Phase 5  Release Hardening             IN PROGRESS  1 / 6
+Phase 5  Release Hardening             IN PROGRESS  2 / 6
 
-Overall implementation: 36 / 41 tasks complete
+Overall implementation: 37 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 36 / 41 - Phase 5.1: Cross-platform CI matrix**
+**Task 37 / 41 - Phase 5.2: Full adversarial filesystem/security suite**
 
-Implemented through Task 36:
+Implemented through Task 37:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -143,7 +143,10 @@ Implemented through Task 36:
 - ownership, scope, permissions, receipts, and optionality preserved;
 - cross-platform CI matrix covers ubuntu/macos/windows crossed with Node 22/24;
 - every CI leg runs build plus full suite plus pack plus CLI plus install smoke;
-- no new engine, CI config plus smoke proof only.
+- no new engine, CI config plus smoke proof only;
+- adversarial attack suite proves traversal, symlink, Windows, malformed
+  registry, stale lock, oversize, corrupt DB, and capability forgery
+  all fail closed with no mutation.
 
 Detailed Task 21 contract:
 
@@ -297,6 +300,21 @@ Task 35 local verification: 329 / 329 PASS on Node 22; exact-head CI cited on pu
 
 Task 36 local verification: 329 / 329 PASS on Node 22 (suite unchanged); build plus pack plus CLI smoke PASS; exact-head CI cited on push.
 
+Task 37 local verification: 337 / 337 PASS on Node 22; focused adversarial file 8 / 8 PASS; exact-head CI cited on push.
+
+## Task 37 architectural laws
+
+Task 37 must preserve:
+
+1. No new engine; the attack suite composes existing primitives verbatim.
+2. Traversal, symlink, Windows, malformed registry, stale lock, oversize,
+   corrupt DB, and capability forgery all fail closed.
+3. Every branch asserts no mutation: registries byte-identical, stale locks
+   preserved, corrupt bytes preserved, events unchanged.
+4. Full suite green with inherited Phase 1-4 gates.
+5. Exact-head CI cited before declaring complete.
+6. No sibling repository modifications are permitted.
+
 ## Task 36 architectural laws
 
 Task 36 must preserve:
@@ -321,11 +339,11 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 37 / 41 - Phase 5.2: Full adversarial filesystem/security suite**
+**Task 38 / 41 - Phase 5.3: Performance baseline**
 
-Traversal, symlink/reparse escapes, Windows paths, malformed registries, stale locks, oversized inputs, corrupt DBs, capability forgery.
+Measure open/create/update/query/aggregate/transaction/event/doctor behavior and set evidence-based budgets.
 
-Do not start Task 38 until Task 37 is explicitly tasked.
+Do not start Task 39 until Task 38 is explicitly tasked.
 
 ## Task 21 architectural laws
 

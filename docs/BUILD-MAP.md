@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 5 IN PROGRESS  
-**Implementation progress:** 36 / 41 tasks complete  
-**Next:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite
+**Implementation progress:** 37 / 41 tasks complete  
+**Next:** Task 38 / 41, Phase 5.3 - Performance baseline
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,10 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [IN PROGRESS]    17%  (1/6)
+Phase 5  Release Hardening             [IN PROGRESS]    33%  (2/6)
 ```
 
-Overall implementation: **36 / 41 tasks complete**.
+Overall implementation: **37 / 41 tasks complete**.
 
 ---
 
@@ -1278,7 +1278,29 @@ Phase status: `docs/PHASE-5-STATUS.md`.
 **Task 5.1 gate: PASSED.**
 
 ## Task 37 / 41 - Phase 5.2 Full adversarial filesystem/security suite
-Traversal, symlink/reparse escapes, Windows paths, malformed registries, stale locks, oversized inputs, corrupt DBs, capability forgery.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/adversarial-security.test.ts` with 8 fail-closed attack tests:
+  traversal segments, symlink components, Windows paths, malformed
+  registries, stale locks, oversized inputs, corrupt databases,
+  capability forgery;
+- every branch asserts no mutation: registries byte-identical, stale
+  locks preserved, corrupt bytes preserved, events unchanged,
+  no prototype pollution;
+- no new engine, tests plus hardening proof only;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 8 / 8 PASS;
+- full `npm test`: 337 / 337 PASS.
+
+Phase status: `docs/PHASE-5-STATUS.md`.
+
+**Task 5.2 gate: PASSED.**
 
 ## Task 38 / 41 - Phase 5.3 Performance baseline
 Measure open/create/update/query/aggregate/transaction/event/doctor behavior and set evidence-based budgets.
