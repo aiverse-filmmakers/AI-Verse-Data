@@ -65,7 +65,7 @@ export function createAppsDataKit(
   validateManifestShape(manifest);
   const base = createBaseAppsDataKit(client, manifest, options);
 
-  return {
+  const secured: AppsDataKit = {
     ...base,
     transactions: {
       execute(input: TransactionExecutePayload) {
@@ -116,4 +116,11 @@ export function createAppsDataKit(
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
