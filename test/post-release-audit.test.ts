@@ -264,6 +264,7 @@ test("records.list rejects its reserved cursor instead of silently ignoring it",
     authorization: { mode: "local-operator" },
   });
   try {
+    assert.equal(client.scope.workspaceId, "audit");
     createSpaceAndSchema(client, "cursor", "items");
     assert.throws(
       () => client.records.list({ spaceId: "cursor", entity: "items", cursor: "opaque" }),
