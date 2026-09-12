@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 24 / 41 tasks complete  
-**Next:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite
+**Implementation progress:** 25 / 41 tasks complete  
+**Next:** Task 26 / 41, Phase 3.8 - Phase 3 gate
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    75%  (6/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    88%  (7/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **24 / 41 tasks complete**.
+Overall implementation: **25 / 41 tasks complete**.
 
 ---
 
@@ -1014,7 +1014,27 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.6 gate: PASSED.**
 
 ## Task 25 / 41 - Phase 3.7 Installation-order/registry coexistence suite
-Representative orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/native-coexistence.test.ts` verification gate over the existing Tasks 19-24 primitives with no new engine or CLI;
+- twelve order variants: bare OS plus Memory, Brain, Multiple Bots, Skills, enabled:false, nested unknown metadata, and the full combined order;
+- full lifecycle per order: install, health check, update, instruction discovery, disable, uninstall, reinstall, final doctor;
+- only `extensions["ai-verse-data"]` created, changed, or removed with siblings byte-semantically identical;
+- unknown top-level fields and unknown per-entry fields including nested objects preserved;
+- existing `enabled: false` on siblings preserved;
+- seeded canonical database bytes byte-identical across update, disable, uninstall, and reinstall with `compatible` reopen;
+- lifecycle alone creates zero `.sqlite` files;
+- registry lock contention fails closed with siblings present;
+- no tracked OS mutation;
+- no Task 26 Phase 3 gate behavior; no sibling repository modifications.
+
+Detailed contract: `docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.7 gate: PASSED.**
 
 ## Task 26 / 41 - Phase 3.8 Phase 3 gate
 Run the complete native installation acceptance story.
@@ -1106,6 +1126,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 25 / 41: Phase 3.7 - Installation-order/registry coexistence suite.**
+**Task 26 / 41: Phase 3.8 - Phase 3 gate.**
 
-Do not begin Task 26 / 41 until Task 25 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Phase 4 until Task 26 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

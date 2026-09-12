@@ -2,9 +2,9 @@
 
 **Phase:** 3 - Native AI-Verse Integration  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 6 / 8  
-**Overall implementation tasks completed:** 24 / 41  
-**Next:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite
+**Implementation tasks completed:** 7 / 8  
+**Overall implementation tasks completed:** 25 / 41  
+**Next:** Task 26 / 41, Phase 3.8 - Phase 3 gate
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -319,8 +319,8 @@ Task 23 / 41 was next at that boundary (now COMPLETE).
 | 22 / 41 | 3.4 | COMPLETE | Extension instructions/runtime discovery |
 | 23 / 41 | 3.5 | COMPLETE | Native CLI install/update/disable/uninstall |
 | 24 / 41 | 3.6 | COMPLETE | Native doctor + status |
-| 25 / 41 | 3.7 | NEXT | Installation-order/registry coexistence suite |
-| 26 / 41 | 3.8 | NOT STARTED | Phase 3 gate |
+| 25 / 41 | 3.7 | COMPLETE | Installation-order/registry coexistence suite |
+| 26 / 41 | 3.8 | NEXT | Phase 3 gate |
 
 ## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
 
@@ -409,7 +409,7 @@ Task 3.6 does not implement:
 - permission or health assertions from registration;
 - sibling repository modifications.
 
-Task 25 / 41 is next.
+Task 25 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 3.6 gate
 
@@ -417,8 +417,58 @@ Task 25 / 41 is next.
 
 ---
 
+## Task 25 / 41 - Phase 3.7 Installation-order/registry coexistence suite
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 3.7 proves the existing Tasks 19-24 primitives coexist with
+sibling extensions across representative installation orders, with no
+new engine and no sibling modification.
+
+Core guarantees:
+
+- twelve order variants: bare OS, Memory before and after, Brain
+  before and after, Multiple Bots before and after, Skills before and
+  after, Memory with `enabled: false`, unrelated custom nested
+  metadata, and the full combined order;
+- full lifecycle per order: install, health check, update,
+  instruction discovery, disable, uninstall, reinstall, final doctor;
+- only the owned registry key created, changed, or removed;
+- unrelated entries byte-semantically identical at every step;
+- unknown top-level and unknown per-entry fields including nested
+  objects preserved;
+- existing sibling `enabled: false` preserved;
+- seeded canonical databases byte-identical across lifecycle plus
+  `compatible` reopen after reinstall;
+- lifecycle alone creates zero `.sqlite` files;
+- lock contention fails closed with siblings present;
+- tracked OS files untouched;
+- no Task 26 Phase 3 gate; no sibling repository modifications.
+
+Detailed contract: `docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 3.7 does not implement:
+
+- the Task 26 Phase 3 gate;
+- any new engine or CLI behavior;
+- purge or destructive removal;
+- real multi-repository integration;
+- sibling repository modifications.
+
+Task 26 / 41 is next.
+
+### Task 3.7 gate
+
+**PASSED.**
+
+---
+
 ## Current boundary
 
-Task 25 / 41 is next.
+Task 26 / 41 is next.
 
-Do not begin Task 26 until Task 25 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Phase 4 until Task 26 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

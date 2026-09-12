@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 Native AI-Verse Integration in progress  
-**Completed implementation tasks:** 24 / 41  
-**Latest completed:** Task 24 / 41, Phase 3.6 - Native doctor + status  
-**Next task:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite  
+**Completed implementation tasks:** 25 / 41  
+**Latest completed:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite  
+**Next task:** Task 26 / 41, Phase 3.8 - Phase 3 gate  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -311,9 +311,20 @@ Native doctor + status
   -> required --root, optional ID-only --workspace, exit 0/1/2
   -> no Task 25 coexistence suite
   -> no sibling edits
+
+Task 25 / 41 - COMPLETE
+Installation-order/registry coexistence suite
+  -> 12 order variants with Memory/Brain/Bots/Skills plus unknowns
+  -> full lifecycle per order with discovery plus health checks
+  -> only owned entry touched, siblings byte-identical
+  -> enabled:false plus nested unknown metadata preserved
+  -> seeded DB bytes survive lifecycle plus reinstall
+  -> zero sqlite created by lifecycle alone, no tracked OS mutation
+  -> no new engine, no Task 26 gate
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. Task 25 coexistence suite is next.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. Task 26 Phase 3 gate is next.
 
 ## Public package surfaces
 
@@ -703,10 +714,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md) - implemented read-only extension instruction/runtime discovery contract
 - [`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`](docs/NATIVE-CLI-LIFECYCLE-V0.1.md) - implemented native CLI lifecycle contract
 - [`docs/NATIVE-DOCTOR-STATUS-V0.1.md`](docs/NATIVE-DOCTOR-STATUS-V0.1.md) - implemented read-only native doctor plus status contract
+- [`docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`](docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md) - implemented installation-order/registry coexistence contract
 - [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite.**
+**Next: Task 26 / 41, Phase 3.8 - Phase 3 gate.**
