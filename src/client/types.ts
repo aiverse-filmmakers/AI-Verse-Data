@@ -40,6 +40,7 @@ import type {
   DataRecordSnapshot,
 } from "../records/index.js";
 import type {
+  DataEvent,
   DataEventPage,
   DataMutationReceipt,
 } from "../provenance/index.js";
@@ -177,6 +178,7 @@ export interface DataClientBulk {
 
 export interface DataClientProvenance {
   listEvents(input?: EventsListPayload): DataSuccessResult<DataEventPage>;
+  getEvent(eventId: string): DataSuccessResult<DataEvent>;
   getReceipt(receiptId: string): DataSuccessResult<DataMutationReceipt>;
   getReceiptByIdempotencyKey(
     idempotencyKey: string,
