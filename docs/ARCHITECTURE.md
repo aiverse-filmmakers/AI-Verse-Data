@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 and Phase 2 complete; Phase 3.1 native compatibility detection, Phase 3.2 hardened local extension materialization/registration, Phase 3.3 native workspace resolver plus Data initialization, Phase 3.4 read-only extension instruction/runtime discovery, Phase 3.5 native CLI install/update/disable/uninstall, Phase 3.6 read-only native doctor plus status, and Phase 3.7 installation-order/registry coexistence proof implemented
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3 native integration complete (8/8): compatibility detection, hardened installation, workspace resolver plus init, instruction discovery, CLI lifecycle, doctor plus status, coexistence proof, and acceptance gate
 
 ## 1. Architectural position
 

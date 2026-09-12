@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-11  
-**Status:** Phase 3 in progress  
-**Implementation progress:** 25 / 41 tasks complete  
-**Next:** Task 26 / 41, Phase 3.8 - Phase 3 gate
+**Status:** Phase 3 COMPLETE  
+**Implementation progress:** 26 / 41 tasks complete  
+**Next:** Task 27 / 41, Phase 4.1 - Typed Data client SDK
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    88%  (7/8)
+Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **25 / 41 tasks complete**.
+Overall implementation: **26 / 41 tasks complete**.
 
 ---
 
@@ -1037,7 +1037,23 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.7 gate: PASSED.**
 
 ## Task 26 / 41 - Phase 3.8 Phase 3 gate
-Run the complete native installation acceptance story.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/phase3-integration.test.ts` end-to-end gate composing Tasks 19-25 verbatim with no new engine or CLI;
+- all 20 canonical installation checklist items on one fixture: detection, owned-files install, entry preservation, enabled:false survival, competing-writer and lost-update detection, path and symlink rejection, tracked-file preservation, single-workspace init, compatible discovery, record-preserving update and disable, owned-only uninstall, compatible reinstall, and no standalone masking;
+- CRM story with spaces, schemas, related records, receipts with replay, OCC conflict, filtered query, all five aggregates, bounded transaction, events, restart plus exact reopen, second-workspace isolation, sibling preservation, deep doctor plus light status, uninstall plus reinstall with identical bytes;
+- negative branches on isolated fixtures: paused and archived blocked, ID mismatch, traversal plus absolute plus symlink, migration-required versus incomplete, unsupported, quarantined or corrupt, scope-conflict distinct, no silent mutation, lock-busy, quarantined read-only evidence;
+- no purge, no Phase 4 SDK or adapter, no sibling repository modifications;
+- full suite green with inherited Phase 1 plus Phase 2 gates.
+
+Detailed contract: `docs/PHASE-3-ACCEPTANCE.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.8 gate: PASSED.**  
+**Phase 3 gate: PASSED.**
 
 ---
 
@@ -1126,6 +1142,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 26 / 41: Phase 3.8 - Phase 3 gate.**
+**Task 27 / 41: Phase 4.1 - Typed Data client SDK.**
 
-Do not begin Phase 4 until Task 26 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 28 / 41 until Task 27 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

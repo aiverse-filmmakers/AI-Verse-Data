@@ -11,16 +11,16 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   IN PROGRESS  7 / 8
+Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 
-Overall implementation: 25 / 41 tasks complete
+Overall implementation: 26 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 25 / 41 - Phase 3.7: Installation-order/registry coexistence suite**
+**Task 26 / 41 - Phase 3.8: Phase 3 gate**
 
-Implemented through Task 25:
+Implemented through Task 26:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -73,7 +73,10 @@ Implemented through Task 25:
 - twelve order variants with Memory/Brain/Bots/Skills plus nested unknowns;
 - full lifecycle per order with discovery plus health checks;
 - only the owned registry key touched with siblings byte-identical;
-- seeded databases byte-identical across lifecycle plus reinstall.
+- seeded databases byte-identical across lifecycle plus reinstall;
+- complete Phase 3 native installation acceptance gate with all 20 checklist items;
+- CRM story with receipts, OCC, query, aggregates, transactions, events, reopen, and isolation;
+- negative branches fail closed without mutation.
 
 Detailed Task 21 contract:
 
@@ -94,6 +97,10 @@ Detailed Task 24 contract:
 Detailed Task 25 contract:
 
 `docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`
+
+Detailed Task 26 contract:
+
+`docs/PHASE-3-ACCEPTANCE.md`
 
 Behavioral implementation verification:
 
@@ -121,7 +128,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 25:
+Implemented through Task 26:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -187,11 +194,11 @@ The Task 20 behavioral implementation and documentation closeout candidate are v
 
 ## NEXT
 
-**Task 26 / 41 - Phase 3.8: Phase 3 gate**
+**Task 27 / 41 - Phase 4.1: Typed Data client SDK**
 
-Run the complete native installation acceptance story.
+Stable typed client over the protocol.
 
-Do not start Phase 4 until Task 26 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Phase 3 is COMPLETE. Do not start Phase 4 until it is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -277,7 +284,22 @@ Task 25 must preserve:
 9. Task 25 must not implement the Task 26 Phase 3 gate early.
 10. No sibling repository modifications are permitted.
 
-## Canonical documents to read before Task 26
+## Task 26 architectural laws
+
+Task 26 must preserve:
+
+1. No new engine or CLI; the gate composes Tasks 19-25 verbatim.
+2. All 20 installation checklist items on one real fixture.
+3. CRM story with receipts, OCC, query, aggregates, transactions, events, reopen, and isolation.
+4. Sibling preservation with unknown state and enabled:false respected.
+5. Uninstall plus reinstall with identical bytes; tracked files identical.
+6. Isolated negative branches fail closed without mutation.
+7. Lock contention fails closed; no purge; no Phase 4 SDK.
+8. Full suite green with inherited Phase 1 plus Phase 2 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Canonical documents to read before Task 27
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`

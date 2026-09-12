@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 3 Native AI-Verse Integration in progress  
-**Completed implementation tasks:** 25 / 41  
-**Latest completed:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite  
-**Next task:** Task 26 / 41, Phase 3.8 - Phase 3 gate  
+**Status:** Phase 3 Native AI-Verse Integration COMPLETE  
+**Completed implementation tasks:** 26 / 41  
+**Latest completed:** Task 26 / 41, Phase 3.8 - Phase 3 gate  
+**Next task:** Task 27 / 41, Phase 4.1 - Typed Data client SDK  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -322,9 +322,18 @@ Installation-order/registry coexistence suite
   -> zero sqlite created by lifecycle alone, no tracked OS mutation
   -> no new engine, no Task 26 gate
   -> no sibling edits
+
+Task 26 / 41 - COMPLETE
+Phase 3 gate
+  -> test/phase3-integration.test.ts end-to-end, no new engine or CLI
+  -> all 20 installation checklist items on one fixture
+  -> CRM story with receipts, OCC, query, aggregates, txn, events, reopen
+  -> two-workspace isolation plus sibling plus doctor plus reinstall proof
+  -> negative branches fail closed without mutation
+  -> no purge, no Phase 4 SDK, no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. Task 26 Phase 3 gate is next.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed.
 
 ## Public package surfaces
 
@@ -551,7 +560,7 @@ Task 20 does not edit tracked OS files and does not create any workspace Data da
 
 Phase 3.3 adds ID-only `resolveWorkspace`, active-only `initWorkspaceData`, and seven-state `discoverWorkspaceData` under `@ai-verse/data/native`. Resolution starts from a Task 19-compatible trusted OS root, inspects only `workspaces/<requested-id>/WORKSPACE.yaml`, requires an exact manifest ID match, tolerates additive manifest fields, reports paused/archived status, derives the canonical `workspaces/<id>/data/ai-verse-data.sqlite` path internally, reuses the workspace-scoped binding contract, stays idempotent on repeat init, and never silently replaces, migrates, repairs, or rebounds an existing database. Discovery reports `missing`, `compatible`, `migration_required`, `quarantined`, `scope_conflict`, `unsupported`, and `unavailable` by reusing the storage/recovery contracts.
 
-See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md), [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md), and [`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`](docs/NATIVE-CLI-LIFECYCLE-V0.1.md).
+See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md), [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md), [`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`](docs/NATIVE-CLI-LIFECYCLE-V0.1.md), [`docs/NATIVE-DOCTOR-STATUS-V0.1.md`](docs/NATIVE-DOCTOR-STATUS-V0.1.md), [`docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`](docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md), and [`docs/PHASE-3-ACCEPTANCE.md`](docs/PHASE-3-ACCEPTANCE.md).
 
 Phase 3.4 adds read-only `discoverExtensionInstructions` under `@ai-verse/data/native`. It requires a Task 19-compatible host, parses the schema-`1.0` registry read-only, reads only `extensions["ai-verse-data"]`, requires supported plus installed plus enabled (respecting `enabled: false`), resolves instruction/engine/adapter paths as repo-relative inside the Data-owned extension directory, rejects traversal/absolute/symlink/oversize states, returns contents plus provenance with task-hint relevance, never executes the engine, never writes the registry, never touches tracked OS files, and never creates or opens any workspace database.
 
@@ -559,16 +568,17 @@ Phase 3.5 adds thin CLI lifecycle commands composing the Task 19-22 primitives: 
 
 Phase 3.6 adds read-only `doctorData` plus `statusData` under `@ai-verse/data/native` plus `doctor` plus `status` CLI commands. Doctor performs the deep check with SQLite runtime version, quick integrity for compatible databases, and WAL writability; status is the light check without integrity or WAL probes. Both report host mode, registry state, instruction presence, workspace identity, database state with migration detail, SQLite facts, problems with next steps, and informational sibling notes while creating zero databases and mutating nothing.
 
+Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.md`. The gate composes Tasks 19-25 verbatim with no new engine or CLI: all 20 installation checklist items on one fixture, the CRM story with receipts, OCC, query, aggregates, transactions, events, restart plus exact reopen, two-workspace isolation, sibling preservation, deep doctor plus light status, uninstall plus reinstall with identical bytes, and isolated negative branches that fail closed without mutation.
+
 ### Latest verification
 
-Task 23 local verification (exact-head CI to be cited on push):
+Task 26 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
-Node 24  pending CI
 
-262 tests
-262 passed
+288 tests
+288 passed
 0 failed
 0 skipped
 0 cancelled
@@ -588,7 +598,7 @@ Node 24  PASS
 0 cancelled
 ```
 
-The Task 23 suite proves install/update/disable/uninstall CLI with required `--root`, human plus `--json` output, exit 0/2/1 semantics, Task 20 lock plus atomic replace reuse, disable-only-`enabled` behavior, owned-only uninstall with canonical databases preserved, install-order coexistence, zero `.sqlite` from lifecycle alone, and no purge or doctor behavior.
+The Task 26 gate proves the complete native installation story: all 20 checklist items on one fixture, the CRM lifecycle with restart plus exact reopen, two-workspace isolation, sibling preservation, deep doctor plus light status, uninstall plus reinstall with identical bytes, and isolated negative branches that fail closed without mutation.
 
 ## Why Data is separate from Memory
 
@@ -715,10 +725,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`](docs/NATIVE-CLI-LIFECYCLE-V0.1.md) - implemented native CLI lifecycle contract
 - [`docs/NATIVE-DOCTOR-STATUS-V0.1.md`](docs/NATIVE-DOCTOR-STATUS-V0.1.md) - implemented read-only native doctor plus status contract
 - [`docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`](docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md) - implemented installation-order/registry coexistence contract
+- [`docs/PHASE-3-ACCEPTANCE.md`](docs/PHASE-3-ACCEPTANCE.md) - final Phase 3 native installation acceptance gate and evidence
 - [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 26 / 41, Phase 3.8 - Phase 3 gate.**
+**Next: Task 27 / 41, Phase 4.1 - Typed Data client SDK.**

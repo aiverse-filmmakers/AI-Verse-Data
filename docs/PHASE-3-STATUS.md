@@ -1,10 +1,10 @@
 # AI-Verse Data Phase 3 Status
 
 **Phase:** 3 - Native AI-Verse Integration  
-**Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 7 / 8  
-**Overall implementation tasks completed:** 25 / 41  
-**Next:** Task 26 / 41, Phase 3.8 - Phase 3 gate
+**Phase status:** COMPLETE  
+**Implementation tasks completed:** 8 / 8  
+**Overall implementation tasks completed:** 26 / 41  
+**Next:** Task 27 / 41, Phase 4.1 - Typed Data client SDK
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -320,7 +320,51 @@ Task 23 / 41 was next at that boundary (now COMPLETE).
 | 23 / 41 | 3.5 | COMPLETE | Native CLI install/update/disable/uninstall |
 | 24 / 41 | 3.6 | COMPLETE | Native doctor + status |
 | 25 / 41 | 3.7 | COMPLETE | Installation-order/registry coexistence suite |
-| 26 / 41 | 3.8 | NEXT | Phase 3 gate |
+| 26 / 41 | 3.8 | COMPLETE | Phase 3 gate |
+
+## Task 26 / 41 - Phase 3.8 Phase 3 gate
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 3.8 runs the complete native installation acceptance story
+through `test/phase3-integration.test.ts`, composing Tasks 19-25
+verbatim with no new engine or CLI.
+
+Core guarantees:
+
+- all 20 canonical installation checklist items on one real fixture;
+- CRM story with spaces, schemas, related records, receipts with
+  replay, OCC conflict, filtered query, all five aggregates, bounded
+  transaction, events, restart plus exact reopen, second-workspace
+  isolation, sibling preservation, deep doctor plus light status,
+  uninstall plus reinstall with identical bytes;
+- negative branches on isolated fixtures: paused and archived blocked,
+  ID mismatch, traversal plus absolute plus symlink, migration states,
+  unsupported, quarantine, scope handling, lock-busy, read-only
+  quarantine evidence;
+- no purge, no Phase 4 SDK or adapter, no sibling modifications;
+- full suite green with inherited Phase 1 plus Phase 2 gates.
+
+Detailed contract: `docs/PHASE-3-ACCEPTANCE.md`.
+
+Task 27 / 41 is next.
+
+### Task 3.8 gate
+
+**PASSED.**
+
+### Phase 3 gate
+
+**PASSED.**
+
+## Current boundary
+
+Phase 3 is COMPLETE.
+
+Phase 4 has not started. Do not begin Phase 4 work until it is
+explicitly tasked.
 
 ## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
 
@@ -445,7 +489,7 @@ Core guarantees:
 - lifecycle alone creates zero `.sqlite` files;
 - lock contention fails closed with siblings present;
 - tracked OS files untouched;
-- no Task 26 Phase 3 gate; no sibling repository modifications.
+- no Task 26 Phase 3 gate at that boundary (now COMPLETE); no sibling repository modifications.
 
 Detailed contract: `docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`.
 
@@ -459,16 +503,19 @@ Task 3.7 does not implement:
 - real multi-repository integration;
 - sibling repository modifications.
 
-Task 26 / 41 is next.
+Task 26 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 3.7 gate
 
 **PASSED.**
 
+Task 26 / 41 was next at that boundary (now COMPLETE).
+
 ---
 
 ## Current boundary
 
-Task 26 / 41 is next.
+Phase 3 is COMPLETE.
 
-Do not begin Phase 4 until Task 26 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Phase 4 has not started. Do not begin Phase 4 work until it is
+explicitly tasked.
