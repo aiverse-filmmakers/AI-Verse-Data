@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-12  
-**Status:** Phase 4 COMPLETE, Phase 5 NOT STARTED  
-**Implementation progress:** 35 / 41 tasks complete  
-**Next:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix
+**Status:** Phase 5 IN PROGRESS  
+**Implementation progress:** 36 / 41 tasks complete  
+**Next:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,10 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [NOT STARTED]     0%
+Phase 5  Release Hardening             [IN PROGRESS]    17%  (1/6)
 ```
 
-Overall implementation: **35 / 41 tasks complete**.
+Overall implementation: **36 / 41 tasks complete**.
 
 ---
 
@@ -1249,10 +1249,33 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 
 # Phase 5 - Release Hardening
 
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 ## Task 36 / 41 - Phase 5.1 Cross-platform CI matrix
-macOS, Linux, Windows, supported Node versions, build/package/install smoke tests.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `.github/workflows/ci.yml` matrix covers `ubuntu-latest`,
+  `macos-latest`, and `windows-latest` crossed with Node 22 and 24;
+- every matrix leg runs `npm run check` (build plus full suite);
+- every matrix leg runs `npm pack --dry-run` package proof;
+- every matrix leg runs `node dist/src/cli.js --help` CLI smoke;
+- every matrix leg runs `npm pack --pack-destination <runner-temp>`
+  install-artifact smoke;
+- no new engine, no new `src/` surface, no test changes;
+- no sibling edits, no deletions.
+
+Local smoke proof (this host, Node 22):
+
+- `npm run build`: PASS;
+- `npm pack --dry-run`: PASS, 490 files;
+- `node dist/src/cli.js --help`: PASS, stable usage tokens.
+
+Phase status: `docs/PHASE-5-STATUS.md`.
+
+**Task 5.1 gate: PASSED.**
 
 ## Task 37 / 41 - Phase 5.2 Full adversarial filesystem/security suite
 Traversal, symlink/reparse escapes, Windows paths, malformed registries, stale locks, oversized inputs, corrupt DBs, capability forgery.

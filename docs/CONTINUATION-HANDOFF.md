@@ -13,15 +13,16 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
+Phase 5  Release Hardening             IN PROGRESS  1 / 6
 
-Overall implementation: 35 / 41 tasks complete
+Overall implementation: 36 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 35 / 41 - Phase 4.9: Phase 4 integration gate**
+**Task 36 / 41 - Phase 5.1: Cross-platform CI matrix**
 
-Implemented through Task 35:
+Implemented through Task 36:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -139,7 +140,10 @@ Implemented through Task 35:
 - cursors only ever move forward, no deletes, no mutations;
 - mismatch catch-ups never synthesized into missing records;
 - complete Phase 4 integration gate composing Task 27-34 with no new engine;
-- ownership, scope, permissions, receipts, and optionality preserved.
+- ownership, scope, permissions, receipts, and optionality preserved;
+- cross-platform CI matrix covers ubuntu/macos/windows crossed with Node 22/24;
+- every CI leg runs build plus full suite plus pack plus CLI plus install smoke;
+- no new engine, CI config plus smoke proof only.
 
 Detailed Task 21 contract:
 
@@ -224,7 +228,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 35:
+Implemented through Task 36:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -291,6 +295,19 @@ Task 34 local verification: 327 / 327 PASS on Node 22; exact-head CI cited on pu
 
 Task 35 local verification: 329 / 329 PASS on Node 22; exact-head CI cited on push.
 
+Task 36 local verification: 329 / 329 PASS on Node 22 (suite unchanged); build plus pack plus CLI smoke PASS; exact-head CI cited on push.
+
+## Task 36 architectural laws
+
+Task 36 must preserve:
+
+1. No new engine or `src/` surface; CI config plus smoke proof only.
+2. Matrix covers ubuntu/macos/windows crossed with Node 22 and 24.
+3. Every leg runs build plus full suite plus pack plus CLI plus install smoke.
+4. Full suite green with inherited Phase 1-4 gates.
+5. Exact-head CI cited before declaring complete.
+6. No sibling repository modifications are permitted.
+
 ## Task 35 architectural laws
 
 Task 35 must preserve:
@@ -304,11 +321,11 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 36 / 41 - Phase 5.1: Cross-platform CI matrix**
+**Task 37 / 41 - Phase 5.2: Full adversarial filesystem/security suite**
 
-macOS, Linux, Windows, supported Node versions, build/package/install smoke tests.
+Traversal, symlink/reparse escapes, Windows paths, malformed registries, stale locks, oversized inputs, corrupt DBs, capability forgery.
 
-Do not start Task 37 until Task 36 is explicitly tasked.
+Do not start Task 38 until Task 37 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -552,7 +569,7 @@ A task is not complete until all of the following are updated and committed:
 - task-specific contract or acceptance document when appropriate;
 - `README.md`;
 - `docs/BUILD-MAP.md`;
-- active phase status file, currently `docs/PHASE-3-STATUS.md`;
+- active phase status file, currently `docs/PHASE-5-STATUS.md`;
 - `docs/CONTINUATION-HANDOFF.md`;
 - any older docs that would otherwise contradict the new implementation state.
 

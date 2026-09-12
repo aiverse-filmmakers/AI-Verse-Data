@@ -4,7 +4,7 @@
 **Phase status:** IN PROGRESS
 **Implementation tasks completed:** 9 / 9
 **Overall implementation tasks completed:** 35 / 41
-**Next:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix
+**Next:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite (Phase 4 COMPLETE)
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -399,8 +399,4 @@ Phase status: this file.
 
 ## Current boundary
 
-Phase 4 is COMPLETE.
-
-Task 36 / 41 is next.
-
-Do not begin Task 37 until Task 36 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Phase 4 is COMPLETE. Phase 5 Task 36 is tracked in `docs/PHASE-5-STATUS.md`.

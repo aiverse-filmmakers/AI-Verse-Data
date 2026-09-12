@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 4 COMPLETE, Phase 5 NOT STARTED  
-**Completed implementation tasks:** 35 / 41  
-**Latest completed:** Task 35 / 41, Phase 4.9 - Phase 4 integration gate  
-**Next task:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix  
+**Status:** Phase 4 COMPLETE, Phase 5 IN PROGRESS  
+**Completed implementation tasks:** 36 / 41  
+**Latest completed:** Task 36 / 41, Phase 5.1 - Cross-platform CI matrix  
+**Next task:** Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -20,7 +20,7 @@ Repository/package foundation
   -> TypeScript + Node 22+
   -> CLI shell
   -> strict build/test setup
-  -> Node 22 + Node 24 CI
+  -> Node 22 + Node 24 CI on ubuntu/macos/windows
 
 Task 2 / 41 - COMPLETE
 Protocol types and validators
@@ -405,6 +405,13 @@ Phase 4 integration gate
   -> ownership, scope, permissions, receipts, optionality preserved
   -> negative branches fail closed without mutation
   -> no sibling edits
+
+Task 36 / 41 - COMPLETE
+Cross-platform CI matrix
+  -> ubuntu/macos/windows crossed with Node 22/24
+  -> every leg runs build plus full suite plus pack plus CLI plus install smoke
+  -> no new engine, CI config plus smoke proof only
+  -> no sibling edits
 ```
 
 Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
@@ -653,7 +660,7 @@ Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.m
 
 ### Latest verification
 
-Task 35 local verification (exact-head CI to be cited on push):
+Task 36 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
@@ -816,10 +823,11 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/CONNECTIONS-AUTHORITY-V0.1.md`](docs/CONNECTIONS-AUTHORITY-V0.1.md) - implemented Connections authority boundary
 - [`docs/AUTOMATION-EVENTS-V0.1.md`](docs/AUTOMATION-EVENTS-V0.1.md) - implemented Automation event adapter
 - [`docs/PHASE-4-ACCEPTANCE.md`](docs/PHASE-4-ACCEPTANCE.md) - Phase 4 integration gate and evidence
-- [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence
+- [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence (COMPLETE)
+- [`docs/PHASE-5-STATUS.md`](docs/PHASE-5-STATUS.md) - Phase 5 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 36 / 41, Phase 5.1 - Cross-platform CI matrix.**
+**Next: Task 37 / 41, Phase 5.2 - Full adversarial filesystem/security suite.**
