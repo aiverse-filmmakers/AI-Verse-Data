@@ -290,10 +290,10 @@ Extension instructions/runtime discovery
   -> no sibling edits
 
 Task 23 / 41 - COMPLETE
-Native CLI install/update/disable/uninstall
-  -> install/update/disable/uninstall CLI with required --root
+Native CLI install/update/enable/disable/uninstall
+  -> install/update/enable/disable/uninstall CLI with required --root
   -> thin wrapper over Task 19-22 primitives, no new engine
-  -> idempotent install/update, enabled-only disable, owned-only uninstall
+  -> idempotent install/update, explicit enable/disable, owned-only uninstall
   -> enabled:false plus unknown fields/files plus others preserved
   -> canonical databases byte-identical across lifecycle
   -> zero sqlite created by lifecycle alone
@@ -449,7 +449,7 @@ Full release acceptance suite
   -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/enable/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
 
 ## Public package surfaces
 
@@ -687,7 +687,7 @@ See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0
 
 Phase 3.4 adds read-only `discoverExtensionInstructions` under `@ai-verse/data/native`. It requires a Task 19-compatible host, parses the schema-`1.0` registry read-only, reads only `extensions["ai-verse-data"]`, requires supported plus installed plus enabled (respecting `enabled: false`), resolves instruction/engine/adapter paths as repo-relative inside the Data-owned extension directory, rejects traversal/absolute/symlink/oversize states, returns contents plus provenance with task-hint relevance, never executes the engine, never writes the registry, never touches tracked OS files, and never creates or opens any workspace database.
 
-Phase 3.5 adds thin CLI lifecycle commands composing the Task 19-22 primitives: install, update, disable, and uninstall with required `--root`, human plus `--json` output, exit 0/2/1 semantics, and next-step hints. Install and update reuse the Task 20 lock plus atomic replace plus raw-text lost-update check; disable flips only the Data entry's `enabled` to `false`; uninstall removes only the three owned files plus the owned root when empty plus the Data registry key. Canonical workspace databases stay byte-identical and purge stays out of scope.
+Phase 3.5 plus release hardening provides thin CLI lifecycle commands composing the native primitives: install, update, enable, disable, and uninstall with required `--root`, human plus `--json` output, exit 0/2/1 semantics, and next-step hints. Install and update preserve existing enabled/disabled intent; enable/disable explicitly flip only Data's own registry flag under the shared lock; uninstall removes only Data-owned extension files plus its registry key. Canonical workspace databases stay byte-identical and purge stays out of scope.
 
 Phase 3.6 adds read-only `doctorData` plus `statusData` under `@ai-verse/data/native` plus `doctor` plus `status` CLI commands. Doctor performs the deep check with SQLite runtime version, quick integrity for compatible databases, and WAL writability; status is the light check without integrity or WAL probes. Both report host mode, registry state, instruction presence, workspace identity, database state with migration detail, SQLite facts, problems with next steps, and informational sibling notes while creating zero databases and mutating nothing.
 
@@ -811,7 +811,7 @@ Phase 3.2 now uses AI-Verse OS's optional local extension contract under:
 .aiverse/extensions/registry.json
 ```
 
-Programmatic materialization/registration is implemented with hardened shared-registry mutation. Native CLI install/update/disable/uninstall and read-only doctor/status are implemented. Installing Data does not initialize every workspace automatically, and future uninstall must preserve canonical workspace Data by default.
+Programmatic materialization/registration is implemented with hardened shared-registry mutation. Native CLI install/update/enable/disable/uninstall and read-only doctor/status are implemented. Installing Data does not initialize every workspace automatically, and future uninstall must preserve canonical workspace Data by default.
 
 ## Canonical documents
 
