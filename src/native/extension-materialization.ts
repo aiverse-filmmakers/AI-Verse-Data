@@ -50,6 +50,8 @@ export interface MaterializationResult {
   readonly snapshots: readonly OwnedFileSnapshot[];
 }
 
+const DATA_RUNTIME_URL = new URL("../index.js", import.meta.url).href;
+
 const INSTRUCTIONS_CONTENT = `# AI-Verse Data Extension
 
 AI-Verse Data is the canonical structured operational data layer for AI-Verse OS.
@@ -61,6 +63,7 @@ Release 0.1 / Phase 5.6 contract:
 - use the public @ai-verse/data surfaces instead of opening canonical SQLite files directly;
 - AI-Verse OS remains authoritative for host identity, workspace identity, actor identity, and host-bound authorization;
 - AI-Verse OS invokes the registered engine through protocol ai-verse-data-host/1.0; the engine delegates to the public Data host handlers;
+- the engine records the concrete Data runtime that installed it, so OS loading does not depend on ambient node_modules lookup;
 - use openAiVerseDataHostSession() for direct trusted-host workspace sessions;
 - initialization is explicit and is never performed by a normal data.request;
 - migration-required, quarantined, conflicting, unsupported, paused, or archived workspace state is never silently repaired or rebound;
@@ -78,8 +81,22 @@ const ENGINE_CONTENT = `export const aiVerseDataExtension = Object.freeze({
   protocol: "ai-verse-data-host/1.0"
 });
 
+const installedRuntimeUrl = ${JSON.stringify(DATA_RUNTIME_URL)};
+
 async function dataPackage() {
-  const data = await import("@ai-verse/data");
+  let data;
+  try {
+    data = await import("@ai-verse/data");
+  } catch (bareImportError) {
+    try {
+      data = await import(installedRuntimeUrl);
+    } catch (installedRuntimeError) {
+      throw new Error(
+        "AI-Verse Data runtime is unavailable. Reinstall the Data extension from an installed @ai-verse/data package.",
+        { cause: { bareImportError, installedRuntimeError } }
+      );
+    }
+  }
   if (
     typeof data.describeAiVerseDataHostEngine !== "function" ||
     typeof data.handleAiVerseDataHostRequest !== "function"
@@ -134,6 +151,7 @@ const MANIFEST_CONTENT = `${JSON.stringify(
     engine: AI_VERSE_DATA_EXTENSION_ENGINE_PATH,
     host_protocol: "ai-verse-data-host/1.0",
     host_adapter: "openAiVerseDataHostSession",
+    runtime_module_url: DATA_RUNTIME_URL,
     adapters: ["host-session"],
     tracked_os_files_mutated: [],
     initializes_workspace_data: false,
