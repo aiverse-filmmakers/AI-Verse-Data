@@ -9,6 +9,8 @@ import { createBotsDataAdapter, isBotsDataAdapterError } from "../src/bots/index
 import { createDataClient } from "../src/client/index.js";
 import { createDashboardProjection } from "../src/dashboard/index.js";
 import { createMemoryBridge } from "../src/memory/index.js";
+import { createConnectionsAuthority } from "../src/connections/index.js";
+import { createAutomationEvents } from "../src/automation/index.js";
 import { isMemoryBridgeError } from "../src/memory/errors.js";
 import { isDataRecordError } from "../src/records/index.js";
 import { TrustedDataRoot, createWorkspaceDataScope } from "../src/scope/index.js";
@@ -273,6 +275,73 @@ test("records.list rejects its reserved cursor instead of silently ignoring it",
   } finally {
     client.close();
     fix.cleanup();
+  }
+});
+
+test("hardened wrappers preserve live closed state instead of spread snapshots", () => {
+  const appFix = fixture("closed-app");
+  const appClient = createDataClient({
+    scope: appFix.scope,
+    actor: { kind: "app", id: "closed-app" },
+    authorization: { mode: "host-bound", capabilityRefs: ["data:allowed:items:read"] },
+  });
+  try {
+    const app = createAppsDataKit(appClient, {
+      app: "closed-app",
+      scope: "workspace",
+      data: {
+        spaces: { allowed: { schemas: ["items"] } },
+        capabilities: ["read"],
+      },
+    });
+    assert.equal(app.closed, false);
+    appClient.close();
+    assert.equal(app.closed, true);
+  } finally {
+    appClient.close();
+    appFix.cleanup();
+  }
+
+  const botFix = fixture("closed-bot");
+  const botClient = createDataClient({
+    scope: botFix.scope,
+    actor: { kind: "bot", id: "closed-bot" },
+    authorization: { mode: "host-bound", capabilityRefs: ["data:allowed:items:read"] },
+  });
+  try {
+    const bot = createBotsDataAdapter(botClient, {
+      workspaceId: "closed-bot",
+      principal: { kind: "bot", id: "closed-bot" },
+      taskId: "closed-task",
+      capabilities: ["data:allowed:items:read"],
+    });
+    assert.equal(bot.closed, false);
+    botClient.close();
+    assert.equal(bot.closed, true);
+  } finally {
+    botClient.close();
+    botFix.cleanup();
+  }
+
+  const humanFix = fixture("closed-human");
+  const humanClient = createDataClient({
+    scope: humanFix.scope,
+    actor: { kind: "human", id: "closed-human" },
+    authorization: { mode: "local-operator" },
+  });
+  try {
+    const wrappers = [
+      createMemoryBridge(humanClient),
+      createDashboardProjection(humanClient),
+      createConnectionsAuthority(humanClient),
+      createAutomationEvents(humanClient),
+    ];
+    for (const wrapper of wrappers) assert.equal(wrapper.closed, false);
+    humanClient.close();
+    for (const wrapper of wrappers) assert.equal(wrapper.closed, true);
+  } finally {
+    humanClient.close();
+    humanFix.cleanup();
   }
 });
 
