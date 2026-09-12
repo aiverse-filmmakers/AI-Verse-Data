@@ -90,7 +90,6 @@ export function createAppsDataKit(
     provenance: {
       listEvents(input?: EventsListPayload) {
         const out = base.provenance.listEvents(input);
-        if (input?.spaceId !== undefined) return out;
         const items = out.result.items.filter(
           (event) =>
             event.spaceId !== null &&
