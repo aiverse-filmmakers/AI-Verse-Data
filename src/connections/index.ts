@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export { createConnectionsAuthority } from "./authority.js";
+export { createConnectionsAuthority } from "./secure-authority.js";
 export type {
   ConnectionsAuthority,
   ConnectionsAuthorityClass,
