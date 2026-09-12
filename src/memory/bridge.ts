@@ -14,7 +14,6 @@ import type {
 import type { DataRecordSnapshot } from "../records/index.js";
 import type {
   DataEvent,
-  DataEventPage,
   DataMutationReceipt,
 } from "../provenance/index.js";
 import { MemoryBridgeError } from "./errors.js";
@@ -389,20 +388,19 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
           receipt = null;
         }
       } else if (reference.eventId !== null) {
-        const events = client.provenance.listEvents({
-          spaceId: reference.spaceId,
-          entity: reference.entity as string,
-          recordId: reference.recordId as string,
-          limit: 200,
-        }).result;
-        const match = events.items.find(
-          (item) => item.eventId === reference.eventId,
-        );
-        if (match !== undefined) {
-          receipt = client.provenance.getReceiptByIdempotencyKey(
-            match.idempotencyKey,
-          ).result;
+        const event = client.provenance.getEvent(reference.eventId).result;
+        if (
+          event.spaceId !== reference.spaceId ||
+          event.entity !== reference.entity ||
+          event.recordId !== reference.recordId
+        ) {
+          failInvalid(
+            "Reference event does not belong to the referenced record.",
+          );
         }
+        receipt = client.provenance.getReceiptByIdempotencyKey(
+          event.idempotencyKey,
+        ).result;
       }
     }
     return {
@@ -474,75 +472,32 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
         }
         if (input.eventId !== undefined) {
           const id = checkOpaqueId(input.eventId, "eventId") as string;
-          const page: DataEventPage = client.provenance.listEvents({
-            limit: 200,
-          }).result;
-          const found = page.items.find((item) => item.eventId === id);
-          if (found === undefined) {
-            failInvalid(`Event '${id}' was not found in this workspace.`);
-          }
-          return eventEvidence(found);
+          return eventEvidence(client.provenance.getEvent(id).result);
         }
         if (input.receiptId !== undefined) {
           const id = checkOpaqueId(input.receiptId, "receiptId") as string;
           const receipt = client.provenance.getReceipt(id).result;
-          const filters: {
-            readonly spaceId?: string;
-            readonly entity?: string;
-            readonly recordId?: string;
-            readonly limit: number;
-          } = { limit: 200 };
-          const page: DataEventPage = client.provenance.listEvents({
-            ...(receipt.spaceId === null ? {} : { spaceId: receipt.spaceId }),
-            ...(receipt.entity === null ? {} : { entity: receipt.entity }),
-            ...(receipt.recordId === null ? {} : { recordId: receipt.recordId }),
-            limit: filters.limit,
-          }).result;
-          const found = page.items.find((item) => item.eventId === receipt.eventId);
-          if (found === undefined) {
-            failInvalid(`Event for receipt '${id}' was not found.`);
-          }
-          return eventEvidence(found);
+          return eventEvidence(
+            client.provenance.getEvent(receipt.eventId).result,
+          );
         }
         const key = checkOpaqueId(
           input.idempotencyKey as string,
           "idempotencyKey",
         ) as string;
-        const receipt = client.provenance.getReceiptByIdempotencyKey(key).result;
-        const page: DataEventPage = client.provenance.listEvents({
-          ...(receipt.spaceId === null ? {} : { spaceId: receipt.spaceId }),
-          ...(receipt.entity === null ? {} : { entity: receipt.entity }),
-          ...(receipt.recordId === null ? {} : { recordId: receipt.recordId }),
-          limit: 200,
-        }).result;
-        const found = page.items.find((item) => item.eventId === receipt.eventId);
-        if (found === undefined) {
-          failInvalid(`Event for idempotency key '${key}' was not found.`);
-        }
-        return eventEvidence(found);
+        const receipt =
+          client.provenance.getReceiptByIdempotencyKey(key).result;
+        return eventEvidence(
+          client.provenance.getEvent(receipt.eventId).result,
+        );
       },
       lookupByReference(reference: DataProvenanceReference | string) {
         assertUsable();
         const resolved = resolveReference(reference);
         if (resolved.eventId !== null && resolved.recordId === "unknown") {
-          return eventEvidence({
-            eventId: resolved.eventId,
-            eventType: "record.updated",
-            operation: "data.record.update",
-            requestId: "req_unknown",
-            transactionId: null,
-            scopeKind: "workspace",
-            workspaceId: resolved.workspaceId,
-            idempotencyKey: "unknown",
-            spaceId: resolved.spaceId,
-            entity: resolved.entity,
-            recordId: null,
-            beforeVersion: null,
-            afterVersion: resolved.recordVersion,
-            actor: { kind: "system", id: "unknown" },
-            committedAt: new Date(0).toISOString(),
-            details: {},
-          }) as unknown as DataSuccessResult<
+          return eventEvidence(
+            client.provenance.getEvent(resolved.eventId).result,
+          ) as DataSuccessResult<
             MemoryEvidenceRecord | MemoryEvidenceEvent
           >;
         }
@@ -613,41 +568,19 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
         let event: DataEvent;
         if (input.eventId !== undefined) {
           const id = checkOpaqueId(input.eventId, "eventId") as string;
-          const page: DataEventPage = client.provenance.listEvents({
-            limit: 200,
-          }).result;
-          const found = page.items.find((item) => item.eventId === id);
-          if (found === undefined) failInvalid(`Event '${id}' was not found.`);
-          event = found as DataEvent;
+          event = client.provenance.getEvent(id).result;
         } else if (input.receiptId !== undefined) {
           const id = checkOpaqueId(input.receiptId, "receiptId") as string;
           const receipt = client.provenance.getReceipt(id).result;
-          const page: DataEventPage = client.provenance.listEvents({
-            limit: 200,
-          }).result;
-          const found = page.items.find(
-            (item) => item.eventId === receipt.eventId,
-          );
-          if (found === undefined) {
-            failInvalid(`Event for receipt '${id}' was not found.`);
-          }
-          event = found as DataEvent;
+          event = client.provenance.getEvent(receipt.eventId).result;
         } else {
           const key = checkOpaqueId(
             input.idempotencyKey as string,
             "idempotencyKey",
           ) as string;
-          const receipt = client.provenance.getReceiptByIdempotencyKey(key).result;
-          const page: DataEventPage = client.provenance.listEvents({
-            limit: 200,
-          }).result;
-          const found = page.items.find(
-            (item) => item.eventId === receipt.eventId,
-          );
-          if (found === undefined) {
-            failInvalid(`Event for idempotency key '${key}' was not found.`);
-          }
-          event = found as DataEvent;
+          const receipt =
+            client.provenance.getReceiptByIdempotencyKey(key).result;
+          event = client.provenance.getEvent(receipt.eventId).result;
         }
         const reference = forRecord({
           spaceId: event.spaceId ?? "unknown",
