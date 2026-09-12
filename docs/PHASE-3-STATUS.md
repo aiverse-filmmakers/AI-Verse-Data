@@ -2,9 +2,9 @@
 
 **Phase:** 3 - Native AI-Verse Integration  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 4 / 8  
-**Overall implementation tasks completed:** 22 / 41  
-**Next:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall
+**Implementation tasks completed:** 5 / 8  
+**Overall implementation tasks completed:** 23 / 41  
+**Next:** Task 24 / 41, Phase 3.6 - Native doctor + status
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -303,7 +303,7 @@ Task 3.4 does not implement:
 - permanent `AGENTS.md` blocks;
 - sibling repository modifications.
 
-Task 23 / 41 is next.
+Task 23 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 3.4 gate
 
@@ -317,13 +317,51 @@ Task 23 / 41 is next.
 |---|---|---|---|
 | 21 / 41 | 3.3 | COMPLETE | Native workspace resolver + Data initialization |
 | 22 / 41 | 3.4 | COMPLETE | Extension instructions/runtime discovery |
-| 23 / 41 | 3.5 | NEXT | Native CLI install/update/disable/uninstall |
-| 24 / 41 | 3.6 | NOT STARTED | Native doctor + status |
+| 23 / 41 | 3.5 | COMPLETE | Native CLI install/update/disable/uninstall |
+| 24 / 41 | 3.6 | NEXT | Native doctor + status |
 | 25 / 41 | 3.7 | NOT STARTED | Installation-order/registry coexistence suite |
 | 26 / 41 | 3.8 | NOT STARTED | Phase 3 gate |
 
+## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
+
+**Implementation status:** COMPLETE
+
+Phase 3.5 composes the Task 19-22 primitives into user-facing lifecycle commands while preserving canonical workspace databases.
+
+Core guarantees:
+
+- `install`, `update`, `disable`, and `uninstall` in `src/cli.ts` with required `--root` and no working-directory guessing;
+- human plus `--json` output with exit `0` ok, `2` usage, `1` fail-closed with stable error code plus next step;
+- Task 19-compatible trusted OS root prerequisite; `no-os` and `incompatible` fail closed with no standalone masking;
+- install/update reuse the Task 20 installer verbatim (lock, in-lock re-read, raw-text lost-update check, atomic replacement);
+- disable flips only the Data-owned `enabled` entry under lock; owned files plus canonical databases untouched;
+- uninstall removes only `.aiverse/extensions/ai-verse-data/` owned files plus the owned registry key; canonical databases, unrelated entries, and unknown state preserved;
+- install orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions preserved;
+- lifecycle alone creates zero `.sqlite` files;
+- no purge behavior; no Task 24 doctor/status; no sibling repository modifications.
+
+Detailed contract: `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 3.5 does not implement:
+
+- native doctor/status;
+- purge or destructive data removal;
+- workspace database initialization, migration, repair, or promotion;
+- health or permission assertions from registration;
+- sibling repository modifications.
+
+Task 24 / 41 is next.
+
+### Task 3.5 gate
+
+**PASSED.**
+
+---
+
 ## Current boundary
 
-Task 23 / 41 is next.
+Task 24 / 41 is next.
 
-Do not begin Task 24 until Task 23 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 25 until Task 24 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

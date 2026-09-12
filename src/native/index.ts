@@ -16,6 +16,14 @@ export {
   AiVerseWorkspaceDataInitializer,
   initWorkspaceData,
 } from "./workspace-init.js";
+export * from "./lifecycle-types.js";
+export {
+  AiVerseDataExtensionLifecycle,
+  disableDataExtension,
+  installDataExtension,
+  uninstallDataExtension,
+  updateDataExtension,
+} from "./lifecycle.js";
 export {
   AiVerseDataInstructionDiscovery,
   discoverExtensionInstructions,

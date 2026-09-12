@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 Native AI-Verse Integration in progress  
-**Completed implementation tasks:** 22 / 41  
-**Latest completed:** Task 22 / 41, Phase 3.4 - Extension instructions/runtime discovery  
-**Next task:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall  
+**Completed implementation tasks:** 23 / 41  
+**Latest completed:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall  
+**Next task:** Task 24 / 41, Phase 3.6 - Native doctor + status  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -288,9 +288,21 @@ Extension instructions/runtime discovery
   -> no registry write, no tracked OS mutation
   -> no Task 23 CLI lifecycle
   -> no sibling edits
+
+Task 23 / 41 - COMPLETE
+Native CLI install/update/disable/uninstall
+  -> install/update/disable/uninstall CLI with required --root
+  -> thin wrapper over Task 19-22 primitives, no new engine
+  -> idempotent install/update, enabled-only disable, owned-only uninstall
+  -> enabled:false plus unknown fields/files plus others preserved
+  -> canonical databases byte-identical across lifecycle
+  -> zero sqlite created by lifecycle alone
+  -> exit 0/1/2 with stable codes plus next-step hints
+  -> no purge, no Task 24 doctor/status
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Task 23 native CLI lifecycle is next.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Task 24 doctor/status is next.
 
 ## Public package surfaces
 
@@ -517,17 +529,33 @@ Task 20 does not edit tracked OS files and does not create any workspace Data da
 
 Phase 3.3 adds ID-only `resolveWorkspace`, active-only `initWorkspaceData`, and seven-state `discoverWorkspaceData` under `@ai-verse/data/native`. Resolution starts from a Task 19-compatible trusted OS root, inspects only `workspaces/<requested-id>/WORKSPACE.yaml`, requires an exact manifest ID match, tolerates additive manifest fields, reports paused/archived status, derives the canonical `workspaces/<id>/data/ai-verse-data.sqlite` path internally, reuses the workspace-scoped binding contract, stays idempotent on repeat init, and never silently replaces, migrates, repairs, or rebounds an existing database. Discovery reports `missing`, `compatible`, `migration_required`, `quarantined`, `scope_conflict`, `unsupported`, and `unavailable` by reusing the storage/recovery contracts.
 
-See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md), and [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md).
+See [`docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`](docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md), [`docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`](docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md), [`docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`](docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md), [`docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`](docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md), and [`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`](docs/NATIVE-CLI-LIFECYCLE-V0.1.md).
 
 Phase 3.4 adds read-only `discoverExtensionInstructions` under `@ai-verse/data/native`. It requires a Task 19-compatible host, parses the schema-`1.0` registry read-only, reads only `extensions["ai-verse-data"]`, requires supported plus installed plus enabled (respecting `enabled: false`), resolves instruction/engine/adapter paths as repo-relative inside the Data-owned extension directory, rejects traversal/absolute/symlink/oversize states, returns contents plus provenance with task-hint relevance, never executes the engine, never writes the registry, never touches tracked OS files, and never creates or opens any workspace database.
 
+Phase 3.5 adds thin CLI lifecycle commands composing the Task 19-22 primitives: install, update, disable, and uninstall with required `--root`, human plus `--json` output, exit 0/2/1 semantics, and next-step hints. Install and update reuse the Task 20 lock plus atomic replace plus raw-text lost-update check; disable flips only the Data entry's `enabled` to `false`; uninstall removes only the three owned files plus the owned root when empty plus the Data registry key. Canonical workspace databases stay byte-identical, purge stays out of scope, and Task 24 doctor/status remains next.
+
 ### Latest verification
 
-Task 22 local verification (exact-head CI to be cited on push):
+Task 23 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
 Node 24  pending CI
+
+262 tests
+262 passed
+0 failed
+0 skipped
+0 cancelled
+```
+
+Prior Task 22 CI run: `34676815629`
+Task 22 head: `e86749f`
+
+```text
+Node 22  PASS
+Node 24  PASS
 
 253 tests
 253 passed
@@ -536,21 +564,7 @@ Node 24  pending CI
 0 cancelled
 ```
 
-Prior Task 20 behavioral CI run: `34606467549`
-Behavioral commit: `1e88ba758dcc1151b4de6f60e8c3b2a9822afad7`
-
-```text
-Node 22  PASS
-Node 24  PASS
-
-229 tests
-229 passed
-0 failed
-0 skipped
-0 cancelled
-```
-
-The Task 20 suite proves read-only planning, fresh registration, unknown-state preservation, disabled-state preservation, idempotent reinstall, malformed-registry fail-closed behavior, lock ownership, symlink/path rejection, expected-raw competing-writer detection, pre-commit owned-file rollback, and no workspace initialization.
+The Task 23 suite proves install/update/disable/uninstall CLI with required `--root`, human plus `--json` output, exit 0/2/1 semantics, Task 20 lock plus atomic replace reuse, disable-only-`enabled` behavior, owned-only uninstall with canonical databases preserved, install-order coexistence, zero `.sqlite` from lifecycle alone, and no purge or doctor behavior.
 
 ## Why Data is separate from Memory
 
@@ -680,4 +694,4 @@ Programmatic materialization/registration is implemented with hardened shared-re
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall.**
+**Next: Task 24 / 41, Phase 3.6 - Native doctor + status.**

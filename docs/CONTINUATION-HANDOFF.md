@@ -11,16 +11,16 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   IN PROGRESS  4 / 8
+Phase 3  Native AI-Verse Integration   IN PROGRESS  5 / 8
 
-Overall implementation: 22 / 41 tasks complete
+Overall implementation: 23 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 22 / 41 - Phase 3.4: Extension instructions/runtime discovery**
+**Task 23 / 41 - Phase 3.5: Native CLI install/update/disable/uninstall**
 
-Implemented through Task 22:
+Implemented through Task 23:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -58,7 +58,15 @@ Implemented through Task 22:
 - no silent replace, migrate, repair, rebind, or quarantine clearing;
 - read-only task-relevant extension instruction/runtime discovery;
 - ready/disabled/not-installed instruction states with enabled:false respected;
-- Data-owned instruction files only with byte-identical read-only proof.
+- Data-owned instruction files only with byte-identical read-only proof;
+- native CLI install/update/disable/uninstall with required `--root`;
+- human plus `--json` output with exit 0/2/1 semantics;
+- install/update reuse Task 20 lock plus atomic replace plus lost-update check;
+- disable flips only the Data-owned `enabled` entry;
+- uninstall removes only owned files plus the owned registry key;
+- canonical databases byte-identical across lifecycle;
+- zero `.sqlite` created by lifecycle alone;
+- no purge, no Task 24 doctor/status.
 
 Detailed Task 21 contract:
 
@@ -67,6 +75,10 @@ Detailed Task 21 contract:
 Detailed Task 22 contract:
 
 `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
+
+Detailed Task 23 contract:
+
+`docs/NATIVE-CLI-LIFECYCLE-V0.1.md`
 
 Behavioral implementation verification:
 
@@ -160,11 +172,11 @@ The Task 20 behavioral implementation and documentation closeout candidate are v
 
 ## NEXT
 
-**Task 23 / 41 - Phase 3.5: Native CLI install/update/disable/uninstall**
+**Task 24 / 41 - Phase 3.6: Native doctor + status**
 
-Lifecycle commands while preserving canonical workspace databases; purge stays separate/destructive.
+Registration, engine health, DB state, SQLite features, binding, integrity, migration status.
 
-Do not start Task 24 until Task 23 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Do not start Task 25 until Task 24 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
 ## Task 21 architectural laws
 
@@ -205,16 +217,31 @@ Task 22 must preserve:
 9. Task 22 must not implement Task 23 CLI lifecycle or Task 24 doctor behavior early.
 10. No sibling repository modifications are permitted.
 
-## Canonical documents to read before Task 23
+## Task 23 architectural laws
+
+Task 23 must preserve:
+
+1. Lifecycle commands start from a Task 19-compatible trusted OS root; `no-os` and `incompatible` fail closed with no standalone masking.
+2. `--root` is required with no working-directory guessing.
+3. Install/update reuse the Task 20 installer verbatim (lock, in-lock re-read, raw-text lost-update check, atomic replacement).
+4. Disable flips only the Data-owned `enabled` entry under lock; owned files plus canonical databases untouched.
+5. Uninstall removes only Data-owned extension files plus the owned registry key; canonical databases, unrelated entries, and unknown state preserved.
+6. Install orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions preserved.
+7. Lifecycle alone creates zero `.sqlite` files; no purge behavior.
+8. No registry write beyond the owned entry; no tracked OS mutation.
+9. Task 23 must not implement Task 24 doctor/status behavior early.
+10. No sibling repository modifications are permitted.
+
+## Canonical documents to read before Task 24
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-3-STATUS.md`
 4. `docs/INSTALLATION-AND-LIFECYCLE.md`
-5. `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`
-6. `docs/EXTENSION-MATERIALIZATION-REGISTRATION-V0.1.md`
-7. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
-8. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
+5. `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`
+6. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
+7. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
+8. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
 9. `docs/SECURITY-AND-AUTHORITY.md`
 10. `docs/TESTING-AND-ACCEPTANCE.md`
 

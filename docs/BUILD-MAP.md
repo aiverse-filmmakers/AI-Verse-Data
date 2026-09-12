@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 22 / 41 tasks complete  
-**Next:** Task 23 / 41, Phase 3.5 - Native CLI install/update/disable/uninstall
+**Implementation progress:** 23 / 41 tasks complete  
+**Next:** Task 24 / 41, Phase 3.6 - Native doctor + status
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    50%  (4/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    62%  (5/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **22 / 41 tasks complete**.
+Overall implementation: **23 / 41 tasks complete**.
 
 ---
 
@@ -966,7 +966,26 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.4 gate: PASSED.**
 
 ## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
-Lifecycle commands while preserving canonical workspace databases; purge stays separate/destructive.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `install`, `update`, `disable`, and `uninstall` lifecycle commands in `src/cli.ts` composing existing Task 19-22 primitives;
+- `--root <os-root>` required with no working-directory guessing;
+- human plus `--json` output with exit `0` ok, `2` usage, `1` fail-closed with stable error code plus next step;
+- Task 19-compatible trusted OS root prerequisite with `no-os`/`incompatible` fail-closed and no standalone masking;
+- install/update reuse the Task 20 installer verbatim with lock, in-lock re-read, raw-text lost-update check, and atomic replacement;
+- disable flips only the Data-owned `enabled` entry to `false` under lock with owned files plus canonical databases untouched;
+- uninstall removes only `.aiverse/extensions/ai-verse-data/` owned files plus the owned `extensions["ai-verse-data"]` registry key, preserving canonical workspace databases, unrelated entries, and unknown state;
+- install orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions preserved;
+- lifecycle alone creates zero `.sqlite` files;
+- no purge behavior; no Task 24 doctor/status; no sibling repository modifications.
+
+Detailed contract: `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.5 gate: PASSED.**
 
 ## Task 24 / 41 - Phase 3.6 Native doctor + status
 Registration, engine health, DB state, SQLite features, binding, integrity, migration status.

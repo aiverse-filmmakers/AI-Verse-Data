@@ -19,11 +19,12 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 3.4 instruction boundary", () => {
+test("--help succeeds and identifies the Phase 3.5 lifecycle boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 3\.4 adds read-only task-relevant extension instruction/);
+  assert.match(result.stdout, /Phase 3\.5 adds native CLI install\/update\/disable\/uninstall/);
+  assert.match(result.stdout, /install --root/);
   assert.equal(result.stderr, "");
 });
 
@@ -38,4 +39,15 @@ test("unknown arguments fail explicitly", () => {
   const result = runCli("records");
   assert.equal(result.status, 2);
   assert.match(result.stderr, /Unknown argument: records/);
+});
+
+test("lifecycle commands require --root and report exit codes", () => {
+  const missing = runCli("install");
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /--root/);
+
+  const badRoot = runCli("install", "--root", "/does/not/exist-ai-verse");
+  assert.equal(badRoot.status, 1);
+  assert.match(badRoot.stderr, /AI_VERSE_OS_NOT_FOUND/);
+  assert.match(badRoot.stderr, /Next step/);
 });
