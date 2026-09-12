@@ -174,6 +174,29 @@ test("stable references round-trip and evidence re-opens live records", () => {
         }),
       (error: unknown) => isMemoryBridgeError(error),
     );
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: false,
+          receiptId: otherDeal.result.receipt.receiptId,
+        }),
+      (error: unknown) => isMemoryBridgeError(error),
+    );
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: true,
+          idempotencyKey: "memory:deal:1",
+          receiptId: otherDeal.result.receipt.receiptId,
+        }),
+      (error: unknown) => isMemoryBridgeError(error),
+    );
 
     const byRef = bridge.evidence.lookupByReference(reference.uri);
     assert.equal(byRef.ok, true);
