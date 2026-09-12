@@ -33,6 +33,11 @@ import {
   AI_VERSE_OS_REQUIRED_SCHEMA_MAJOR,
 } from "./types.js";
 
+const HOST_BRIDGE_MODULE_URL = new URL(
+  "./host-bridge.js",
+  import.meta.url,
+).href;
+
 interface OwnedFileSpec {
   readonly relativePath: string;
   readonly contents: string;
@@ -68,7 +73,12 @@ First-release boundary:
 Canonical Data remains user-owned and must not be deleted merely because extension software is updated or removed.
 `;
 
-const ENGINE_CONTENT = `export const aiVerseDataExtension = Object.freeze({
+const ENGINE_CONTENT = `import {
+  handleNativeDataHostRequest,
+  describeNativeDataHost
+} from ${JSON.stringify(HOST_BRIDGE_MODULE_URL)};
+
+export const aiVerseDataExtension = Object.freeze({
   id: "ai-verse-data",
   package: "@ai-verse/data",
   version: "${AI_VERSE_DATA_EXTENSION_VERSION}",
@@ -76,8 +86,12 @@ const ENGINE_CONTENT = `export const aiVerseDataExtension = Object.freeze({
   phase: "5.6",
   releaseComplete: true,
   workspaceInitialization: "explicit",
-  registrationOnly: false
+  registrationOnly: false,
+  hostProtocol: "ai-verse-data-host/1.0"
 });
+
+export const describe = describeNativeDataHost;
+export const handleRequest = handleNativeDataHostRequest;
 
 export default aiVerseDataExtension;
 `;
