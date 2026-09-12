@@ -58,7 +58,6 @@ function executableDataEntry(
 ): AiVerseDataExtensionJsonObject {
   return {
     ...buildDataExtensionEntry(existing),
-    adapters: ["host-session"],
     host_adapter: "openAiVerseDataHostSession",
   };
 }
