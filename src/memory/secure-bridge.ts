@@ -58,6 +58,23 @@ function findEvent(
   }
 }
 
+function requireReceiptForRecord(
+  client: DataClient,
+  receipt: DataMutationReceipt,
+  input: { readonly spaceId: string; readonly entity: string; readonly recordId: string },
+): void {
+  if (
+    receipt.workspaceId !== client.scope.workspaceId ||
+    receipt.spaceId !== input.spaceId ||
+    receipt.entity !== input.entity ||
+    receipt.recordId !== input.recordId
+  ) {
+    invalid(
+      "Requested receipt does not belong to the requested workspace/space/entity/record.",
+    );
+  }
+}
+
 function receiptEvent(client: DataClient, receipt: DataMutationReceipt): DataSuccessResult<DataEvent> {
   return findEvent(client, receipt.eventId, {
     ...(receipt.spaceId === null ? {} : { spaceId: receipt.spaceId }),
@@ -113,8 +130,10 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
     if (input.includeReceipt ?? false) {
       if (input.idempotencyKey !== undefined) {
         receipt = client.provenance.getReceiptByIdempotencyKey(input.idempotencyKey).result;
+        requireReceiptForRecord(client, receipt, input);
       } else if (input.receiptId !== undefined && input.receiptId !== null) {
         receipt = client.provenance.getReceipt(input.receiptId).result;
+        requireReceiptForRecord(client, receipt, input);
       } else if (input.eventId !== undefined && input.eventId !== null) {
         const event = findEvent(client, input.eventId, {
           spaceId: input.spaceId,
@@ -122,6 +141,7 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
           recordId: input.recordId,
         }).result;
         receipt = client.provenance.getReceiptByIdempotencyKey(event.idempotencyKey).result;
+        requireReceiptForRecord(client, receipt, input);
       }
     }
     const reference = base.references.forRecord({
