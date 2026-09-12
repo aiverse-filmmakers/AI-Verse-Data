@@ -173,13 +173,32 @@ test("bounded query plus aggregates answer with provenance and no goal copy", ()
 test("spaces, schemas, events, receipts, and health stay read-only with provenance", () => {
   const { fix, client } = brainSetup();
   try {
-    const company = client.records.createWithReceipt({
+    const company = client.records.create({
       spaceId: "crm",
       entity: "companies",
       idempotencyKey: "brain:company:ro",
       data: { name: "ReadOnly Co" },
     });
     assert.equal(company.ok, true);
+    const deal = client.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "deals",
+      idempotencyKey: "brain:deal:ro",
+      data: {
+        title: "Readable deal",
+        value: 10,
+        stage: "lead",
+        company: company.result.recordId,
+      },
+    });
+    assert.equal(deal.ok, true);
+    const hidden = client.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "companies",
+      idempotencyKey: "brain:company:hidden",
+      data: { name: "Hidden Co" },
+    });
+    assert.equal(hidden.ok, true);
     const brain = createBrainDataAdapter(client);
 
     const spaces = brain.spaces.list();
@@ -187,11 +206,12 @@ test("spaces, schemas, events, receipts, and health stay read-only with provenan
     assert.equal(spaces.result.length, 1);
     const summarized = brain.spaces.summarize({ spaceId: "crm" });
     assert.equal(summarized.ok, true);
-    assert.equal(summarized.result.schemaCount, 2);
+    assert.equal(summarized.result.schemaCount, 1);
 
     const schemas = brain.schemas.list({ spaceId: "crm" });
     assert.equal(schemas.ok, true);
-    assert.equal(schemas.result.length, 2);
+    assert.equal(schemas.result.length, 1);
+    assert.equal(schemas.result[0]?.entity, "deals");
     const entity = brain.schemas.summarize({
       spaceId: "crm",
       entity: "deals",
@@ -206,17 +226,44 @@ test("spaces, schemas, events, receipts, and health stay read-only with provenan
     assert.ok(events.result.provenance.recordCount >= 1);
 
     const receipt = brain.provenance.getReceiptByIdempotencyKey(
-      "brain:company:ro",
+      "brain:deal:ro",
     );
     assert.equal(receipt.ok, true);
     assert.equal(
       receipt.result.receipt.recordId,
-      company.result.record.recordId,
+      deal.result.record.recordId,
     );
     const byId = brain.provenance.getReceipt(
       receipt.result.receipt.receiptId,
     );
     assert.equal(byId.ok, true);
+
+    assert.throws(
+      () => brain.provenance.getReceipt(hidden.result.receipt.receiptId),
+      (error: unknown) => {
+        assert.ok(isBrainDataAdapterError(error));
+        assert.equal(
+          (error as BrainDataAdapterError).code,
+          "BRAIN_PERMISSION_DENIED",
+        );
+        return true;
+      },
+    );
+    assert.throws(
+      () =>
+        brain.schemas.get({
+          spaceId: "crm",
+          entity: "companies",
+        }),
+      (error: unknown) => {
+        assert.ok(isBrainDataAdapterError(error));
+        assert.equal(
+          (error as BrainDataAdapterError).code,
+          "BRAIN_PERMISSION_DENIED",
+        );
+        return true;
+      },
+    );
 
     const facts = brain.health.diagnostics();
     assert.equal(facts.ok, true);
