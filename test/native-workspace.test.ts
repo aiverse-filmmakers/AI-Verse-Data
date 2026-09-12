@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -39,7 +40,7 @@ interface Fixture {
 }
 
 function fixture(): Fixture {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-")));
   return {
     rootPath,
     cleanup(): void {
@@ -274,7 +275,7 @@ test("resolver rejects symlinked workspace directories and manifests", {
     writeWorkspace(linkFixture.rootPath, "real");
     writeWorkspace(manifestFixture.rootPath, "sales");
 
-    const outside = mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-out-"));
+    const outside = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-out-")));
     try {
       rmSync(join(linkFixture.rootPath, "workspaces", "linked"), {
         recursive: true,
@@ -879,7 +880,7 @@ test("symlinked database paths fail closed and discovery never migrates or repai
     assert.deepEqual(readFileSync(databasePath), before);
 
     if (process.platform !== "win32") {
-      const outside = mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-db-"));
+      const outside = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-ws21-db-")));
       try {
         const target = join(outside, "external.sqlite");
         writeFileSync(target, before);

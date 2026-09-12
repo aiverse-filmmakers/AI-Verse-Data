@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -32,7 +33,7 @@ interface Fixture {
 }
 
 function fixture(): Fixture {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-instr22-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-instr22-")));
   return {
     rootPath,
     cleanup(): void {
@@ -180,7 +181,9 @@ test("ready discovery returns Data files only and leaves the fixture byte-identi
     assert.match(result.manifest.contents, /ai-verse-data/);
     assert.deepEqual(result.adapters, []);
     assert.ok(
-      result.instructions.absolutePath.startsWith(f.rootPath),
+      realpathSync(result.instructions.absolutePath).startsWith(
+        realpathSync(f.rootPath),
+      ),
     );
 
     const viaClass = new AiVerseDataInstructionDiscovery().discover({
