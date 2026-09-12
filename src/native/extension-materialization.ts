@@ -56,13 +56,14 @@ AI-Verse Data is the structured operational data layer for AI-Verse OS.
 
 This installed file is owned by AI-Verse Data.
 
-Phase 3.2 boundary:
+First-release boundary:
 
 - use the public @ai-verse/data package surfaces for structured Data operations;
-- do not open canonical SQLite files directly from model, Bot, App, or Dashboard code;
-- AI-Verse OS remains authoritative for host and workspace scope;
-- this materialization step does not initialize any workspace database;
-- native task-relevant runtime discovery and workspace initialization are introduced by later Phase 3 tasks.
+- do not open canonical SQLite files directly from model, Bot, App, Brain, Memory, or Dashboard code;
+- AI-Verse OS remains authoritative for host identity, workspace scope, permissions, and routing;
+- extension installation is registration-only with respect to workspace data: it never creates a workspace database implicitly;
+- workspace discovery and initialization are explicit native operations, and doctor/status are read-only health operations;
+- Bots, Brain, Memory, Dashboard, Apps, Connections, and Automation integrations must use their scoped Data adapters rather than bypassing them.
 
 Canonical Data remains user-owned and must not be deleted merely because extension software is updated or removed.
 `;
@@ -72,8 +73,10 @@ const ENGINE_CONTENT = `export const aiVerseDataExtension = Object.freeze({
   package: "@ai-verse/data",
   version: "${AI_VERSE_DATA_EXTENSION_VERSION}",
   source: "AI-Verse-Data",
-  phase: "3.2",
-  registrationOnly: true
+  phase: "5.6",
+  releaseComplete: true,
+  workspaceInitialization: "explicit",
+  registrationOnly: false
 });
 
 export default aiVerseDataExtension;
@@ -98,6 +101,9 @@ const MANIFEST_CONTENT = `${JSON.stringify(
     adapters: [],
     tracked_os_files_mutated: [],
     initializes_workspace_data: false,
+    workspace_initialization: "explicit",
+    release_phase: "5.6",
+    release_complete: true,
     registration_grants_permissions: false,
     registration_asserts_health: false,
     owns_os_canonical_state: false,
