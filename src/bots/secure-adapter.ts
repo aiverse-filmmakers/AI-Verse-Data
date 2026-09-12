@@ -1,6 +1,6 @@
 import type { DataClient } from "../client/index.js";
 import type { EventsListPayload } from "../protocol/index.js";
-import type { DataMutationReceipt } from "../provenance/index.js";
+import { DataProvenanceError, type DataMutationReceipt } from "../provenance/index.js";
 import {
   createBotsDataAdapter as createBaseBotsDataAdapter,
   type BotsDataAdapter,
@@ -52,7 +52,7 @@ function requireReceiptRead(
     receipt.entity === null ||
     !hasRead(lease, receipt.spaceId, receipt.entity)
   ) {
-    denied("Capability lease does not permit reading provenance for this space/entity.");
+    denied("Capability lease does not permit access to this provenance receipt.");
   }
 }
 
@@ -82,14 +82,34 @@ export function createBotsDataAdapter(
         return base.provenance.listEvents(input);
       },
       getReceipt(receiptId: string) {
-        const out = base.provenance.getReceipt(receiptId);
-        requireReceiptRead(lease, out.result);
-        return out;
+        try {
+          const out = base.provenance.getReceipt(receiptId);
+          requireReceiptRead(lease, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            denied("Capability lease does not permit access to this provenance receipt.");
+          }
+          throw error;
+        }
       },
       getReceiptByIdempotencyKey(idempotencyKey: string) {
-        const out = base.provenance.getReceiptByIdempotencyKey(idempotencyKey);
-        requireReceiptRead(lease, out.result);
-        return out;
+        try {
+          const out = base.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+          requireReceiptRead(lease, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            denied("Capability lease does not permit access to this provenance receipt.");
+          }
+          throw error;
+        }
       },
       listTransactionReceipts(transactionId: string) {
         const out = base.provenance.listTransactionReceipts(transactionId);
