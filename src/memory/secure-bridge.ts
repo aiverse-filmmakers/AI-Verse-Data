@@ -135,7 +135,7 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
     return { ...recordOut, result: { reference, record: recordOut.result, receipt } };
   }
 
-  return {
+  const secured: MemoryBridge = {
     ...base,
     references: {
       ...base.references,
@@ -209,4 +209,11 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
       },
     },
   };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
 }
