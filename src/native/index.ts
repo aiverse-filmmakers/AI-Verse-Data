@@ -23,7 +23,7 @@ export {
   installDataExtension,
   uninstallDataExtension,
   updateDataExtension,
-} from "./lifecycle.js";
+} from "./secure-lifecycle.js";
 export {
   AiVerseDataInstructionDiscovery,
   discoverExtensionInstructions,
