@@ -23,7 +23,7 @@ const packageJson = JSON.parse(
   readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
 ) as PackageJson;
 
-test("package metadata exposes all implemented Phase 3.2 public subpaths", () => {
+test("package metadata exposes all completed first-release public subpaths", () => {
   assert.equal(packageJson.name, "@ai-verse/data");
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
@@ -57,10 +57,10 @@ test("package metadata exposes all implemented Phase 3.2 public subpaths", () =>
 
 test("foundation surface reports Phase 4.1 typed client SDK", () => {
   assert.equal(AI_VERSE_DATA_PACKAGE, "@ai-verse/data");
-  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "4.1");
+  assert.equal(AI_VERSE_DATA_FOUNDATION_PHASE, "5.6");
   assert.deepEqual(getFoundationStatus(), {
     packageName: "@ai-verse/data",
-    phase: "4.1",
+    phase: "5.6",
     protocolAvailable: true,
     storageAvailable: true,
     scopeAvailable: true,
