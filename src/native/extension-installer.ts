@@ -8,6 +8,7 @@ import {
   type AiVerseDataExtensionInstallPlan,
   type AiVerseDataExtensionInstallResult,
   type AiVerseDataExtensionInstallerApi,
+  type AiVerseDataExtensionJsonObject,
 } from "./extension-types.js";
 import {
   buildDataExtensionEntry,
@@ -52,6 +53,16 @@ function requireCompatibleRoot(
   );
 }
 
+function executableDataEntry(
+  existing: AiVerseDataExtensionJsonObject | null,
+): AiVerseDataExtensionJsonObject {
+  return {
+    ...buildDataExtensionEntry(existing),
+    adapters: ["host-session"],
+    host_adapter: "openAiVerseDataHostSession",
+  };
+}
+
 function planWithRoot(
   root: TrustedDataRoot,
 ): AiVerseDataExtensionInstallPlan {
@@ -59,7 +70,7 @@ function planWithRoot(
   const currentEntry = currentDataExtensionEntry(
     registry.extensions,
   );
-  const nextEntry = buildDataExtensionEntry(currentEntry);
+  const nextEntry = executableDataEntry(currentEntry);
   const ownedFiles = planOwnedFiles(root);
   const registryRequiresWrite =
     currentEntry === null ||
@@ -105,7 +116,7 @@ export class AiVerseDataExtensionInstaller
       const currentEntry = currentDataExtensionEntry(
         registry.extensions,
       );
-      const nextEntry = buildDataExtensionEntry(currentEntry);
+      const nextEntry = executableDataEntry(currentEntry);
       const ownedFiles = planOwnedFiles(root);
       const registryRequiresWrite =
         currentEntry === null ||
