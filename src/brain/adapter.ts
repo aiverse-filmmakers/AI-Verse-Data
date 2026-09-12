@@ -145,6 +145,115 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     }
   }
 
+  function parsedReadRefs(): readonly {
+    readonly space: string;
+    readonly entity: string;
+  }[] {
+    if (client.authorization.mode === "local-operator") {
+      return [{ space: "*", entity: "*" }];
+    }
+    return (client.authorization.capabilityRefs ?? []).flatMap((ref) => {
+      const parts = ref.split(":");
+      if (
+        parts.length !== 4 ||
+        parts[0] !== "data" ||
+        parts[3] !== "read"
+      ) {
+        return [];
+      }
+      return [{ space: parts[1] as string, entity: parts[2] as string }];
+    });
+  }
+
+  const readRefs = parsedReadRefs();
+
+  function canRead(space: string, entity: string): boolean {
+    return readRefs.some(
+      (ref) =>
+        (ref.space === "*" || ref.space === space) &&
+        (ref.entity === "*" || ref.entity === entity),
+    );
+  }
+
+  function canReadSpace(space: string): boolean {
+    return readRefs.some(
+      (ref) => ref.space === "*" || ref.space === space,
+    );
+  }
+
+  function requireAnyRead(): void {
+    assertUsable();
+    if (readRefs.length === 0) {
+      throw new BrainDataAdapterError(
+        "BRAIN_PERMISSION_DENIED",
+        "Brain has no host-granted Data read capability in this workspace.",
+      );
+    }
+  }
+
+  function requireReadSpace(space: string): void {
+    assertUsable();
+    if (!canReadSpace(space)) {
+      throw new BrainDataAdapterError(
+        "BRAIN_PERMISSION_DENIED",
+        `Brain has no host-granted Data read capability in space '${space}'.`,
+      );
+    }
+  }
+
+  function requireRead(space: string, entity: string): void {
+    assertUsable();
+    if (!canRead(space, entity)) {
+      throw new BrainDataAdapterError(
+        "BRAIN_PERMISSION_DENIED",
+        `Brain has no host-granted Data read capability for ${space}/${entity}.`,
+      );
+    }
+  }
+
+  function transactionReadable(transactionId: string): boolean {
+    const receipts =
+      client.provenance.listTransactionReceipts(transactionId).result;
+    const targets = receipts.filter(
+      (receipt) => receipt.spaceId !== null && receipt.entity !== null,
+    );
+    return (
+      targets.length > 0 &&
+      targets.every((receipt) =>
+        canRead(receipt.spaceId as string, receipt.entity as string),
+      )
+    );
+  }
+
+  function receiptReadable(receipt: DataMutationReceipt): boolean {
+    if (receipt.spaceId !== null && receipt.entity !== null) {
+      return canRead(receipt.spaceId, receipt.entity);
+    }
+    return (
+      receipt.transactionId !== null &&
+      transactionReadable(receipt.transactionId)
+    );
+  }
+
+  function eventReadable(event: import("../provenance/index.js").DataEvent): boolean {
+    if (event.spaceId !== null && event.entity !== null) {
+      return canRead(event.spaceId, event.entity);
+    }
+    return (
+      event.transactionId !== null &&
+      transactionReadable(event.transactionId)
+    );
+  }
+
+  function requireReadableReceipt(receipt: DataMutationReceipt): void {
+    if (!receiptReadable(receipt)) {
+      throw new BrainDataAdapterError(
+        "BRAIN_PERMISSION_DENIED",
+        "Brain cannot read provenance outside its host-granted Data entities.",
+      );
+    }
+  }
+
   function provenanceFor<Result>(
     out: DataSuccessResult<Result>,
     count: number,
@@ -164,37 +273,50 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     },
     spaces: {
       get(input: SpaceGetPayload) {
-        assertUsable();
+        requireReadSpace(input.spaceId);
         return client.spaces.get(input);
       },
       list() {
-        assertUsable();
-        return client.spaces.list();
+        requireAnyRead();
+        const out = client.spaces.list();
+        return {
+          ...out,
+          result: out.result.filter((space) => canReadSpace(space.spaceId)),
+        };
       },
       summarize(input: SpaceGetPayload) {
-        assertUsable();
+        requireReadSpace(input.spaceId);
         const space = client.spaces.get(input);
         const schemas = client.schemas.list({ spaceId: input.spaceId });
+        const readableSchemas = schemas.result.filter((schema) =>
+          canRead(input.spaceId, schema.entity),
+        );
         return {
           ...space,
           result: {
             space: space.result,
-            schemaCount: schemas.result.length,
+            schemaCount: readableSchemas.length,
           },
         };
       },
     },
     schemas: {
       get(input: SchemaGetPayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         return client.schemas.get(input);
       },
       list(input: SchemaListPayload) {
-        assertUsable();
-        return client.schemas.list(input);
+        requireReadSpace(input.spaceId);
+        const out = client.schemas.list(input);
+        return {
+          ...out,
+          result: out.result.filter((schema) =>
+            canRead(input.spaceId, schema.entity),
+          ),
+        };
       },
       summarize(input: SchemaGetPayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         const schema = client.schemas.get(input);
         return {
           ...schema,
@@ -215,7 +337,7 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     },
     records: {
       get(input: RecordGetPayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         const out = client.records.get(input);
         return {
           ...out,
@@ -226,7 +348,7 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
         };
       },
       list(input: RecordListPayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         const out = client.records.list(input);
         return {
           ...out,
@@ -239,7 +361,7 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     },
     query: {
       ask(input: QueryPayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         const out = client.query.query(input);
         return {
           ...out,
@@ -250,7 +372,7 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
         };
       },
       summarize(input: AggregatePayload) {
-        assertUsable();
+        requireRead(input.spaceId, input.entity);
         const out = client.query.aggregate(input);
         return {
           ...out,
@@ -264,18 +386,30 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     provenance: {
       listEvents(input?: EventsListPayload) {
         assertUsable();
+        if (input?.spaceId !== undefined && input.entity !== undefined) {
+          requireRead(input.spaceId, input.entity);
+        } else if (input?.spaceId !== undefined) {
+          requireReadSpace(input.spaceId);
+        } else {
+          requireAnyRead();
+        }
         const out = client.provenance.listEvents(input);
+        const page = {
+          ...out.result,
+          items: out.result.items.filter(eventReadable),
+        };
         return {
           ...out,
           result: {
-            page: out.result,
-            provenance: provenanceFor(out, out.result.items.length),
+            page,
+            provenance: provenanceFor(out, page.items.length),
           },
         };
       },
       getReceipt(receiptId: string) {
         assertUsable();
         const out = client.provenance.getReceipt(receiptId);
+        requireReadableReceipt(out.result);
         return {
           ...out,
           result: {
@@ -289,6 +423,7 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
         const out = client.provenance.getReceiptByIdempotencyKey(
           idempotencyKey,
         );
+        requireReadableReceipt(out.result);
         return {
           ...out,
           result: {
@@ -300,14 +435,15 @@ export function createBrainDataAdapter(client: DataClient): BrainDataAdapter {
     },
     health: {
       metadata() {
+        requireAnyRead();
         return client.health.metadata();
       },
       diagnostics() {
-        assertUsable();
+        requireAnyRead();
         return client.health.diagnostics();
       },
       migrationStatus() {
-        assertUsable();
+        requireAnyRead();
         return client.health.migrationStatus();
       },
     },
