@@ -132,10 +132,39 @@ test("Apps and Bots cannot read provenance outside granted entity scope", () => 
         capabilities: ["read", "create"],
       },
     });
+    const allowed = appClient.records.create({
+      spaceId: "allowed",
+      entity: "items",
+      idempotencyKey: "allowed:create",
+      data: { title: "allowed" },
+    });
+    assert.equal(allowed.ok, true);
+
     assert.throws(
       () => kit.provenance.getReceipt(secret.result.receipt.receiptId),
       (error: unknown) => isAppsDataError(error) && error.code === "APPS_PERMISSION_DENIED",
     );
+    assert.throws(
+      () => kit.provenance.listEvents(),
+      (error: unknown) => isAppsDataError(error) && error.code === "APPS_PERMISSION_DENIED",
+    );
+    assert.throws(
+      () => kit.provenance.listEvents({ spaceId: "allowed" }),
+      (error: unknown) => isAppsDataError(error) && error.code === "APPS_PERMISSION_DENIED",
+    );
+    assert.throws(
+      () => kit.provenance.listEvents({ spaceId: "secret", entity: "items" }),
+      (error: unknown) => isAppsDataError(error) && error.code === "APPS_PERMISSION_DENIED",
+    );
+    const allowedEvents = kit.provenance.listEvents({
+      spaceId: "allowed",
+      entity: "items",
+      limit: 1,
+    });
+    assert.equal(allowedEvents.result.items.length, 1);
+    assert.equal(allowedEvents.result.items[0]?.recordId, allowed.result.recordId);
+    assert.equal(allowedEvents.result.hasMore, false);
+    assert.equal(allowedEvents.result.nextCursor, null);
   } finally {
     appClient.close();
   }
@@ -157,6 +186,26 @@ test("Apps and Bots cannot read provenance outside granted entity scope", () => 
       () => bot.provenance.getReceipt(secretReceipt.receiptId),
       (error: unknown) => isBotsDataAdapterError(error) && error.code === "CAPABILITY_DENIED",
     );
+    assert.throws(
+      () => bot.provenance.listEvents(),
+      (error: unknown) => isBotsDataAdapterError(error) && error.code === "CAPABILITY_DENIED",
+    );
+    assert.throws(
+      () => bot.provenance.listEvents({ spaceId: "allowed" }),
+      (error: unknown) => isBotsDataAdapterError(error) && error.code === "CAPABILITY_DENIED",
+    );
+    assert.throws(
+      () => bot.provenance.listEvents({ spaceId: "secret", entity: "items" }),
+      (error: unknown) => isBotsDataAdapterError(error) && error.code === "CAPABILITY_DENIED",
+    );
+    const botAllowed = bot.provenance.listEvents({
+      spaceId: "allowed",
+      entity: "items",
+      limit: 1,
+    });
+    assert.equal(botAllowed.result.items.length, 1);
+    assert.equal(botAllowed.result.hasMore, false);
+    assert.equal(botAllowed.result.nextCursor, null);
   } finally {
     botClient.close();
     fix.cleanup();
