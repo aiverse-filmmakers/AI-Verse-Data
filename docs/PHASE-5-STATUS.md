@@ -2,9 +2,9 @@
 
 **Phase:** 5 - Release Hardening
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 4 / 6
-**Overall implementation tasks completed:** 39 / 41
-**Next:** Task 40 / 41, Phase 5.5 - Packaging and simple install command
+**Implementation tasks completed:** 5 / 6
+**Overall implementation tasks completed:** 40 / 41
+**Next:** Task 41 / 41, Phase 5.6 - Full release acceptance suite
 
 This document records implementation evidence for Phase 5. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -195,9 +195,53 @@ Task 5.4 does not implement:
 - packaging/install-command changes (Task 40);
 - release acceptance (Task 41).
 
-Task 40 / 41 is next.
+Task 40 / 41 was next at that boundary (now COMPLETE, see below).
 
 ### Task 5.4 gate
+
+**PASSED.**
+
+---
+
+## Task 40 / 41 - Phase 5.5 Packaging and simple install command
+
+**Implementation status:** COMPLETE
+
+Phase 5.5 locks stable distribution metadata plus a clean GitHub
+install path with publication explicitly deferred to post-Task-41.
+
+Core guarantees:
+
+- `docs/PACKAGING-INSTALL-V0.1.md` records name, version,
+  license, bin, exports, files, scripts, and dependencies;
+- `prepare` builds `dist/` on GitHub install; `files` ships
+  `dist/src/` plus `README.md` only;
+- tarball holds 490 files with entry points plus every surface
+  present; CLI `--help` plus `--version` green;
+- install path is `npm install github:aiverse-filmmakers/AI-Verse-Data`
+  plus `npx ai-verse-data install --root <os-root>`;
+- no `npm publish`, no registry listing, no version bump, no license
+  change until Task 41 passes;
+- no new engine, no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- `npm run build`: PASS;
+- `npm pack --dry-run` / `--pack-destination`: PASS;
+- full `npm test`: 343 / 343 PASS (suite unchanged).
+
+### Deliberately not implemented
+
+Task 5.5 does not implement:
+
+- npm publication or registry listing (Task 41 decision);
+- version bump out of `-alpha.0`;
+- license change out of `UNLICENSED`;
+- release acceptance (Task 41).
+
+Task 41 / 41 is next.
+
+### Task 5.5 gate
 
 **PASSED.**
 
@@ -211,11 +255,11 @@ Task 40 / 41 is next.
 | 37 / 41 | 5.2 | COMPLETE | Adversarial filesystem/security suite |
 | 38 / 41 | 5.3 | COMPLETE | Performance baseline |
 | 39 / 41 | 5.4 | COMPLETE | Documentation/examples |
-| 40 / 41 | 5.5 | NOT STARTED | Packaging and simple install command |
+| 40 / 41 | 5.5 | COMPLETE | Packaging and simple install command |
 | 41 / 41 | 5.6 | NOT STARTED | Full release acceptance suite |
 
 ## Current boundary
 
-Task 40 / 41 is next.
+Task 41 / 41 is next.
 
-Do not begin Task 40 until Task 39 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 41 until Task 40 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

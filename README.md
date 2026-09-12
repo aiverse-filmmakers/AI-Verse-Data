@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 4 COMPLETE, Phase 5 IN PROGRESS  
-**Completed implementation tasks:** 39 / 41  
-**Latest completed:** Task 39 / 41, Phase 5.4 - Documentation/examples  
-**Next task:** Task 40 / 41, Phase 5.5 - Packaging and simple install command  
+**Completed implementation tasks:** 40 / 41  
+**Latest completed:** Task 40 / 41, Phase 5.5 - Packaging and simple install command  
+**Next task:** Task 41 / 41, Phase 5.6 - Full release acceptance suite  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -432,6 +432,14 @@ Documentation/examples
   -> docs/EXAMPLES-V0.1.md guide; all 6 samples runnable with one *-OK line
   -> docs plus runnable samples only, no new engine
   -> no sibling edits
+
+Task 40 / 41 - COMPLETE
+Packaging and simple install command
+  -> docs/PACKAGING-INSTALL-V0.1.md: stable metadata, GitHub install path, publication deferred
+  -> prepare script builds dist/ on GitHub install; files ships dist/src plus README only
+  -> tarball proof: 490 files, entry points plus all surfaces present, CLI help plus version green
+  -> no new engine, publication explicitly held for Task 41
+  -> no sibling edits
 ```
 
 Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost, plus the read-only Brain structured-data answers over that client with question provenance and no goal copy, plus the Memory provenance/candidate bridge over that client with stable references and no automatic Memory writes, plus the read-only Dashboard projections over that client with no raw DB paths and systemId kept Dashboard-local, plus the Apps scoped kit over that client with manifest declarations and uninstall-preserves-data, plus the Connections authority line over that client with local-canonical now and explicit import-only contracts, plus the Automation event facts over that client with no scheduler, plus the Phase 4 integration gate proving ownership plus scope plus permissions plus receipts plus optionality.
@@ -680,7 +688,7 @@ Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.m
 
 ### Latest verification
 
-Task 39 local verification (exact-head CI to be cited on push):
+Task 40 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
@@ -691,6 +699,8 @@ Node 22  PASS (local)
 0 skipped
 0 cancelled
 
+pack 490 files, entry points plus all surfaces present
+CLI help plus version green
 6 examples runnable, each printing one *-OK line
 ```
 
@@ -848,9 +858,10 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence (COMPLETE)
 - [`docs/PHASE-5-STATUS.md`](docs/PHASE-5-STATUS.md) - Phase 5 implementation evidence
 - [`docs/EXAMPLES-V0.1.md`](docs/EXAMPLES-V0.1.md) - runnable examples guide
+- [`docs/PACKAGING-INSTALL-V0.1.md`](docs/PACKAGING-INSTALL-V0.1.md) - packaging and GitHub install contract
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 40 / 41, Phase 5.5 - Packaging and simple install command.**
+**Next: Task 41 / 41, Phase 5.6 - Full release acceptance suite.**

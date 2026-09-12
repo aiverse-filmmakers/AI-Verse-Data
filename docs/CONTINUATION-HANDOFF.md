@@ -13,16 +13,16 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
-Phase 5  Release Hardening             IN PROGRESS  4 / 6
+Phase 5  Release Hardening             IN PROGRESS  5 / 6
 
-Overall implementation: 39 / 41 tasks complete
+Overall implementation: 40 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 39 / 41 - Phase 5.4: Documentation/examples**
+**Task 40 / 41 - Phase 5.5: Packaging and simple install command**
 
-Implemented through Task 39:
+Implemented through Task 40:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -151,7 +151,9 @@ Implemented through Task 39:
   for open, create, update, query, aggregate, transaction, bulk,
   events, doctor, and status;
 - runnable examples plus guide for CRM, content, production, Bot-safe
-  ops, backup/reinstall, and Data-vs-Memory with no new engine.
+  ops, backup/reinstall, and Data-vs-Memory with no new engine;
+- stable packaging metadata plus GitHub install path with publication
+  deferred to post-Task-41.
 
 Detailed Task 21 contract:
 
@@ -217,6 +219,10 @@ Detailed Task 39 contract:
 
 `docs/EXAMPLES-V0.1.md`
 
+Detailed Task 40 contract:
+
+`docs/PACKAGING-INSTALL-V0.1.md`
+
 Behavioral implementation verification (Task 35 local; exact-head CI cited on push):
 
 ```text
@@ -240,7 +246,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 39:
+Implemented through Task 40:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -315,6 +321,19 @@ Task 38 local verification: 343 / 343 PASS on Node 22; focused perf file 6 / 6 P
 
 Task 39 local verification: 343 / 343 PASS on Node 22 (suite unchanged); all 6 examples runnable; exact-head CI cited on push.
 
+Task 40 local verification: 343 / 343 PASS on Node 22 (suite unchanged); pack 490 files plus entry points plus CLI green; exact-head CI cited on push.
+
+## Task 40 architectural laws
+
+Task 40 must preserve:
+
+1. Docs plus pack proof only; no new engine, no new `src/`.
+2. GitHub install path works via `prepare`; no `npm publish`.
+3. No version bump, no license change until Task 41 passes.
+4. Full suite green with inherited Phase 1-4 gates.
+5. Exact-head CI cited before declaring complete.
+6. No sibling repository modifications are permitted.
+
 ## Task 39 architectural laws
 
 Task 39 must preserve:
@@ -374,11 +393,11 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 40 / 41 - Phase 5.5: Packaging and simple install command**
+**Task 41 / 41 - Phase 5.6: Full release acceptance suite**
 
-Stable distribution metadata and clean GitHub install path, then optional npm publication when appropriate.
+Prove the complete release story on clean environments.
 
-Do not start Task 41 until Task 40 is explicitly tasked.
+**First release completes only when Task 41 passes.**
 
 ## Task 21 architectural laws
 

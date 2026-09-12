@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-12  
 **Status:** Phase 5 IN PROGRESS  
-**Implementation progress:** 39 / 41 tasks complete  
-**Next:** Task 40 / 41, Phase 5.5 - Packaging and simple install command
+**Implementation progress:** 40 / 41 tasks complete  
+**Next:** Task 41 / 41, Phase 5.6 - Full release acceptance suite
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,10 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [IN PROGRESS]    67%  (4/6)
+Phase 5  Release Hardening             [IN PROGRESS]    83%  (5/6)
 ```
 
-Overall implementation: **39 / 41 tasks complete**.
+Overall implementation: **40 / 41 tasks complete**.
 
 ---
 
@@ -1359,7 +1359,32 @@ Phase status: `docs/PHASE-5-STATUS.md`.
 **Task 5.4 gate: PASSED.**
 
 ## Task 40 / 41 - Phase 5.5 Packaging and simple install command
-Stable distribution metadata and clean GitHub install path, then optional npm publication when appropriate.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- `docs/PACKAGING-INSTALL-V0.1.md`: stable metadata, GitHub install
+  path, publication deferred to post-Task-41;
+- `package.json`: `prepare` script builds `dist/` on GitHub install;
+  `files` stays `dist/src/` plus `README.md` (sources, tests,
+  examples, fixtures never ship);
+- tarball proof: 490 files with `package.json`, `README.md`,
+  `dist/src/cli.js`, `dist/src/index.js`, plus every surface
+  `index.js` present;
+- CLI proof: `--help` stable usage tokens, `--version`
+  `0.1.0-alpha.0`;
+- no new engine, no publication, no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- `npm run build`: PASS;
+- `npm pack --dry-run` / `--pack-destination`: PASS;
+- full `npm test`: 343 / 343 PASS (suite unchanged).
+
+Phase status: `docs/PHASE-5-STATUS.md`.
+
+**Task 5.5 gate: PASSED.**
 
 ## Task 41 / 41 - Phase 5.6 Full release acceptance suite
 Prove the complete release story on clean environments.

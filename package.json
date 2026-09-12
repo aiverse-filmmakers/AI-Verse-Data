@@ -113,6 +113,7 @@
     "build": "npm run clean && tsc -p tsconfig.json",
     "test": "npm run build && node --test dist/test/*.test.js",
     "check": "npm run test",
+    "prepare": "npm run build",
     "start": "node dist/src/cli.js"
   },
   "keywords": [
