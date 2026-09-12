@@ -4,7 +4,7 @@ import type { CreateDataClientOptions, DataClient } from "./types.js";
 
 export function createDataClient(options: CreateDataClientOptions): DataClient {
   const base = createBaseDataClient(options);
-  return {
+  const client: DataClient = {
     ...base,
     records: {
       ...base.records,
@@ -25,4 +25,16 @@ export function createDataClient(options: CreateDataClientOptions): DataClient {
       return base.closed;
     },
   };
+
+  // The base client intentionally defines scope as a non-enumerable trusted
+  // object. Object spread does not carry non-enumerable properties, so restore
+  // the exact trusted scope descriptor instead of synthesizing/copying it.
+  Object.defineProperty(client, "scope", {
+    value: base.scope,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+
+  return client;
 }
