@@ -211,6 +211,57 @@ jobs:
 
           test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
 
+      - name: Disable and re-enable Data without regenerating host config
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          DATA_ROOT="$GITHUB_WORKSPACE"
+
+          node "$DATA_ROOT/dist/src/cli.js" disable --root "$OS_ROOT"
+
+          export OS_ROOT
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+          root = os.environ["OS_ROOT"]
+          host = BridgeHostAdapter(JSONSubprocessBridge(
+              BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          ))
+          assert "query_data" not in host.description.operations
+          print("Data disable dynamic discovery: PASS")
+          PY
+
+          node "$DATA_ROOT/dist/src/cli.js" update --root "$OS_ROOT"
+          export REGISTRY_PATH="$OS_ROOT/.aiverse/extensions/registry.json"
+          python - <<'PY'
+          import json, os
+          data = json.load(open(os.environ["REGISTRY_PATH"], encoding="utf-8"))
+          assert data["extensions"]["ai-verse-data"]["enabled"] is False
+          PY
+
+          node "$DATA_ROOT/dist/src/cli.js" enable --root "$OS_ROOT"
+
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+          root = os.environ["OS_ROOT"]
+          host = BridgeHostAdapter(JSONSubprocessBridge(
+              BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          ))
+          assert "query_data" in host.description.operations
+          answer = host.query_data({
+              "scope": "workspace:alpha",
+              "operation": "data.record.list",
+              "payload": {"spaceId": "acceptance", "entity": "items"},
+          })
+          assert "five-component-data-marker" in str(answer)
+          print("Data explicit re-enable dynamic discovery: PASS")
+          PY
+
+          test -f "$OS_ROOT/workspaces/alpha/data/ai-verse-data.sqlite"
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
       - name: Detach and reattach without losing canonical state
         shell: bash
         run: |
