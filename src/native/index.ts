@@ -16,6 +16,11 @@ export {
   AiVerseWorkspaceDataInitializer,
   initWorkspaceData,
 } from "./workspace-init.js";
+export type {
+  AiVerseDataHostSession,
+  OpenAiVerseDataHostSessionInput,
+} from "./host-adapter.js";
+export { openAiVerseDataHostSession } from "./host-adapter.js";
 export * from "./lifecycle-types.js";
 export {
   AiVerseDataExtensionLifecycle,
