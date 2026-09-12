@@ -1,9 +1,12 @@
 import {
   existsSync,
   lstatSync,
+  mkdirSync,
+  readFileSync,
   readdirSync,
   rmdirSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { isAbsolute, relative } from "node:path";
 
@@ -167,6 +170,116 @@ function removeOwnedFile(
   return true;
 }
 
+interface OwnedFileSnapshot {
+  readonly relativePath: string;
+  readonly absolutePath: string;
+  readonly contents: string;
+}
+
+function snapshotOwnedFiles(
+  root: TrustedDataRoot,
+  ownedRoot: string,
+): readonly OwnedFileSnapshot[] {
+  if (existsSync(ownedRoot)) {
+    const rootInfo = lstatSync(ownedRoot);
+    if (rootInfo.isSymbolicLink() || !rootInfo.isDirectory()) {
+      throw new AiVerseDataLifecycleError(
+        "SYMLINK_PATH_REJECTED",
+        "ai-verse-data extension root is unsafe and was left unchanged.",
+      );
+    }
+  }
+
+  const snapshots: OwnedFileSnapshot[] = [];
+  for (const relativePath of OWNED_FILE_PATHS) {
+    const absolutePath = resolveExtensionOwnedPath(root, relativePath);
+    const child = relative(ownedRoot, absolutePath);
+    if (child === "" || child.startsWith("..") || isAbsolute(child)) {
+      throw new AiVerseDataLifecycleError(
+        "INVALID_EXTENSION_PATH",
+        `ai-verse-data extension file must remain inside the Data-owned extension directory: ${relativePath}`,
+      );
+    }
+    if (!existsSync(absolutePath)) continue;
+    const info = lstatSync(absolutePath);
+    if (info.isSymbolicLink()) {
+      throw new AiVerseDataLifecycleError(
+        "SYMLINK_PATH_REJECTED",
+        `ai-verse-data extension file must not be a symbolic link: ${relativePath}`,
+      );
+    }
+    if (!info.isFile()) {
+      throw new AiVerseDataLifecycleError(
+        "INVALID_EXTENSION_FILE",
+        `ai-verse-data extension path is not a regular file and was left unchanged: ${relativePath}`,
+      );
+    }
+    snapshots.push({
+      relativePath,
+      absolutePath,
+      contents: readFileSync(absolutePath, "utf8"),
+    });
+  }
+  return snapshots;
+}
+
+function restoreOwnedFiles(
+  ownedRoot: string,
+  snapshots: readonly OwnedFileSnapshot[],
+): void {
+  if (snapshots.length === 0) return;
+  if (!existsSync(ownedRoot)) {
+    mkdirSync(ownedRoot, { recursive: true, mode: 0o700 });
+  }
+  const rootInfo = lstatSync(ownedRoot);
+  if (rootInfo.isSymbolicLink() || !rootInfo.isDirectory()) {
+    throw new AiVerseDataLifecycleError(
+      "EXTENSION_ROLLBACK_FAILED",
+      "Could not restore Data-owned files because the extension root became unsafe.",
+    );
+  }
+
+  for (const snapshot of snapshots) {
+    if (existsSync(snapshot.absolutePath)) {
+      const info = lstatSync(snapshot.absolutePath);
+      if (
+        info.isSymbolicLink() ||
+        !info.isFile() ||
+        readFileSync(snapshot.absolutePath, "utf8") !== snapshot.contents
+      ) {
+        throw new AiVerseDataLifecycleError(
+          "EXTENSION_ROLLBACK_FAILED",
+          `Could not safely restore Data-owned file '${snapshot.relativePath}' because it changed during uninstall.`,
+        );
+      }
+      continue;
+    }
+    writeFileSync(snapshot.absolutePath, snapshot.contents, {
+      encoding: "utf8",
+      mode: 0o600,
+      flag: "wx",
+    });
+  }
+}
+
+function restoreRegistryEntry(
+  root: TrustedDataRoot,
+  entry: AiVerseDataExtensionJsonObject,
+): void {
+  const rollback = readRegistryDocument(root);
+  if (currentDataExtensionEntry(rollback.extensions) !== null) {
+    throw new AiVerseDataLifecycleError(
+      "EXTENSION_ROLLBACK_FAILED",
+      "Could not restore ai-verse-data registry state because another entry appeared during uninstall.",
+    );
+  }
+  writeRegistryAtomic(
+    root,
+    registryWithDataEntry(rollback, entry),
+    rollback.rawText,
+  );
+}
+
 function removeOwnedRootIfEmpty(
   ownedRoot: string,
 ): boolean {
@@ -313,17 +426,7 @@ export function uninstallDataExtension(
         root,
         AI_VERSE_DATA_EXTENSION_ROOT,
       );
-      const removed: string[] = [];
-      if (existsSync(ownedRoot)) {
-        for (const relativePath of OWNED_FILE_PATHS) {
-          if (removeOwnedFile(root, ownedRoot, relativePath)) {
-            removed.push(relativePath);
-          }
-        }
-        if (removeOwnedRootIfEmpty(ownedRoot)) {
-          removed.push(AI_VERSE_DATA_EXTENSION_ROOT);
-        }
-      }
+      const ownedSnapshots = snapshotOwnedFiles(root, ownedRoot);
 
       const { [AI_VERSE_DATA_EXTENSION_ID]: _dropped, ...rest } =
         snapshot.extensions;
@@ -332,16 +435,40 @@ export function uninstallDataExtension(
         ...snapshot.document,
         extensions: { ...rest },
       };
-      writeRegistryAtomic(root, document, snapshot.rawText);
 
-      const finalEntry = currentDataExtensionEntry(
-        readRegistryDocument(root).extensions,
-      );
-      if (finalEntry !== null) {
+      writeRegistryAtomic(root, document, snapshot.rawText);
+      const committed = readRegistryDocument(root);
+      if (currentDataExtensionEntry(committed.extensions) !== null) {
         throw new AiVerseDataLifecycleError(
           "EXTENSION_REGISTRY_CHANGED",
-          "ai-verse-data registry state changed after uninstall; installed files were preserved and no destructive rollback was attempted.",
+          "ai-verse-data registry removal did not commit cleanly; no extension files were removed.",
         );
+      }
+
+      const removed: string[] = [];
+      try {
+        if (existsSync(ownedRoot)) {
+          for (const relativePath of OWNED_FILE_PATHS) {
+            if (removeOwnedFile(root, ownedRoot, relativePath)) {
+              removed.push(relativePath);
+            }
+          }
+          if (removeOwnedRootIfEmpty(ownedRoot)) {
+            removed.push(AI_VERSE_DATA_EXTENSION_ROOT);
+          }
+        }
+      } catch (error) {
+        try {
+          restoreOwnedFiles(ownedRoot, ownedSnapshots);
+          restoreRegistryEntry(root, current);
+        } catch (rollbackError) {
+          throw new AiVerseDataLifecycleError(
+            "EXTENSION_ROLLBACK_FAILED",
+            "Uninstall failed after registry removal and the previous installed state could not be restored safely.",
+            { uninstallError: error, rollbackError },
+          );
+        }
+        throw error;
       }
 
       return baseResult("uninstall", root, {
