@@ -74,6 +74,10 @@ export interface DataEventPage {
   readonly hasMore: boolean;
 }
 
+export interface DataEventGetInput {
+  readonly eventId: string;
+}
+
 export interface DataReceiptGetInput {
   readonly receiptId: string;
 }
@@ -88,6 +92,7 @@ export interface DataTransactionReceiptsInput {
 
 export interface DataProvenanceApi {
   listEvents(input?: DataEventListInput): DataEventPage;
+  getEvent(input: DataEventGetInput): DataEvent;
   getReceipt(input: DataReceiptGetInput): DataMutationReceipt;
   getReceiptByIdempotencyKey(
     input: DataReceiptByIdempotencyKeyInput,
