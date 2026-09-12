@@ -19,7 +19,9 @@ function denied(message: string): never {
 }
 
 function validatePrincipalShape(lease: BotsDataCapabilityLease): void {
-  if (typeof lease !== "object" || lease === null) return;
+  if (typeof lease !== "object" || lease === null || Array.isArray(lease)) {
+    invalid("Lease must be a host-passed trusted object.");
+  }
   const principal = (lease as unknown as Record<string, unknown>)["principal"];
   if (typeof principal !== "object" || principal === null || Array.isArray(principal)) {
     invalid("Lease principal must be { kind: bot|worker, id }.");
@@ -66,7 +68,6 @@ export function createBotsDataAdapter(
     provenance: {
       listEvents(input?: EventsListPayload) {
         const out = base.provenance.listEvents(input);
-        if (input?.spaceId !== undefined) return out;
         return {
           ...out,
           result: {
