@@ -1,6 +1,7 @@
 export type BrainDataAdapterErrorCode =
   | "BRAIN_INVALID"
-  | "BRAIN_CLOSED";
+  | "BRAIN_CLOSED"
+  | "BRAIN_PERMISSION_DENIED";
 
 export class BrainDataAdapterError extends Error {
   readonly code: BrainDataAdapterErrorCode;
