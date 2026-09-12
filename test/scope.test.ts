@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   mkdirSync,
   mkdtempSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -24,7 +25,7 @@ import {
 } from "../src/storage/index.js";
 
 function withTempRoot(run: (rootPath: string) => void): void {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-scope-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-scope-")));
   try {
     run(rootPath);
   } finally {
@@ -53,7 +54,7 @@ function assertStorageError(
 test("trusted roots canonicalize an existing directory", () => {
   withTempRoot((rootPath) => {
     const root = TrustedDataRoot.fromExistingDirectory(rootPath);
-    assert.equal(root.canonicalPath, resolve(rootPath));
+    assert.equal(root.canonicalPath, realpathSync(resolve(rootPath)));
   });
 });
 

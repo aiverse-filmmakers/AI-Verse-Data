@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -93,7 +93,7 @@ function bootstrapCrm(catalog: DataCatalog): void {
 }
 
 test("Phase 1 standalone acceptance story survives close and reopen exactly", () => {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-standalone-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-standalone-")));
   try {
     mkdirSync(join(rootPath, ".ai-verse-data"), { recursive: true });
 
@@ -338,7 +338,7 @@ test("Phase 1 standalone acceptance story survives close and reopen exactly", ()
 });
 
 test("Phase 1 native-ready workspace scope creates the canonical workspace database", () => {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-workspace-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-workspace-")));
   try {
     mkdirSync(join(rootPath, "workspaces", "production", "data"), {
       recursive: true,
@@ -370,7 +370,7 @@ test("Phase 1 native-ready workspace scope creates the canonical workspace datab
 });
 
 test("Phase 1 workspace databases remain physically and logically isolated", () => {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-isolation-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-isolation-")));
   try {
     for (const workspaceId of ["workspace-a", "workspace-b"]) {
       mkdirSync(join(rootPath, "workspaces", workspaceId, "data"), {
@@ -469,7 +469,7 @@ test("Phase 1 workspace databases remain physically and logically isolated", () 
 });
 
 test("Phase 1 scoped reopen rejects an unsupported newer database format", () => {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-version-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase1-version-")));
   try {
     mkdirSync(join(rootPath, ".ai-verse-data"), { recursive: true });
     const root = TrustedDataRoot.fromExistingDirectory(rootPath);

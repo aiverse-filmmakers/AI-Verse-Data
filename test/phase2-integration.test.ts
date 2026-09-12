@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -46,7 +47,7 @@ interface WorkspaceFixture {
 }
 
 function workspaceFixture(workspaceId = "sales"): WorkspaceFixture {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-gate-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-gate-")));
   mkdirSync(join(rootPath, "workspaces", workspaceId, "data"), {
     recursive: true,
   });
@@ -181,7 +182,7 @@ function requiredOwnerMigration() {
 test("Phase 2 integrated reliability lifecycle survives replay, bulk, schema migration, backup, export, and reopen", async () => {
   const driver = new SqliteStorageDriver();
   const fixture = workspaceFixture();
-  const artifacts = mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-artifacts-"));
+  const artifacts = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-artifacts-")));
   let opened = openFresh(driver, fixture);
 
   try {
@@ -429,7 +430,7 @@ test("Phase 2 verified backup recovers migrated/idempotent/provenance state with
   const driver = new SqliteStorageDriver();
   const sourceFixture = workspaceFixture("sales");
   const destinationFixture = workspaceFixture("sales");
-  const artifacts = mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-recovery-"));
+  const artifacts = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase2-recovery-")));
   const source = openFresh(driver, sourceFixture);
 
   try {

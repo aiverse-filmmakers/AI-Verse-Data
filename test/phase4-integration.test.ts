@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -21,7 +21,7 @@ import {
 const APP = "production-manager";
 
 function workspaceScope(workspaceId = "sales") {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase4-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase4-")));
   mkdirSync(join(rootPath, "workspaces", workspaceId, "data"), {
     recursive: true,
   });

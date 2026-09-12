@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -55,7 +56,7 @@ interface Fixture {
 }
 
 function fixture(): Fixture {
-  const rootPath = mkdtempSync(join(tmpdir(), "ai-verse-data-phase3-"));
+  const rootPath = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-phase3-")));
   return {
     rootPath,
     cleanup(): void {
