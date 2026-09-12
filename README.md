@@ -700,8 +700,8 @@ Task 41 local verification (exact-head CI to be cited on push):
 ```text
 Node 22  PASS (local)
 
-344 tests
-344 passed
+351 tests
+351 passed
 0 failed
 0 skipped
 0 cancelled
@@ -725,6 +725,13 @@ Node 24  PASS
 ```
 
 The Task 35 gate proves the complete Phase 4 adapter story: typed client plus Bots plus Brain plus Memory plus Dashboard plus Apps plus Connections plus automation with ownership plus scope plus permissions plus receipts plus optionality preserved, and isolated negative branches that fail closed without mutation.
+
+
+Post-audit hardening: **351 / 351 tests passed** across Node 22 and 24 on
+Ubuntu, macOS, and Windows. The hardening closes adapter permission and
+provenance gaps, canonicalizes Memory event lookup, fixes Dashboard
+cross-space references, makes uninstall failure-safe, and makes the installed
+extension engine callable through the native host protocol.
 
 ## Why Data is separate from Memory
 
