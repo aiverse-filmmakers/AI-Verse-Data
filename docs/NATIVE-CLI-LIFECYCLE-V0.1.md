@@ -133,7 +133,7 @@ Lifecycle reuses rather than reimplements:
 Enable, disable, and uninstall perform their registry mutation under the same
 lock with the same atomic replace and post-commit verification as Task 20.
 Uninstall verifies the Data key is gone after commit; enable/disable verify
-`enabled === false` after commit.
+`enabled === true` for enable and `enabled === false` for disable after commit.
 
 ## 5. Database preservation
 
@@ -150,19 +150,19 @@ OS owns the hook and contract; Data owns only its entry and files.
 Missing siblings never block lifecycle. The registry writer preserves
 unknown top-level and other-entry state byte-semantically across
 OS-first, Memory-first, Brain-first, Bots-first, and Skills-first
-orders. Big-machine workspace IDs follow the same host pattern and are
-never enumerated by lifecycle.
+orders. Workspace IDs follow the canonical host pattern and are never enumerated by lifecycle.
 
-## 7. Deliberately not implemented
+## 7. Lifecycle command boundary
 
-Task 23 does not implement:
+This lifecycle surface deliberately does not implement:
 
 - purge of canonical Data (separate destructive operation);
-- Task 24 doctor or status commands;
 - workspace database initialization or discovery invocation;
 - health or permission assertions from registration;
 - permanent `AGENTS.md` blocks;
 - sibling repository changes.
+
+Read-only `doctor` and `status` are implemented as the separate native health surface and compose the same compatibility/registry/workspace primitives without mutating canonical Data.
 
 ## 8. Acceptance
 
