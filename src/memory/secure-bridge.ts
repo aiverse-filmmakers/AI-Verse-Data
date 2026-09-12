@@ -86,6 +86,15 @@ function receiptEvent(client: DataClient, receipt: DataMutationReceipt): DataSuc
 export function createMemoryBridge(client: DataClient): MemoryBridge {
   const base = createBaseMemoryBridge(client);
 
+  function assertUsable(): void {
+    if (client.closed) {
+      throw new MemoryBridgeError(
+        "MEMORY_CLOSED",
+        "Bound client is closed and cannot serve Memory evidence.",
+      );
+    }
+  }
+
   function eventEvidence(eventOut: DataSuccessResult<DataEvent>): DataSuccessResult<MemoryEvidenceEvent> {
     const event = eventOut.result;
     const reference = base.references.forRecord({
@@ -99,6 +108,7 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
   }
 
   function lookupEvent(input: MemoryEventEvidenceQuery): DataSuccessResult<MemoryEvidenceEvent> {
+    assertUsable();
     const provided = [input.eventId, input.receiptId, input.idempotencyKey].filter(
       (value) => value !== undefined,
     );
@@ -121,6 +131,7 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
   }
 
   function lookupRecord(input: MemoryEvidenceQuery): DataSuccessResult<MemoryEvidenceRecord> {
+    assertUsable();
     const recordOut = client.records.get({
       spaceId: input.spaceId,
       entity: input.entity,
@@ -203,6 +214,7 @@ export function createMemoryBridge(client: DataClient): MemoryBridge {
       lookupRecord,
       lookupEvent,
       lookupByReference(reference: DataProvenanceReference | string) {
+        assertUsable();
         let resolved: DataProvenanceReference;
         try {
           resolved = typeof reference === "string" ? base.references.parse(reference) : reference;
