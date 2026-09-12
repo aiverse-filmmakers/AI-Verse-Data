@@ -272,11 +272,25 @@ Core guarantees:
 Local proof (this host, Node 22):
 
 - focused file: 1 / 1 PASS;
-- full `npm test`: 344 / 344 PASS.
+- original Task 41 gate: 344 / 344 PASS;
+- post-audit hardening gate: 351 / 351 PASS across Node 22/24 on Ubuntu, macOS, and Windows.
 
 ### Task 5.6 gate
 
 **PASSED.**
+
+### Post-audit hardening
+
+The completed release was subsequently audited at source level. The audit
+repaired permission, provenance, Memory event lookup, Dashboard cross-space
+reference, record-list contract, uninstall atomicity, and installed-engine
+delivery defects without changing the repository's ownership model.
+
+The hardened materialized extension now exposes a callable native host
+boundary and is covered by an install-to-query acceptance test.
+
+GitHub Actions run `34700035814`: **351 / 351 PASS** on all six
+Node/platform matrix jobs.
 
 ### Phase 5 gate
 
