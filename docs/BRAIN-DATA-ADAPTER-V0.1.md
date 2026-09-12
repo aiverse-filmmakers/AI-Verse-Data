@@ -30,6 +30,22 @@ Engine ceilings, cursors, validation, idempotent replay reads, and
 stable protocol envelopes and error codes are reused verbatim from
 the Task 27 client. Query ceilings fail closed.
 
+## Authorization boundary
+
+Brain is a trusted host read surface, not a capability-policy parser.
+`DataClient.authorization.capabilityRefs` are host-issued provenance
+and are not independently interpreted by `createBrainDataAdapter()`.
+The owning OS/host MUST authorize the complete read scope before it
+constructs the client handed to Brain. A narrowly worded capability
+reference must never be treated as evidence that the Brain adapter
+itself will reduce its read surface to that reference.
+
+Untrusted Apps and Bots must not receive this raw trusted-host surface.
+They use the Apps and Bots adapters, which apply their own narrower
+runtime grants on every supported operation. This keeps policy
+ownership in the OS while avoiding two competing authorization engines
+inside Data.
+
 ## Boundaries
 
 - No Brain repository edits.

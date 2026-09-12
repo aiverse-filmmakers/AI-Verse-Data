@@ -158,6 +158,21 @@ test("allowed lease operations succeed with task-linked receipts and bot provena
   }
 });
 
+test("adapter closed state tracks the underlying client after secure wrapping", () => {
+  const fix = workspaceScope();
+  const client = botClient(fix.scope);
+  try {
+    bootstrap(client);
+    const adapter = createBotsDataAdapter(client, lease());
+    assert.equal(adapter.closed, false);
+    client.close();
+    assert.equal(adapter.closed, true);
+  } finally {
+    client.close();
+    fix.cleanup();
+  }
+});
+
 test("read-only lease denies writes and wrong-entity access", () => {
   const fix = workspaceScope();
   const readCaps = ["data:crm:deals:read"] as const;

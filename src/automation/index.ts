@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export { createAutomationEvents } from "./events.js";
+export { createAutomationEvents } from "./secure-events.js";
 export type {
   AutomationEventEnvelope,
   AutomationEvents,

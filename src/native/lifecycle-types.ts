@@ -3,6 +3,7 @@ import type { AiVerseDataExtensionInstallErrorCode } from "./extension-types.js"
 export type AiVerseDataLifecycleCommand =
   | "install"
   | "update"
+  | "enable"
   | "disable"
   | "uninstall";
 
@@ -10,6 +11,7 @@ export type AiVerseDataLifecycleStatus =
   | "installed"
   | "updated"
   | "unchanged"
+  | "enabled"
   | "disabled"
   | "uninstalled"
   | "not-installed";

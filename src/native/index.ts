@@ -16,14 +16,29 @@ export {
   AiVerseWorkspaceDataInitializer,
   initWorkspaceData,
 } from "./workspace-init.js";
+export type {
+  AiVerseDataHostSession,
+  OpenAiVerseDataHostSessionInput,
+} from "./host-adapter.js";
+export { openAiVerseDataHostSession } from "./host-adapter.js";
+export type {
+  AiVerseDataHostEngineDescription,
+  AiVerseDataHostEngineRequest,
+} from "./host-engine.js";
+export {
+  AI_VERSE_DATA_HOST_PROTOCOL,
+  describeAiVerseDataHostEngine,
+  handleAiVerseDataHostRequest,
+} from "./host-engine.js";
 export * from "./lifecycle-types.js";
 export {
   AiVerseDataExtensionLifecycle,
   disableDataExtension,
+  enableDataExtension,
   installDataExtension,
   uninstallDataExtension,
   updateDataExtension,
-} from "./lifecycle.js";
+} from "./secure-lifecycle.js";
 export {
   AiVerseDataInstructionDiscovery,
   discoverExtensionInstructions,

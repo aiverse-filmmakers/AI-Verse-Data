@@ -136,6 +136,68 @@ test("stable references round-trip and evidence re-opens live records", () => {
     assert.equal(evidence.result.reference.workspaceId, "sales");
     assert.ok(evidence.result.receipt !== null);
 
+    const otherDeal = client.records.createWithReceipt({
+      spaceId: "crm",
+      entity: "deals",
+      idempotencyKey: "memory:deal:other-receipt",
+      data: {
+        title: "Other deal",
+        value: 19000,
+        stage: "proposal",
+        company: company.result.record.recordId,
+      },
+    });
+    assert.equal(otherDeal.ok, true);
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: true,
+          receiptId: otherDeal.result.receipt.receiptId,
+        }),
+      (error: unknown) => {
+        assert.ok(isMemoryBridgeError(error));
+        assert.equal((error as MemoryBridgeError).code, "MEMORY_INVALID");
+        return true;
+      },
+    );
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: true,
+          idempotencyKey: "memory:deal:other-receipt",
+        }),
+      (error: unknown) => isMemoryBridgeError(error),
+    );
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: false,
+          receiptId: otherDeal.result.receipt.receiptId,
+        }),
+      (error: unknown) => isMemoryBridgeError(error),
+    );
+    assert.throws(
+      () =>
+        bridge.evidence.lookupRecord({
+          spaceId: "crm",
+          entity: "deals",
+          recordId: deal.result.record.recordId,
+          includeReceipt: true,
+          idempotencyKey: "memory:deal:1",
+          receiptId: otherDeal.result.receipt.receiptId,
+        }),
+      (error: unknown) => isMemoryBridgeError(error),
+    );
+
     const byRef = bridge.evidence.lookupByReference(reference.uri);
     assert.equal(byRef.ok, true);
     assert.ok("record" in byRef.result);

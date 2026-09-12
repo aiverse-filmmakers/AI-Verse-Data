@@ -1,0 +1,135 @@
+import type { DataClient } from "../client/index.js";
+import type { EventsListPayload } from "../protocol/index.js";
+import { DataProvenanceError, type DataMutationReceipt } from "../provenance/index.js";
+import {
+  createBotsDataAdapter as createBaseBotsDataAdapter,
+  type BotsDataAdapter,
+} from "./adapter.js";
+import {
+  BotsDataAdapterError,
+  type BotsDataCapabilityLease,
+} from "./errors.js";
+
+function invalid(message: string): never {
+  throw new BotsDataAdapterError("LEASE_INVALID", message);
+}
+
+function denied(message: string): never {
+  throw new BotsDataAdapterError("CAPABILITY_DENIED", message);
+}
+
+function validatePrincipalShape(lease: BotsDataCapabilityLease): void {
+  if (typeof lease !== "object" || lease === null || Array.isArray(lease)) {
+    invalid("Lease must be a host-passed trusted object.");
+  }
+  const principal = (lease as unknown as Record<string, unknown>)["principal"];
+  if (typeof principal !== "object" || principal === null || Array.isArray(principal)) {
+    invalid("Lease principal must be { kind: bot|worker, id }.");
+  }
+}
+
+function hasRead(
+  lease: BotsDataCapabilityLease,
+  spaceId: string,
+  entity: string,
+): boolean {
+  return lease.capabilities.some((raw) => {
+    const parts = raw.split(":");
+    if (parts.length !== 4 || parts[0] !== "data" || parts[3] !== "read") {
+      return false;
+    }
+    return (parts[1] === "*" || parts[1] === spaceId) &&
+      (parts[2] === "*" || parts[2] === entity);
+  });
+}
+
+function requireReceiptRead(
+  lease: BotsDataCapabilityLease,
+  receipt: DataMutationReceipt,
+): void {
+  if (
+    receipt.spaceId === null ||
+    receipt.entity === null ||
+    !hasRead(lease, receipt.spaceId, receipt.entity)
+  ) {
+    denied("Capability lease does not permit access to this provenance receipt.");
+  }
+}
+
+export function createBotsDataAdapter(
+  client: DataClient,
+  lease: BotsDataCapabilityLease,
+): BotsDataAdapter {
+  validatePrincipalShape(lease);
+  const base = createBaseBotsDataAdapter(client, lease);
+
+  const secured: BotsDataAdapter = {
+    ...base,
+    provenance: {
+      listEvents(input?: EventsListPayload) {
+        if (
+          input === undefined ||
+          typeof input.spaceId !== "string" ||
+          typeof input.entity !== "string"
+        ) {
+          denied(
+            "Capability lease provenance listing requires an explicit permitted spaceId and entity so pagination cannot reveal hidden activity.",
+          );
+        }
+        if (!hasRead(lease, input.spaceId, input.entity)) {
+          denied("Capability lease does not permit reading provenance for this space/entity.");
+        }
+        return base.provenance.listEvents(input);
+      },
+      getReceipt(receiptId: string) {
+        try {
+          const out = base.provenance.getReceipt(receiptId);
+          requireReceiptRead(lease, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            denied("Capability lease does not permit access to this provenance receipt.");
+          }
+          throw error;
+        }
+      },
+      getReceiptByIdempotencyKey(idempotencyKey: string) {
+        try {
+          const out = base.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+          requireReceiptRead(lease, out.result);
+          return out;
+        } catch (error) {
+          if (
+            error instanceof DataProvenanceError &&
+            error.code === "RECEIPT_NOT_FOUND"
+          ) {
+            denied("Capability lease does not permit access to this provenance receipt.");
+          }
+          throw error;
+        }
+      },
+      listTransactionReceipts(transactionId: string) {
+        const out = base.provenance.listTransactionReceipts(transactionId);
+        return {
+          ...out,
+          result: out.result.filter(
+            (receipt) =>
+              receipt.spaceId !== null &&
+              receipt.entity !== null &&
+              hasRead(lease, receipt.spaceId, receipt.entity),
+          ),
+        };
+      },
+    },
+  };
+
+  Object.defineProperty(secured, "closed", {
+    get: () => base.closed,
+    enumerable: true,
+    configurable: false,
+  });
+  return secured;
+}

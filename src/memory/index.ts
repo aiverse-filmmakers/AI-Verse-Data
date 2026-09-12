@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export { createMemoryBridge } from "./bridge.js";
+export { createMemoryBridge } from "./secure-bridge.js";
 export type {
   DataProvenanceReference,
   MemoryBridge,

@@ -21,6 +21,7 @@ import {
   AiVerseDataExtensionLifecycle,
   AiVerseDataLifecycleError,
   disableDataExtension,
+  enableDataExtension,
   initWorkspaceData,
   installDataExtension,
   uninstallDataExtension,
@@ -304,6 +305,57 @@ test("disable flips only enabled and preserves files plus databases", async () =
   }
 });
 
+test("enable explicitly reactivates a disabled extension without touching files or databases", async () => {
+  const f = fixture();
+  try {
+    writeCompatibleHost(f.rootPath);
+    writeWorkspace(f.rootPath, "sales");
+    installDataExtension({ rootPath: f.rootPath });
+    await initWorkspaceData({
+      rootPath: f.rootPath,
+      workspaceId: "sales",
+    });
+
+    const dbPath = join(
+      f.rootPath,
+      "workspaces",
+      "sales",
+      "data",
+      "ai-verse-data.sqlite",
+    );
+    const dbBefore = readFileSync(dbPath);
+    const instructionsPath = join(
+      f.rootPath,
+      ...AI_VERSE_DATA_EXTENSION_INSTRUCTIONS_PATH.split("/"),
+    );
+    const instructionsBefore = readFileSync(instructionsPath, "utf8");
+
+    disableDataExtension({ rootPath: f.rootPath });
+    const disabledUpdate = updateDataExtension({ rootPath: f.rootPath });
+    assert.equal(disabledUpdate.enabled, false);
+
+    const first = enableDataExtension({ rootPath: f.rootPath });
+    assert.equal(first.command, "enable");
+    assert.equal(first.status, "enabled");
+    assert.equal(first.enabled, true);
+    assert.equal(first.registryWritten, true);
+    assert.deepEqual(readFileSync(dbPath), dbBefore);
+    assert.equal(readFileSync(instructionsPath, "utf8"), instructionsBefore);
+
+    const second = enableDataExtension({ rootPath: f.rootPath });
+    assert.equal(second.status, "unchanged");
+    assert.equal(second.enabled, true);
+    assert.equal(second.registryWritten, false);
+
+    const registry = readRegistry(f.rootPath) as {
+      extensions: Record<string, Record<string, unknown>>;
+    };
+    assert.equal(registry.extensions["ai-verse-data"]?.enabled, true);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test("uninstall removes only owned state and preserves databases plus others", async () => {
   const f = fixture();
   try {
@@ -394,6 +446,7 @@ test("incompatible and missing hosts fail closed with no masking", () => {
     for (const run of [
       installDataExtension,
       updateDataExtension,
+      enableDataExtension,
       disableDataExtension,
       uninstallDataExtension,
     ]) {
@@ -407,7 +460,7 @@ test("incompatible and missing hosts fail closed with no masking", () => {
   }
 });
 
-test("CLI install/update/disable/uninstall preserve databases with exit codes", async () => {
+test("CLI install/update/enable/disable/uninstall preserve databases with exit codes", async () => {
   const f = fixture();
   try {
     writeCompatibleHost(f.rootPath);
@@ -443,6 +496,19 @@ test("CLI install/update/disable/uninstall preserve databases with exit codes", 
     r = runCli("update", "--root", f.rootPath);
     assert.equal(r.status, 0);
     assert.deepEqual(readFileSync(dbPath), dbBefore);
+    let registry = readRegistry(f.rootPath) as {
+      extensions: Record<string, Record<string, unknown>>;
+    };
+    assert.equal(registry.extensions["ai-verse-data"]?.enabled, false);
+
+    r = runCli("enable", "--root", f.rootPath);
+    assert.equal(r.status, 0);
+    assert.match(r.stdout, /enabled|unchanged/);
+    assert.deepEqual(readFileSync(dbPath), dbBefore);
+    registry = readRegistry(f.rootPath) as {
+      extensions: Record<string, Record<string, unknown>>;
+    };
+    assert.equal(registry.extensions["ai-verse-data"]?.enabled, true);
 
     r = runCli("uninstall", "--root", f.rootPath);
     assert.equal(r.status, 0);

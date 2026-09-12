@@ -447,9 +447,9 @@ test("transactions, bulk, and provenance stay inside the grant", () => {
     });
     assert.equal(executed.ok, true);
 
-    const events = kit.provenance.listEvents({ spaceId: "production" });
+    const events = kit.provenance.listEvents({ spaceId: "production", entity: "productions" });
     assert.equal(events.ok, true);
-    assert.ok(events.result.items.length >= 3);
+    assert.ok(events.result.items.length >= 2);
   } finally {
     client.close();
     fix.cleanup();

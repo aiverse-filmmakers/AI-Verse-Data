@@ -229,6 +229,66 @@ export function updateDataExtension(
   }
 }
 
+export function enableDataExtension(
+  input: AiVerseDataLifecycleInput,
+): AiVerseDataLifecycleResult {
+  const initialRoot = requireCompatibleTrustedRoot(input.rootPath);
+
+  try {
+    return withRegistryLock(initialRoot, () => {
+      const root = requireCompatibleTrustedRoot(
+        initialRoot.canonicalPath,
+      );
+      const snapshot = readRegistryDocument(root);
+      const current = currentDataExtensionEntry(snapshot.extensions);
+
+      if (current === null) {
+        throw new AiVerseDataLifecycleError(
+          "EXTENSION_NOT_INSTALLED",
+          "ai-verse-data is not registered; install it before enabling.",
+        );
+      }
+
+      if (readEnabled(current) === true) {
+        return baseResult("enable", root, {
+          status: "unchanged",
+          enabled: true,
+        });
+      }
+
+      const next: AiVerseDataExtensionJsonObject = {
+        ...current,
+        id: AI_VERSE_DATA_EXTENSION_ID,
+        enabled: true,
+      };
+
+      writeRegistryAtomic(
+        root,
+        registryWithDataEntry(snapshot, next),
+        snapshot.rawText,
+      );
+
+      const finalEntry = currentDataExtensionEntry(
+        readRegistryDocument(root).extensions,
+      );
+      if (finalEntry === null || readEnabled(finalEntry) !== true) {
+        throw new AiVerseDataLifecycleError(
+          "EXTENSION_REGISTRY_CHANGED",
+          "ai-verse-data registry state changed after enable; retry after inspecting the local extension registry.",
+        );
+      }
+
+      return baseResult("enable", root, {
+        status: "enabled",
+        registryWritten: true,
+        enabled: true,
+      });
+    });
+  } catch (error) {
+    throw remapInstallError(error);
+  }
+}
+
 export function disableDataExtension(
   input: AiVerseDataLifecycleInput,
 ): AiVerseDataLifecycleResult {
@@ -367,6 +427,12 @@ export class AiVerseDataExtensionLifecycle {
     input: AiVerseDataLifecycleInput,
   ): AiVerseDataLifecycleResult {
     return updateDataExtension(input);
+  }
+
+  enable(
+    input: AiVerseDataLifecycleInput,
+  ): AiVerseDataLifecycleResult {
+    return enableDataExtension(input);
   }
 
   disable(

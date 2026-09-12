@@ -14,7 +14,7 @@ extensions, without any new engine, new CLI, or sibling modification.
 Task 25 answers one question for a compatible native host:
 
 ```text
-Does Data install, update, disable, uninstall, and reinstall cleanly
+Does Data install, update, explicitly enable/disable, uninstall, and reinstall cleanly
 no matter which sibling extensions arrived first, without touching
 their state or canonical workspace databases?
 ```
@@ -26,7 +26,18 @@ preservation at every step. It implements no new behavior.
 
 ## 2. Orders covered
 
-Per `docs/INSTALLATION-AND-LIFECYCLE.md` section 15, at minimum:
+The beta distinguishes **package availability** from **native OS attachment**.
+
+These are all valid:
+
+```text
+Data package available -> OS installed later -> ai-verse-data install --root <os>
+OS installed first -> Data package available later -> ai-verse-data install --root <os>
+```
+
+Package-before-OS creates no native workspace state and grants no authority. The native lifecycle never writes a standalone fallback into an arbitrary non-OS project.
+
+Per `docs/INSTALLATION-AND-LIFECYCLE.md` section 15, native attachment coexistence covers at minimum:
 
 ```text
 OS -> Data
@@ -60,7 +71,8 @@ public APIs:
 
 ```text
 install -> status/doctor -> update -> instruction discovery
-  -> disable -> status -> uninstall -> reinstall -> doctor
+  -> disable -> status -> update(stays disabled) -> enable -> status
+  -> uninstall -> reinstall -> doctor
 ```
 
 Between steps it asserts:
@@ -70,12 +82,12 @@ Between steps it asserts:
   (`JSON.stringify` comparison before and after);
 - unknown top-level fields (for example `custom_top_level`) survive;
 - unknown per-entry fields (including nested objects and arrays)
-  survive install, update, disable, and reinstall;
+  survive install, update, enable, disable, and reinstall;
 - existing `enabled: false` on a sibling is preserved;
 - Data-owned files are limited to the three Task 20 owned files;
 - lifecycle alone creates zero `.sqlite` files;
 - seeded canonical database bytes are byte-identical across update,
-  disable, uninstall, and reinstall;
+  disable, explicit enable, uninstall, and reinstall;
 - a reinstalled host reopens the preserved database as `compatible`
   through the normal Task 21 path;
 - no tracked OS file (`AI-VERSE.yaml`, `AGENTS.md`,
@@ -100,7 +112,17 @@ The suite reuses rather than reimplements every safety rule:
 - no Task 26 Phase 3 gate behavior;
 - no sibling repository modifications.
 
-## 5. Deliberately not implemented
+## 5. Package-before-OS adoption rule
+
+"Data before OS" means the Data software/package can exist first. Once a compatible OS exists, the user attaches it deliberately with:
+
+```bash
+ai-verse-data install --root <os-root>
+```
+
+Unlike Memory, the first Data beta does not define a canonical standalone Data store that later needs migration. Therefore there is nothing to auto-merge when OS arrives later. If a future standalone Data product is added, it must ship with its own explicit adoption/migration contract before it can participate in this guarantee.
+
+## 6. Deliberately not implemented
 
 Task 25 does not implement:
 
@@ -111,7 +133,7 @@ Task 25 does not implement:
   release);
 - sibling repository changes.
 
-## 6. Acceptance
+## 7. Acceptance
 
 Task 25 proves twelve order variants preserve siblings across the full
 lifecycle, seeded databases survive lifecycle plus reinstall in every

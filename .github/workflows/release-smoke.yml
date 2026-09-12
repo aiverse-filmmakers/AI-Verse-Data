@@ -1,0 +1,31 @@
+name: Release Smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Build and test
+        run: npm run check
+
+      - name: Package smoke
+        run: npm pack --dry-run
+
+      - name: CLI smoke
+        run: node dist/src/cli.js --help

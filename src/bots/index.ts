@@ -1,7 +1,7 @@
 export * from "./errors.js";
 export {
   createBotsDataAdapter,
-} from "./adapter.js";
+} from "./secure-adapter.js";
 export type {
   BotsBulkMutation,
   BotsDataAdapter,

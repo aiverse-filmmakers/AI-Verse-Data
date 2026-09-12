@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export { createDashboardProjection } from "./adapter.js";
+export { createDashboardProjection } from "./secure-adapter.js";
 export type {
   DashboardChart,
   DashboardEventHistory,

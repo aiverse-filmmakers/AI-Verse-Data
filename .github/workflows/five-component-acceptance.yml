@@ -1,0 +1,339 @@
+name: Five-Component Release Acceptance
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  five-component:
+    name: order ${{ matrix.order }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        order:
+          - brain-memory-skills-data
+          - data-brain-skills-memory
+          - skills-data-memory-brain
+
+    steps:
+      - name: Checkout Data release candidate
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Clone pinned public release components
+        shell: bash
+        env:
+          OS_SHA: 89fb9043ec58c05931d477ef3e154df428a06c22
+          BRAIN_SHA: bef8261ad35d126d29aeff5d496f46904125b7b6
+          MEMORY_SHA: f5b417f9e7ce1b3f05bc80d10a483d10f6ad10ee
+          SKILLS_SHA: 3ab838e6e64561bbb7cea8f85d0ebc75b9e84337
+        run: |
+          set -euo pipefail
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-OS.git "$RUNNER_TEMP/AI-Verse-OS"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Brain.git "$RUNNER_TEMP/AI-Verse-Brain"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Memory.git "$RUNNER_TEMP/AI-Verse-Memory"
+          git clone https://github.com/aiverse-filmmakers/AI-Verse-Skills.git "$RUNNER_TEMP/AI-Verse-Skills"
+          git -C "$RUNNER_TEMP/AI-Verse-OS" checkout --detach "$OS_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Brain" checkout --detach "$BRAIN_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Memory" checkout --detach "$MEMORY_SHA"
+          git -C "$RUNNER_TEMP/AI-Verse-Skills" checkout --detach "$SKILLS_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-OS" rev-parse HEAD)" = "$OS_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Brain" rev-parse HEAD)" = "$BRAIN_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Memory" rev-parse HEAD)" = "$MEMORY_SHA"
+          test "$(git -C "$RUNNER_TEMP/AI-Verse-Skills" rev-parse HEAD)" = "$SKILLS_SHA"
+          git rev-parse HEAD
+
+      - name: Build Data candidate and install Brain package
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts
+          npm run build
+          python -m pip install -e "$RUNNER_TEMP/AI-Verse-Brain"
+
+      - name: Prepare clean OS and stable host config before optional components
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          SKILLS_ROOT="$RUNNER_TEMP/aiverse-skills-root"
+          mkdir -p "$OS_ROOT/workspaces/alpha/context"
+          cat > "$OS_ROOT/workspaces/alpha/WORKSPACE.yaml" <<'YAML'
+          schema_version: "2.0"
+          id: "alpha"
+          name: "Alpha"
+          type: "test"
+          status: "active"
+          purpose: "Five-component release acceptance."
+          YAML
+          cat > "$OS_ROOT/workspaces/alpha/context/CURRENT.md" <<'MD'
+          # Current Workspace Context
+
+          ## Current state
+
+          Five-component acceptance is active.
+          MD
+
+          python "$OS_ROOT/scripts/ai_verse_host_adapter.py"             --root "$OS_ROOT"             --skills-root "$SKILLS_ROOT"             --local-skills-root "$RUNNER_TEMP/no-local-skills"             --write-config "$OS_ROOT/.aiverse/brain-host.json"
+
+          export OS_ROOT
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+
+          root = os.environ["OS_ROOT"]
+          cfg = BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          host = BridgeHostAdapter(JSONSubprocessBridge(cfg))
+          assert host.description.adapter_id == "ai-verse-os:host"
+          assert "query_data" not in host.description.operations
+          assert list(host.retrieve_history("nothing yet", "operator")) == []
+          caps = list(host.list_capabilities("operator"))
+          assert any(item.get("provider") == "os" for item in caps)
+          print("OS-only dynamic host: PASS")
+          PY
+
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
+      - name: Install optional components in requested order
+        shell: bash
+        env:
+          ORDER: ${{ matrix.order }}
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          MEMORY="$RUNNER_TEMP/AI-Verse-Memory"
+          SKILLS="$RUNNER_TEMP/AI-Verse-Skills"
+          SKILLS_ROOT="$RUNNER_TEMP/aiverse-skills-root"
+          SKILLS_CACHE="$RUNNER_TEMP/aiverse-skills-cache"
+          DATA_ROOT="$GITHUB_WORKSPACE"
+
+          install_brain() {
+            ai-verse-brain init "$OS_ROOT" --apply
+          }
+          install_memory() {
+            python "$MEMORY/scripts/install.py" --target "$OS_ROOT" --source-dir "$MEMORY"
+          }
+          install_skills() {
+            python "$SKILLS/installer/aiverse_skills.py"               --root "$SKILLS_ROOT" --cache "$SKILLS_CACHE" install --profile creator
+          }
+          install_data() {
+            node "$DATA_ROOT/dist/src/cli.js" install --root "$OS_ROOT"
+          }
+
+          IFS='-' read -r -a parts <<< "$ORDER"
+          for component in "${parts[@]}"; do
+            "install_$component"
+          done
+
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
+      - name: Initialize Data and seed Memory plus structured records
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          MEMORY_ENGINE="$OS_ROOT/scripts/ai-verse-memory/memory.py"
+
+          python "$MEMORY_ENGINE" --root "$OS_ROOT" remember             --type state --workspace alpha             --text "five-component-memory-marker"
+
+          call_data() {
+            local request="$1"
+            printf '%s\n' "$request" | node "$OS_ROOT/scripts/data-host.mjs" --root "$OS_ROOT"
+          }
+
+          call_data '{"protocol":"ai-verse-os-data-host/1.0","request_id":"accept-init","operation":"init","scope":"workspace:alpha","reason":"Initialize release-acceptance Data workspace."}'
+          call_data '{"protocol":"ai-verse-os-data-host/1.0","request_id":"accept-space","operation":"request","scope":"workspace:alpha","reason":"Create release-acceptance space.","data":{"operation":"data.space.create","payload":{"spaceId":"acceptance","name":"Acceptance","authority":"local_canonical"}}}'
+          call_data '{"protocol":"ai-verse-os-data-host/1.0","request_id":"accept-schema","operation":"request","scope":"workspace:alpha","reason":"Create release-acceptance schema.","data":{"operation":"data.schema.create","payload":{"spaceId":"acceptance","entity":"items","name":"Items","fields":{"title":{"type":"string","required":true}}}}}'
+          call_data '{"protocol":"ai-verse-os-data-host/1.0","request_id":"accept-record","operation":"request","scope":"workspace:alpha","reason":"Create release-acceptance record.","data":{"operation":"data.record.create","payload":{"spaceId":"acceptance","entity":"items","idempotencyKey":"five-component:create","data":{"title":"five-component-data-marker"}}}}'
+
+      - name: Same host config discovers late Memory Skills Data and Connections
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          mkdir -p "$OS_ROOT/connections"
+          cat > "$OS_ROOT/connections/registry.yaml" <<'YAML'
+          schema_version: "2.0"
+          connections:
+            - id: acceptance-local
+              name: Acceptance Local
+              mechanism: local
+              status: configured
+              scope:
+                operator: true
+                workspaces: [alpha]
+          YAML
+
+          export OS_ROOT
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+
+          root = os.environ["OS_ROOT"]
+          cfg = BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          host = BridgeHostAdapter(JSONSubprocessBridge(cfg))
+
+          assert host.description.adapter_id == "ai-verse-os:host"
+          assert "query_data" in host.description.operations
+          assert host.description.metadata["optional_components_dynamic"] is True
+
+          history = list(host.retrieve_history("five-component-memory-marker", "workspace:alpha"))
+          assert any("five-component-memory-marker" in str(item) for item in history)
+
+          capabilities = list(host.list_capabilities("operator"))
+          assert any(item.get("provider") == "aiverse-skills" for item in capabilities)
+
+          connections = list(host.list_connections("workspace:alpha"))
+          assert any(item.get("id") == "acceptance-local" for item in connections)
+
+          answer = host.query_data({
+              "scope": "workspace:alpha",
+              "operation": "data.record.list",
+              "payload": {"spaceId": "acceptance", "entity": "items"},
+          })
+          assert "five-component-data-marker" in str(answer)
+          print("Dynamic five-component host composition: PASS")
+          PY
+
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
+      - name: Disable and re-enable Data without regenerating host config
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          DATA_ROOT="$GITHUB_WORKSPACE"
+
+          node "$DATA_ROOT/dist/src/cli.js" disable --root "$OS_ROOT"
+
+          export OS_ROOT
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+          root = os.environ["OS_ROOT"]
+          host = BridgeHostAdapter(JSONSubprocessBridge(
+              BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          ))
+          assert "query_data" not in host.description.operations
+          print("Data disable dynamic discovery: PASS")
+          PY
+
+          node "$DATA_ROOT/dist/src/cli.js" update --root "$OS_ROOT"
+          export REGISTRY_PATH="$OS_ROOT/.aiverse/extensions/registry.json"
+          python - <<'PY'
+          import json, os
+          data = json.load(open(os.environ["REGISTRY_PATH"], encoding="utf-8"))
+          assert data["extensions"]["ai-verse-data"]["enabled"] is False
+          PY
+
+          node "$DATA_ROOT/dist/src/cli.js" enable --root "$OS_ROOT"
+
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+          root = os.environ["OS_ROOT"]
+          host = BridgeHostAdapter(JSONSubprocessBridge(
+              BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          ))
+          assert "query_data" in host.description.operations
+          answer = host.query_data({
+              "scope": "workspace:alpha",
+              "operation": "data.record.list",
+              "payload": {"spaceId": "acceptance", "entity": "items"},
+          })
+          assert "five-component-data-marker" in str(answer)
+          print("Data explicit re-enable dynamic discovery: PASS")
+          PY
+
+          test -f "$OS_ROOT/workspaces/alpha/data/ai-verse-data.sqlite"
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
+      - name: Detach and reattach without losing canonical state
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          MEMORY="$RUNNER_TEMP/AI-Verse-Memory"
+          DATA_ROOT="$GITHUB_WORKSPACE"
+
+          # Prove Brain cannot be removed while it owns strategic direction, then
+          # explicitly export/hand back before detach.
+          ai-verse-brain direction-owner "$OS_ROOT" --scope operator --handover-to-brain --apply --confirm-import
+          cat > "$RUNNER_TEMP/brain-handback.json" <<'JSON'
+          {
+            "desired_state": "Five-component beta is safely shippable",
+            "success_definition": "Install, detach and reinstall preserve authority and canonical state",
+            "goals": ["Finish the five-component release gate"]
+          }
+          JSON
+          ai-verse-brain onboard "$OS_ROOT" --scope operator --answers "$RUNNER_TEMP/brain-handback.json" --apply
+
+          set +e
+          ai-verse-brain detach "$OS_ROOT" --apply > "$RUNNER_TEMP/brain-detach-blocked.out" 2>&1
+          detach_status=$?
+          set -e
+          test "$detach_status" -eq 2
+          grep -Fq "Transfer direction ownership" "$RUNNER_TEMP/brain-detach-blocked.out"
+
+          ai-verse-brain direction-owner "$OS_ROOT" --scope operator --handover-to-os --apply --confirm-export
+          grep -Fq "Five-component beta is safely shippable" "$OS_ROOT/operator/context/CURRENT.md"
+
+          python "$MEMORY/scripts/install.py" --target "$OS_ROOT" --source-dir "$MEMORY" --action detach
+          find "$OS_ROOT/workspaces/alpha/memory/atomic" -type f -name '*.md' | grep -q .
+
+          node "$DATA_ROOT/dist/src/cli.js" uninstall --root "$OS_ROOT"
+          test -f "$OS_ROOT/workspaces/alpha/data/ai-verse-data.sqlite"
+
+          ai-verse-brain detach "$OS_ROOT" --apply
+          test -f "$OS_ROOT/operator/brain/installation.json"
+
+          ai-verse-brain attach "$OS_ROOT" --apply
+          python "$MEMORY/scripts/install.py" --target "$OS_ROOT" --source-dir "$MEMORY"
+          node "$DATA_ROOT/dist/src/cli.js" install --root "$OS_ROOT"
+
+          export OS_ROOT
+          python - <<'PY'
+          import os
+          from aiverse_brain.bridge import BridgeConfig, BridgeHostAdapter, JSONSubprocessBridge
+          root = os.environ["OS_ROOT"]
+          host = BridgeHostAdapter(JSONSubprocessBridge(
+              BridgeConfig.load(os.path.join(root, ".aiverse", "brain-host.json"))
+          ))
+          history = list(host.retrieve_history("five-component-memory-marker", "workspace:alpha"))
+          assert any("five-component-memory-marker" in str(item) for item in history)
+          answer = host.query_data({
+              "scope": "workspace:alpha",
+              "operation": "data.record.list",
+              "payload": {"spaceId": "acceptance", "entity": "items"},
+          })
+          assert "five-component-data-marker" in str(answer)
+          print("Detach/reinstall state preservation: PASS")
+          PY
+
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"
+
+      - name: Final component doctors
+        shell: bash
+        run: |
+          set -euo pipefail
+          OS_ROOT="$RUNNER_TEMP/AI-Verse-OS"
+          node "$OS_ROOT/scripts/components.mjs" doctor --root "$OS_ROOT"
+          ai-verse-brain doctor "$OS_ROOT"
+          python "$OS_ROOT/scripts/ai-verse-memory/memory.py" --root "$OS_ROOT" doctor
+          node "$GITHUB_WORKSPACE/dist/src/cli.js" doctor --root "$OS_ROOT" --workspace alpha
+          python "$RUNNER_TEMP/AI-Verse-Skills/installer/aiverse_skills.py"             --root "$RUNNER_TEMP/aiverse-skills-root" doctor --readiness
+          test -z "$(git -C "$OS_ROOT" status --porcelain --untracked-files=no)"

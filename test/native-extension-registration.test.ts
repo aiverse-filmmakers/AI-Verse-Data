@@ -877,7 +877,7 @@ test("no-os and incompatible hosts are rejected before native installation state
   }
 });
 
-test("materialized file constants are deterministic and do not expose workspace initialization", () => {
+test("materialized file constants expose the executable host engine without implicit workspace initialization", () => {
   const instructions = ownedFileContentsForTesting(
     AI_VERSE_DATA_EXTENSION_INSTRUCTIONS_PATH,
   );
@@ -889,7 +889,7 @@ test("materialized file constants are deterministic and do not expose workspace 
   );
 
   assert.match(instructions ?? "", /does not initialize any workspace database/);
-  assert.match(engine ?? "", /registrationOnly: true/);
+  assert.match(engine ?? "", /registrationOnly: false/);
   const parsed = JSON.parse(manifest ?? "{}") as Record<string, unknown>;
   assert.equal(parsed.id, AI_VERSE_DATA_EXTENSION_ID);
   assert.equal(parsed.package_version, AI_VERSE_DATA_EXTENSION_VERSION);

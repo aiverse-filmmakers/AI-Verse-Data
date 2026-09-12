@@ -1,13 +1,13 @@
 # AI-Verse Data Installation and Lifecycle
 
-**Status:** Canonical install/lifecycle direction  
+**Status:** Release 0.1 / Phase 5.6 native lifecycle contract  
 **Date:** 2026-09-10
 
 ## 1. Goal
 
 Installing AI-Verse Data should feel native without modifying or taking ownership of AI-Verse OS itself.
 
-The target experience is eventually:
+For repository-authorized development installs, the package can be invoked from GitHub; public/member distribution is a separate release decision:
 
 ```bash
 npx github:aiverse-filmmakers/AI-Verse-Data install
@@ -41,7 +41,7 @@ A registry entry is not evidence that a workspace database exists or is healthy.
 
 ## 3. Native AI-Verse OS compatibility gate
 
-Phase 3.1 implements this gate through the public `@ai-verse/data/native` compatibility detector.
+Release 0.1 implements this gate through the public `@ai-verse/data/native` compatibility detector.
 
 A native host is compatible only when the detector verifies the required AI-Verse OS v2 contract:
 
@@ -66,13 +66,13 @@ Unsafe, malformed, unsupported, or incomplete AI-Verse layouts fail closed.
 
 A missing/ordinary non-AI-Verse project remains `no-os`. Strong AI-Verse partial-host evidence without a valid manifest is `incompatible`, so later install logic must not silently fall back to standalone mode and mask a broken native host.
 
-Task 19 path-checks an existing extension-registry location but deliberately does not parse or mutate registry contents. Hardened registry validation/materialization belongs to Task 20.
+The release lifecycle uses the hardened local extension-registry validation/materialization contract described below.
 
 Detailed contract: `docs/AI-VERSE-OS-COMPATIBILITY-V0.1.md`.
 
 ## 4. Native extension placement
 
-Phase 3.2 implements Data-owned local materialization under:
+Release 0.1 materializes Data-owned local extension files under:
 
 ```text
 .aiverse/extensions/ai-verse-data/
@@ -81,7 +81,7 @@ Phase 3.2 implements Data-owned local materialization under:
 └── extension.json
 ```
 
-These are local extension files, not canonical workspace Data. Task 20 updates only these owned files and preserves unknown safe files already present in the extension directory.
+These are local extension files, not canonical workspace Data. Normal install/update touches only Data-owned files and preserves unknown safe files already present in the extension directory.
 
 The general ownership rule remains:
 
@@ -99,7 +99,7 @@ The exact packaged file layout may evolve, but all normal extension material mus
 
 ## 5. Local extension registration
 
-Phase 3.2 implements hardened programmatic registration through `AiVerseDataExtensionInstaller`.
+Release 0.1 implements hardened programmatic registration through `AiVerseDataExtensionInstaller`.
 
 Register only the `ai-verse-data` entry in:
 
@@ -135,7 +135,7 @@ Registration must:
 - use atomic replacement;
 - reject path traversal, absolute paths, unsafe symlinks, malformed files, and unsupported registry versions.
 
-Phase 3.2 now implements this safety class directly:
+The release implementation provides this safety class directly:
 
 - exact registry `schema_version: "1.0"`;
 - exclusive `registry.json.lock`;
@@ -159,15 +159,9 @@ Installation makes the capability available.
 
 A workspace database is created only when Data is explicitly initialized or first used through a deliberate creation path.
 
-Preferred command shape:
+Workspace initialization is explicit and is not a side effect of package install. In the first beta it is performed by the trusted AI-Verse OS Data host (`operation: init`) or the public native API `initWorkspaceData()`; the lifecycle CLI deliberately does not guess a workspace or auto-create every database.
 
-```bash
-ai-verse-data init --root /path/to/AI-Verse-OS --workspace <id>
-```
-
-or equivalent native runtime invocation.
-
-The engine resolves the workspace from the trusted OS root, validates `WORKSPACE.yaml`, and creates:
+The engine resolves the exact workspace from the trusted OS root, validates `WORKSPACE.yaml`, and creates:
 
 ```text
 workspaces/<id>/data/ai-verse-data.sqlite
@@ -199,32 +193,21 @@ and validate:
 - migration state;
 - integrity status when requested.
 
-## 8. Standalone mode
+## 8. Package-before-OS and standalone behavior
 
-Standalone mode should remain possible for portability, but it is secondary to native AI-Verse use.
+The Data package/runtime may be installed or made available before AI-Verse OS exists. That package-level availability grants no OS authority and creates no native workspace database.
 
-Conceptual standalone structure:
+The first member beta does **not** silently create a competing standalone Data store when the native lifecycle is pointed at a non-OS or incompatible AI-Verse root. Native `install/update/enable/disable/uninstall/doctor/status` require a compatible AI-Verse OS root and fail closed otherwise.
 
-```text
-project/
-└── .ai-verse-data/
-    ├── data.sqlite
-    └── local metadata
-```
+A future portable standalone product may use a separate explicit scope model, but it must remain distinct from AI-Verse workspace authorization and must include an explicit migration/adoption contract before it is treated as part of the beta install-order guarantee.
 
-Standalone mode must have its own explicit scope model and cannot pretend to provide AI-Verse workspace authorization.
-
-If a compatible AI-Verse OS is detected, native mode is preferred.
-
-If an incompatible AI-Verse OS is detected, fail instead of creating a competing standalone store.
+Therefore "Data before OS" means **package available before OS, attach later**, not "write canonical Data into an arbitrary project and later guess how to merge it."
 
 ## 9. Install behavior
 
-The Phase 3.2 programmatic installer now implements steps 1 through 11 for compatible native hosts, except standalone selection remains outside this native installer and live `doctor` remains Task 24.
+The release installer implements compatible native host detection, Data-owned materialization, shared registry locking/registration, lifecycle commands, doctor/status, rollback-safe uninstall, and explicit workspace initialization through the native/OS host contract.
 
-The later Task 23 native CLI will compose these primitives into lifecycle commands and user-facing status/next-step output.
-
-The installer does not initialize every workspace automatically.
+The installer does not initialize every workspace automatically and does not create a standalone fallback when the native host is absent or incompatible.
 
 ## 10. Update behavior
 
@@ -266,13 +249,13 @@ Destructive changes should require a separate explicit migration request with pr
 
 The installer must never alter user entity schemas merely because the package version changed.
 
-## 12. Disable behavior
+## 12. Enable / disable behavior
 
-Disabling the extension should change only its enabled state/availability.
+Disabling the extension changes only its enabled state/availability.
 
 Canonical Data remains untouched.
 
-Expected outcome:
+Expected disabled outcome:
 
 ```text
 engine installed
@@ -280,6 +263,14 @@ registry enabled = false
 workspace databases preserved
 normal runtime does not select Data
 ```
+
+Re-enable is explicit:
+
+```bash
+ai-verse-data enable --root <os-root>
+```
+
+`install` and `update` deliberately preserve an existing `enabled: false`; they do not reinterpret an update as operator intent to reactivate Data. `enable` flips only Data's own registry entry back to `enabled: true`, preserves unknown sibling/entry fields, and leaves canonical databases and extension files unchanged.
 
 ## 13. Uninstall behavior
 
@@ -354,9 +345,9 @@ Integration is discovery/adapters, not installer-side rewriting.
 
 ## 17. `doctor`
 
-`ai-verse-data doctor` should be read-only with respect to canonical user records.
+`ai-verse-data doctor --root <os-root> [--workspace <id>]` is implemented and is read-only with respect to canonical user records.
 
-It should report:
+It reports:
 
 - mode;
 - host compatibility;
@@ -378,7 +369,7 @@ Missing optional sibling layers should not be warnings.
 
 ## 18. `status`
 
-A lighter status command may report without deep integrity work:
+`ai-verse-data status --root <os-root> [--workspace <id>]` is implemented as the lighter health/readiness surface without the full integrity check:
 
 ```text
 AI-Verse Data 0.1.x
@@ -401,7 +392,7 @@ Canonical databases are user-owned even if Data created them.
 
 ## 20. Crash/concurrency safety
 
-Install/update/uninstall operations should serialize their own lifecycle mutations.
+Install/update/enable/disable/uninstall operations should serialize their own lifecycle mutations.
 
 Extension registry mutations must use the OS's safe lock/atomic replace rules.
 
@@ -429,7 +420,7 @@ Path validation must explicitly handle:
 
 ## 22. Distribution direction
 
-Development can initially support GitHub-based installation.
+Development can use GitHub-based installation when the caller has repository access. Member/public distribution must use whatever immutable access/package policy is chosen for the private repository; this document does not assume public GitHub access.
 
 Future package publication may provide:
 
@@ -443,11 +434,11 @@ The distribution format should not change canonical database paths or public pro
 
 1. Install never deletes canonical Data.
 2. Update never silently changes user schemas.
-3. Disable never changes records.
+3. Enable/disable never changes records or canonical databases.
 4. Uninstall preserves canonical databases by default.
 5. Purge is explicit and separate.
 6. Other extension registrations are preserved.
 7. Incompatible AI-Verse hosts fail closed.
-8. Standalone fallback never masks an incompatible AI-Verse installation.
+8. Missing/incompatible native OS never triggers a silent standalone fallback.
 9. Missing sibling extensions never block Data installation.
 10. Reinstall can rediscover compatible preserved databases without rebuilding their contents.

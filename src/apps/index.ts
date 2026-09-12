@@ -1,5 +1,5 @@
 export * from "./errors.js";
-export { createAppsDataKit } from "./kit.js";
+export { createAppsDataKit } from "./secure-kit.js";
 export type {
   AppsDataCapability,
   AppsDataGrant,
