@@ -1,12 +1,12 @@
 # AI-Verse Native CLI Lifecycle v0.1
 
 **Task:** 23 / 41
-**Phase:** 3.5 - Native CLI install/update/disable/uninstall
+**Phase:** 3.5 + release hardening - Native CLI install/update/enable/disable/uninstall
 **Status:** IMPLEMENTED
 **Public package surface:** `ai-verse-data` CLI plus `@ai-verse/data/native` lifecycle engine
 
 This document defines the thin native CLI lifecycle over the existing
-Task 19-22 primitives. It installs, updates, disables, and uninstalls
+Task 19-22 primitives. It installs, updates, explicitly re-enables, disables, and uninstalls
 the Data extension without ever touching canonical workspace databases.
 
 ## 1. Purpose
@@ -47,6 +47,7 @@ All lifecycle commands require an explicit trusted host root:
 ```bash
 ai-verse-data install --root <os-root> [--json]
 ai-verse-data update --root <os-root> [--json]
+ai-verse-data enable --root <os-root> [--json]
 ai-verse-data disable --root <os-root> [--json]
 ai-verse-data uninstall --root <os-root> [--json]
 ```
@@ -73,6 +74,10 @@ Preserves `enabled: false`, unknown entry fields, unknown top-level
 registry fields, unrelated entries, and unknown safe files in the owned
 directory. Never rewrites user records or schemas.
 
+### enable
+
+Requires an existing Data registration. If already enabled it is idempotent/unchanged. If disabled it flips only `extensions["ai-verse-data"].enabled` to `true` under the shared registry lock. It does not recreate databases or reinterpret package update as enable intent.
+
 ### disable
 
 Flips only the Data entry's `enabled` to `false` under the registry
@@ -97,13 +102,14 @@ Programmatic surface under `@ai-verse/data/native`:
 ```ts
 installDataExtension({ rootPath })
 updateDataExtension({ rootPath })
+enableDataExtension({ rootPath })
 disableDataExtension({ rootPath })
 uninstallDataExtension({ rootPath })
-new AiVerseDataExtensionLifecycle().install/update/disable/uninstall(...)
+new AiVerseDataExtensionLifecycle().install/update/enable/disable/uninstall(...)
 ```
 
 Results carry command, status (`installed`, `updated`, `unchanged`,
-`disabled`, `uninstalled`, `not-installed`), canonical root, registry
+`enabled`, `disabled`, `uninstalled`, `not-installed`), canonical root, registry
 written flag, materialized/removed paths, enabled state, and the
 `preservesCanonicalWorkspaceData: true` plus `trackedOsFilesMutated: []`
 invariants. Errors use `AiVerseDataLifecycleError`, remapping every
@@ -124,9 +130,9 @@ Lifecycle reuses rather than reimplements:
   own-entry fields, existing `enabled: false`, unknown safe owned-dir
   files left alone except the three owned files on uninstall.
 
-Disable and uninstall perform their registry mutation under the same
+Enable, disable, and uninstall perform their registry mutation under the same
 lock with the same atomic replace and post-commit verification as Task 20.
-Uninstall verifies the Data key is gone after commit; disable verifies
+Uninstall verifies the Data key is gone after commit; enable/disable verify
 `enabled === false` after commit.
 
 ## 5. Database preservation
@@ -134,7 +140,7 @@ Uninstall verifies the Data key is gone after commit; disable verifies
 Lifecycle never creates, opens, migrates, repairs, or rebounds a
 workspace database. Verified by the suite asserting zero `.sqlite`
 files appear from lifecycle alone, and by byte comparison of seeded
-databases across disable, update, and uninstall. Reinstall after
+databases across disable, update, enable, and uninstall. Reinstall after
 uninstall reopens preserved compatible databases through the normal
 Task 21 path, which lifecycle never invokes implicitly.
 
@@ -161,7 +167,7 @@ Task 23 does not implement:
 ## 8. Acceptance
 
 Task 23 proves install composes the Task 20 primitive idempotently,
-update preserves `enabled: false` plus unknown state, disable flips
+update preserves `enabled: false` plus unknown state, enable/disable flip
 only `enabled` with files and databases byte-identical, uninstall
 removes only owned state with databases and unrelated entries intact,
 incompatible and missing hosts fail closed, CLI exit codes and next-step
