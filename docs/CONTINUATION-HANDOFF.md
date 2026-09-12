@@ -13,16 +13,18 @@ Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
 Phase 4  Ecosystem Adapters            COMPLETE  9 / 9
-Phase 5  Release Hardening             IN PROGRESS  5 / 6
+Phase 5  Release Hardening             COMPLETE  6 / 6
 
-Overall implementation: 40 / 41 tasks complete
+Overall implementation: 41 / 41 tasks complete
+
+First release: COMPLETE
 ```
 
 ## Latest completed task
 
-**Task 40 / 41 - Phase 5.5: Packaging and simple install command**
+**Task 41 / 41 - Phase 5.6: Full release acceptance suite**
 
-Implemented through Task 40:
+Implemented through Task 41:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -153,7 +155,9 @@ Implemented through Task 40:
 - runnable examples plus guide for CRM, content, production, Bot-safe
   ops, backup/reinstall, and Data-vs-Memory with no new engine;
 - stable packaging metadata plus GitHub install path with publication
-  deferred to post-Task-41.
+  deferred to post-Task-41;
+- release acceptance gate proves the clean-environment full story
+  with seeded bytes identical across update, uninstall, and reinstall.
 
 Detailed Task 21 contract:
 
@@ -223,6 +227,10 @@ Detailed Task 40 contract:
 
 `docs/PACKAGING-INSTALL-V0.1.md`
 
+Detailed Task 41 contract:
+
+`docs/RELEASE-ACCEPTANCE.md`
+
 Behavioral implementation verification (Task 35 local; exact-head CI cited on push):
 
 ```text
@@ -246,7 +254,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 40:
+Implemented through Task 41:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -323,6 +331,23 @@ Task 39 local verification: 343 / 343 PASS on Node 22 (suite unchanged); all 6 e
 
 Task 40 local verification: 343 / 343 PASS on Node 22 (suite unchanged); pack 490 files plus entry points plus CLI green; exact-head CI cited on push.
 
+Task 41 local verification: 344 / 344 PASS on Node 22; focused release file 1 / 1 PASS; exact-head CI cited on push.
+
+## Task 41 architectural laws
+
+Task 41 must preserve:
+
+1. Gate only; no new engine and no new CLI.
+2. Section-18 story on one clean fixture: install, workspace A,
+   CRM, records, query, aggregates, versions, replay, conflict,
+   backup, reopen, isolation, sibling, update, doctor, uninstall,
+   reinstall, verified records.
+3. Seeded bytes identical across update, uninstall, and reinstall;
+   tracked OS files byte-identical.
+4. Full suite green with inherited Phase 1-4 gates.
+5. Exact-head CI cited before declaring complete.
+6. No sibling repository modifications are permitted.
+
 ## Task 40 architectural laws
 
 Task 40 must preserve:
@@ -393,11 +418,9 @@ Task 35 must preserve:
 
 ## NEXT
 
-**Task 41 / 41 - Phase 5.6: Full release acceptance suite**
+**First release: COMPLETE 41 / 41.**
 
-Prove the complete release story on clean environments.
-
-**First release completes only when Task 41 passes.**
+No further tasks. The 41-task plan is done.
 
 ## Task 21 architectural laws
 

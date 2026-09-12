@@ -1,10 +1,10 @@
 # AI-Verse Data Phase 5 Status
 
 **Phase:** 5 - Release Hardening
-**Phase status:** IN PROGRESS
-**Implementation tasks completed:** 5 / 6
-**Overall implementation tasks completed:** 40 / 41
-**Next:** Task 41 / 41, Phase 5.6 - Full release acceptance suite
+**Phase status:** COMPLETE
+**Implementation tasks completed:** 6 / 6
+**Overall implementation tasks completed:** 41 / 41
+**Next:** None - first release complete
 
 This document records implementation evidence for Phase 5. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -239,11 +239,52 @@ Task 5.5 does not implement:
 - license change out of `UNLICENSED`;
 - release acceptance (Task 41).
 
-Task 41 / 41 is next.
+Task 41 / 41 was next at that boundary (now COMPLETE, see below).
 
 ### Task 5.5 gate
 
 **PASSED.**
+
+---
+
+## Task 41 / 41 - Phase 5.6 Full release acceptance suite
+
+**Implementation status:** COMPLETE
+
+Phase 5.6 adds `test/release-acceptance.test.ts` plus
+`docs/RELEASE-ACCEPTANCE.md`: the section-18 story on one clean
+fixture with no new engine.
+
+Core guarantees:
+
+- fresh OS, install with owned files only, workspace A init only;
+- CRM space plus schemas, related records with receipts and replay;
+- filtered query plus count/sum aggregates;
+- safe versioned update plus simulated concurrent conflict;
+- backup create plus verify;
+- restart plus exact reopen of records/events/receipts;
+- workspace B isolation;
+- representative sibling state surviving update;
+- doctor healthy, uninstall preserving the canonical DB, reinstall
+  reopening verified records, tracked OS files byte-identical;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 1 / 1 PASS;
+- full `npm test`: 344 / 344 PASS.
+
+### Task 5.6 gate
+
+**PASSED.**
+
+### Phase 5 gate
+
+**PASSED.**
+
+### First release
+
+**COMPLETE 41 / 41.**
 
 ---
 
@@ -256,10 +297,8 @@ Task 41 / 41 is next.
 | 38 / 41 | 5.3 | COMPLETE | Performance baseline |
 | 39 / 41 | 5.4 | COMPLETE | Documentation/examples |
 | 40 / 41 | 5.5 | COMPLETE | Packaging and simple install command |
-| 41 / 41 | 5.6 | NOT STARTED | Full release acceptance suite |
+| 41 / 41 | 5.6 | COMPLETE | Full release acceptance suite |
 
 ## Current boundary
 
-Task 41 / 41 is next.
-
-Do not begin Task 41 until Task 40 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+**First release: COMPLETE 41 / 41.**

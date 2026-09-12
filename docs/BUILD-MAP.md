@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
 **Updated:** 2026-09-12  
-**Status:** Phase 5 IN PROGRESS  
-**Implementation progress:** 40 / 41 tasks complete  
-**Next:** Task 41 / 41, Phase 5.6 - Full release acceptance suite
+**Status:** Phase 5 COMPLETE  
+**Implementation progress:** 41 / 41 tasks complete  
+**Next:** None - first release complete
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -21,10 +21,12 @@ Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
 Phase 4  Ecosystem Adapters            [COMPLETE]      100%  (9/9)
-Phase 5  Release Hardening             [IN PROGRESS]    83%  (5/6)
+Phase 5  Release Hardening             [COMPLETE]      100%  (6/6)
 ```
 
-Overall implementation: **40 / 41 tasks complete**.
+Overall implementation: **41 / 41 tasks complete**.
+
+**First release completes when Task 41 passes: PASSED.**
 
 ---
 
@@ -1387,9 +1389,31 @@ Phase status: `docs/PHASE-5-STATUS.md`.
 **Task 5.5 gate: PASSED.**
 
 ## Task 41 / 41 - Phase 5.6 Full release acceptance suite
-Prove the complete release story on clean environments.
 
-**First release completes only when Task 41 passes.**
+**Status:** COMPLETE
+
+Implemented:
+
+- `test/release-acceptance.test.ts` end-to-end on one clean fixture
+  with no new engine: fresh OS, install, workspace A init, CRM space
+  plus schemas, related records with receipts and replay, filtered
+  query plus count/sum aggregates, safe versioned update, simulated
+  concurrent conflict, backup create plus verify, restart plus exact
+  reopen of records/events/receipts, workspace B isolation,
+  representative sibling state surviving update, doctor healthy,
+  uninstall preserving the canonical DB, reinstall reopening
+  verified records, tracked OS files byte-identical;
+- `docs/RELEASE-ACCEPTANCE.md` proof;
+- no sibling edits, no deletions.
+
+Local proof (this host, Node 22):
+
+- focused file: 1 / 1 PASS;
+- full `npm test`: 344 / 344 PASS.
+
+**Task 5.6 gate: PASSED.**
+**Phase 5 gate: PASSED.**
+**First release completes only when Task 41 passes: PASSED.**
 
 ---
 
@@ -1417,6 +1441,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 36 / 41: Phase 5.1 - Cross-platform CI matrix.**
+**First release: COMPLETE 41 / 41.**
 
-Do not begin Task 37 / 41 until Task 36 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+No further tasks. The 41-task plan is done.
