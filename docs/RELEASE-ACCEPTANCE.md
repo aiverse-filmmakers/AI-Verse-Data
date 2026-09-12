@@ -40,7 +40,7 @@ Across the whole story:
 Full repository suite on the implementation host:
 
 ```text
-344 / 344 PASS
+351 / 351 PASS
 0 failed
 0 skipped
 0 cancelled
@@ -51,3 +51,37 @@ Focused release file: 1 / 1 PASS.
 Release gate: **PASSED.**
 First release: **COMPLETE 41 / 41.**
 Phase 5: **COMPLETE 6 / 6.**
+
+
+## 4. Post-audit release hardening
+
+A full source-level release audit on 2026-09-12 identified and repaired
+adapter and delivery defects that were not covered by the original 344-test
+gate. The hardening work preserves the 41-task implementation plan while
+strengthening the shipped release.
+
+Verified repairs:
+
+- Apps cannot tunnel record deletion through transaction or bulk update grants;
+- Apps, Bots, and Brain provenance reads stay inside their granted Data entities;
+- Brain host-bound read capability references are enforced rather than treated as metadata;
+- Memory resolves canonical events directly by event ID and no longer synthesizes placeholder evidence or depends on the first 200 events;
+- Dashboard resolves cross-space references through the schema's `spaceId` and propagates unexpected lookup failures;
+- `data.record.list` rejects unsupported cursors instead of silently ignoring them; cursor pagination remains on `data.query`;
+- native uninstall validates owned files before mutation, removes registry state before files, and restores the previous installed state if post-commit file removal fails;
+- installed extension instructions/metadata reflect the completed Phase 5.6 release;
+- the materialized `engine.mjs` exposes a real `ai-verse-data-host/1.0` request handler over the public package rather than registration-only metadata;
+- the installed engine acceptance test performs explicit workspace initialization and real create/query operations through the materialized extension boundary.
+
+Cross-platform GitHub Actions proof at hardening head
+`4d1c9ca899ecb55eba387d92e26c2e8a111ec8b9`:
+
+```text
+Run: 34700035814
+Node 22: ubuntu PASS, macOS PASS, Windows PASS
+Node 24: ubuntu PASS, macOS PASS, Windows PASS
+351 / 351 PASS
+0 failed
+0 skipped
+0 cancelled
+```
