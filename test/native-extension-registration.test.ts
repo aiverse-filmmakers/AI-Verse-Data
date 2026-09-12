@@ -888,7 +888,7 @@ test("materialized file constants are deterministic and do not expose workspace 
     AI_VERSE_DATA_EXTENSION_MANIFEST_PATH,
   );
 
-  assert.match(instructions ?? "", /does not initialize any workspace database/);
+  assert.match(instructions ?? "", /never creates a workspace database implicitly/);
   assert.match(engine ?? "", /registrationOnly: false/);
   assert.match(engine ?? "", /phase: "5\.6"/);
   assert.match(instructions ?? "", /workspace discovery and initialization are explicit native operations/);
