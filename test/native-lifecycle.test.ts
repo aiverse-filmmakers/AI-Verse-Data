@@ -589,6 +589,10 @@ test("registry busy and unsafe paths fail closed", {
         () => uninstallDataExtension({ rootPath: link.rootPath }),
         (error) => errorCode(error) === "SYMLINK_PATH_REJECTED",
       );
+      const afterFailedUninstall = readRegistry(link.rootPath) as {
+        extensions: Record<string, unknown>;
+      };
+      assert.ok("ai-verse-data" in afterFailedUninstall.extensions);
     } finally {
       rmSync(target, { force: true });
       writeFileSync(target, saved, "utf8");
