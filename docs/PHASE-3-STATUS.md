@@ -2,9 +2,9 @@
 
 **Phase:** 3 - Native AI-Verse Integration  
 **Phase status:** IN PROGRESS  
-**Implementation tasks completed:** 5 / 8  
-**Overall implementation tasks completed:** 23 / 41  
-**Next:** Task 24 / 41, Phase 3.6 - Native doctor + status
+**Implementation tasks completed:** 6 / 8  
+**Overall implementation tasks completed:** 24 / 41  
+**Next:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite
 
 This document records implementation evidence for Phase 3. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -318,8 +318,8 @@ Task 23 / 41 was next at that boundary (now COMPLETE).
 | 21 / 41 | 3.3 | COMPLETE | Native workspace resolver + Data initialization |
 | 22 / 41 | 3.4 | COMPLETE | Extension instructions/runtime discovery |
 | 23 / 41 | 3.5 | COMPLETE | Native CLI install/update/disable/uninstall |
-| 24 / 41 | 3.6 | NEXT | Native doctor + status |
-| 25 / 41 | 3.7 | NOT STARTED | Installation-order/registry coexistence suite |
+| 24 / 41 | 3.6 | COMPLETE | Native doctor + status |
+| 25 / 41 | 3.7 | NEXT | Installation-order/registry coexistence suite |
 | 26 / 41 | 3.8 | NOT STARTED | Phase 3 gate |
 
 ## Task 23 / 41 - Phase 3.5 Native CLI install/update/disable/uninstall
@@ -352,7 +352,7 @@ Task 3.5 does not implement:
 - health or permission assertions from registration;
 - sibling repository modifications.
 
-Task 24 / 41 is next.
+Task 24 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 3.5 gate
 
@@ -360,8 +360,65 @@ Task 24 / 41 is next.
 
 ---
 
+## Task 24 / 41 - Phase 3.6 Native doctor + status
+
+**Status:** COMPLETE
+
+### Implemented
+
+Phase 3.6 reports native health read-only over the Task 19-23
+primitives without mutating registries, tracked files, or canonical
+databases.
+
+Core guarantees:
+
+- `doctorData` deep check plus `statusData` light check under
+  `@ai-verse/data/native`;
+- SQLite runtime version with minimum check;
+- quick `integrity_check(1)` for compatible databases on doctor only;
+- WAL directory writability on doctor only;
+- host modes `ai-verse-os-v2`, `standalone`, and `incompatible` with no
+  masking;
+- schema-`1.0` registry read-only for the owned entry only;
+- Task 22 instruction presence as facts;
+- Task 21 resolve plus seven-state discovery with Task 15 migration
+  detail;
+- storage diagnostics with format, binding, quarantine, and scope
+  semantics reused read-only;
+- unsafe path, symlink, readability, and minimum-version checks with
+  stable codes plus next steps;
+- sibling layers informational only;
+- `doctor` plus `status` CLI with required `--root`, optional ID-only
+  `--workspace`, human plus `--json`, exit 0 healthy, 1 problems,
+  2 usage;
+- fixtures byte-identical with zero created databases;
+- no registry write or lock, no tracked OS mutation, no database
+  create or write;
+- no Task 25 coexistence suite; no sibling repository modifications.
+
+Detailed contract: `docs/NATIVE-DOCTOR-STATUS-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 3.6 does not implement:
+
+- Task 25 coexistence suite;
+- Task 26 Phase 3 gate;
+- purge or destructive removal;
+- migration execution, repair, promotion, or quarantine clearing;
+- permission or health assertions from registration;
+- sibling repository modifications.
+
+Task 25 / 41 is next.
+
+### Task 3.6 gate
+
+**PASSED.**
+
+---
+
 ## Current boundary
 
-Task 24 / 41 is next.
+Task 25 / 41 is next.
 
-Do not begin Task 25 until Task 24 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 26 until Task 25 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

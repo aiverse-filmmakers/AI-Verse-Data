@@ -451,7 +451,7 @@ test("CLI install/update/disable/uninstall preserve databases with exit codes", 
     r = runCli("--help");
     assert.equal(r.status, 0);
     assert.match(r.stdout, /install --root/);
-    assert.match(r.stdout, /Phase 3\.5/);
+    assert.match(r.stdout, /doctor --root/);
 
     r = runCli("--version");
     assert.equal(r.status, 0);

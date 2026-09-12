@@ -19,12 +19,12 @@ function runCli(...args: string[]) {
   });
 }
 
-test("--help succeeds and identifies the Phase 3.5 lifecycle boundary", () => {
+test("--help succeeds and identifies the Phase 3.6 doctor boundary", () => {
   const result = runCli("--help");
   assert.equal(result.status, 0);
   assert.match(result.stdout, /AI-Verse Data/);
-  assert.match(result.stdout, /Phase 3\.5 adds native CLI install\/update\/disable\/uninstall/);
-  assert.match(result.stdout, /install --root/);
+  assert.match(result.stdout, /doctor --root/);
+  assert.match(result.stdout, /Phase 3/);
   assert.equal(result.stderr, "");
 });
 
@@ -50,4 +50,10 @@ test("lifecycle commands require --root and report exit codes", () => {
   assert.equal(badRoot.status, 1);
   assert.match(badRoot.stderr, /AI_VERSE_OS_NOT_FOUND/);
   assert.match(badRoot.stderr, /Next step/);
+});
+
+test("doctor and status commands require --root", () => {
+  const missing = runCli("doctor");
+  assert.equal(missing.status, 2);
+  assert.match(missing.stderr, /--root/);
 });

@@ -28,3 +28,9 @@ export {
   AiVerseDataInstructionDiscovery,
   discoverExtensionInstructions,
 } from "./instruction-discovery.js";
+export * from "./doctor-types.js";
+export {
+  AiVerseDataDoctor,
+  doctorData,
+  statusData,
+} from "./doctor.js";

@@ -2,8 +2,8 @@
 
 **Updated:** 2026-09-11  
 **Status:** Phase 3 in progress  
-**Implementation progress:** 23 / 41 tasks complete  
-**Next:** Task 24 / 41, Phase 3.6 - Native doctor + status
+**Implementation progress:** 24 / 41 tasks complete  
+**Next:** Task 25 / 41, Phase 3.7 - Installation-order/registry coexistence suite
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -19,12 +19,12 @@ The target is an installable local-first structured-data layer that can run stan
 Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
-Phase 3  Native AI-Verse Integration   [IN PROGRESS]    62%  (5/8)
+Phase 3  Native AI-Verse Integration   [IN PROGRESS]    75%  (6/8)
 Phase 4  Ecosystem Adapters            [NOT STARTED]     0%
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **23 / 41 tasks complete**.
+Overall implementation: **24 / 41 tasks complete**.
 
 ---
 
@@ -988,7 +988,30 @@ Phase status: `docs/PHASE-3-STATUS.md`.
 **Task 3.5 gate: PASSED.**
 
 ## Task 24 / 41 - Phase 3.6 Native doctor + status
-Registration, engine health, DB state, SQLite features, binding, integrity, migration status.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- read-only `doctorData` plus `statusData` plus `AiVerseDataDoctor` under `@ai-verse/data/native`;
+- `doctor` deep check with SQLite runtime, quick integrity for compatible databases, and WAL writability;
+- `status` light check with no integrity or WAL probes;
+- Task 19 host modes `ai-verse-os-v2`, `standalone`, and `incompatible` with no masking;
+- schema-`1.0` registry read-only for the owned entry only;
+- Task 22 instruction presence as facts;
+- Task 21 resolve plus seven-state discovery with Task 15 migration detail;
+- storage diagnostics with format, binding, quarantine, and scope semantics reused read-only;
+- unsafe path, symlink, readability, and SQLite-minimum checks with stable codes plus next steps;
+- sibling layers informational only;
+- `doctor` plus `status` CLI with required `--root`, optional ID-only `--workspace`, human plus `--json`, exit 0 healthy, 1 problems, 2 usage;
+- fixtures byte-identical with zero created databases;
+- no registry write or lock, no tracked OS mutation, no database create or write;
+- no Task 25 coexistence suite; no sibling repository modifications.
+
+Detailed contract: `docs/NATIVE-DOCTOR-STATUS-V0.1.md`.  
+Phase status: `docs/PHASE-3-STATUS.md`.
+
+**Task 3.6 gate: PASSED.**
 
 ## Task 25 / 41 - Phase 3.7 Installation-order/registry coexistence suite
 Representative orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions.
@@ -1083,6 +1106,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 23 / 41: Phase 3.5 - Native CLI install/update/disable/uninstall.**
+**Task 25 / 41: Phase 3.7 - Installation-order/registry coexistence suite.**
 
-Do not begin Task 24 / 41 until Task 23 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 26 / 41 until Task 25 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

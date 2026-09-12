@@ -11,16 +11,16 @@
 Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
-Phase 3  Native AI-Verse Integration   IN PROGRESS  5 / 8
+Phase 3  Native AI-Verse Integration   IN PROGRESS  6 / 8
 
-Overall implementation: 23 / 41 tasks complete
+Overall implementation: 24 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 23 / 41 - Phase 3.5: Native CLI install/update/disable/uninstall**
+**Task 24 / 41 - Phase 3.6: Native doctor + status**
 
-Implemented through Task 23:
+Implemented through Task 24:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -66,7 +66,10 @@ Implemented through Task 23:
 - uninstall removes only owned files plus the owned registry key;
 - canonical databases byte-identical across lifecycle;
 - zero `.sqlite` created by lifecycle alone;
-- no purge, no Task 24 doctor/status.
+- no purge; Task 25 coexistence suite is next.
+- read-only native doctor plus status with deep integrity on doctor only;
+- compatible, standalone, and incompatible modes with no masking;
+- fixtures byte-identical with zero created databases.
 
 Detailed Task 21 contract:
 
@@ -79,6 +82,10 @@ Detailed Task 22 contract:
 Detailed Task 23 contract:
 
 `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`
+
+Detailed Task 24 contract:
+
+`docs/NATIVE-DOCTOR-STATUS-V0.1.md`
 
 Behavioral implementation verification:
 
@@ -106,7 +113,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 20:
+Implemented through Task 24:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -172,11 +179,11 @@ The Task 20 behavioral implementation and documentation closeout candidate are v
 
 ## NEXT
 
-**Task 24 / 41 - Phase 3.6: Native doctor + status**
+**Task 25 / 41 - Phase 3.7: Installation-order/registry coexistence suite**
 
-Registration, engine health, DB state, SQLite features, binding, integrity, migration status.
+Representative orders with Memory, Brain, Multiple Bots, Skills metadata, and unrelated extensions.
 
-Do not start Task 25 until Task 24 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
+Do not start Task 26 until Task 25 is fully implemented, tested, documented, merged, and the exact resulting `main` head has passing CI.
 
 ## Task 21 architectural laws
 
@@ -232,18 +239,34 @@ Task 23 must preserve:
 9. Task 23 must not implement Task 24 doctor/status behavior early.
 10. No sibling repository modifications are permitted.
 
-## Canonical documents to read before Task 24
+## Task 24 architectural laws
+
+Task 24 must preserve:
+
+1. Health checks compose Tasks 19-23 verbatim with no new engine; read-only with respect to canonical records.
+2. No registry write or lock, no tracked OS mutation, no database create, open-write, migrate, repair, promote, rebind, or quarantine clearing.
+3. Compatible hosts report full facts; missing roots report standalone; incompatible hosts fail closed with no masking.
+4. Only the owned registry entry is read; unrelated entries preserved and never loaded; siblings informational only.
+5. Workspace identity is ID-only with Task 21 resolve plus seven-state discovery and Task 15 migration detail.
+6. Doctor performs deep integrity plus WAL checks; status skips both.
+7. Stable problem codes plus next steps; exit 0 healthy, 1 problems, 2 usage.
+8. Fixtures byte-identical with zero created databases.
+9. Task 24 must not implement the Task 25 coexistence suite early.
+10. No sibling repository modifications are permitted.
+
+## Canonical documents to read before Task 25
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
 3. `docs/PHASE-3-STATUS.md`
 4. `docs/INSTALLATION-AND-LIFECYCLE.md`
 5. `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`
-6. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
-7. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
-8. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
-9. `docs/SECURITY-AND-AUTHORITY.md`
-10. `docs/TESTING-AND-ACCEPTANCE.md`
+6. `docs/NATIVE-DOCTOR-STATUS-V0.1.md`
+7. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
+8. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
+9. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
+10. `docs/SECURITY-AND-AUTHORITY.md`
+11. `docs/TESTING-AND-ACCEPTANCE.md`
 
 Before implementation, inspect the current AI-Verse OS workspace schema/template read-only to confirm the host contract has not changed. Do not modify the OS repository.
 
