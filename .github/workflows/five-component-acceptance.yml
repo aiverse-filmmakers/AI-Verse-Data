@@ -37,7 +37,7 @@ jobs:
       - name: Clone pinned public release components
         shell: bash
         env:
-          OS_SHA: 8e2549cfafe5c786b314b7310d7aa266e45bf178
+          OS_SHA: 603bc6575b689334b7896939fd5f89559845125f
           BRAIN_SHA: bef8261ad35d126d29aeff5d496f46904125b7b6
           MEMORY_SHA: f5b417f9e7ce1b3f05bc80d10a483d10f6ad10ee
           SKILLS_SHA: 3ab838e6e64561bbb7cea8f85d0ebc75b9e84337
