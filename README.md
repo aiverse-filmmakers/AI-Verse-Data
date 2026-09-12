@@ -2,10 +2,10 @@
 
 **The canonical structured-data layer for AI-Verse OS.**
 
-**Status:** Phase 3 Native AI-Verse Integration COMPLETE  
-**Completed implementation tasks:** 26 / 41  
-**Latest completed:** Task 26 / 41, Phase 3.8 - Phase 3 gate  
-**Next task:** Task 27 / 41, Phase 4.1 - Typed Data client SDK  
+**Status:** Phase 3 COMPLETE, Phase 4 IN PROGRESS  
+**Completed implementation tasks:** 27 / 41  
+**Latest completed:** Task 27 / 41, Phase 4.1 - Typed Data client SDK  
+**Next task:** Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -331,9 +331,19 @@ Phase 3 gate
   -> two-workspace isolation plus sibling plus doctor plus reinstall proof
   -> negative branches fail closed without mutation
   -> no purge, no Phase 4 SDK, no sibling edits
+
+Task 27 / 41 - COMPLETE
+Typed Data client SDK
+  -> stable typed client under @ai-verse/data/client, no new engine
+  -> scope-first trusted access, no raw paths or SQL
+  -> host-bound actor plus authorization on every operation
+  -> engine-verbatim ceilings, digests, receipts, provenance
+  -> no consumer-repo changes, no cross-workspace txn, no purge
+  -> no Task 28-34 adapters early
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine.
 
 ## Public package surfaces
 
@@ -352,6 +362,7 @@ Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS com
 @ai-verse/data/backup
 @ai-verse/data/schema-migrations
 @ai-verse/data/recovery
+@ai-verse/data/client
 @ai-verse/data/native
 ```
 
@@ -572,10 +583,24 @@ Phase 3.8 adds `test/phase3-integration.test.ts` plus `docs/PHASE-3-ACCEPTANCE.m
 
 ### Latest verification
 
-Task 26 local verification (exact-head CI to be cited on push):
+Task 27 local verification (exact-head CI to be cited on push):
 
 ```text
 Node 22  PASS (local)
+
+295 tests
+295 passed
+0 failed
+0 skipped
+0 cancelled
+```
+
+Prior Task 26 CI run: `34680605380`
+Task 26 head: `78d8fbb`
+
+```text
+Node 22  PASS
+Node 24  PASS
 
 288 tests
 288 passed
@@ -584,21 +609,7 @@ Node 22  PASS (local)
 0 cancelled
 ```
 
-Prior Task 22 CI run: `34676815629`
-Task 22 head: `e86749f`
-
-```text
-Node 22  PASS
-Node 24  PASS
-
-253 tests
-253 passed
-0 failed
-0 skipped
-0 cancelled
-```
-
-The Task 26 gate proves the complete native installation story: all 20 checklist items on one fixture, the CRM lifecycle with restart plus exact reopen, two-workspace isolation, sibling preservation, deep doctor plus light status, uninstall plus reinstall with identical bytes, and isolated negative branches that fail closed without mutation.
+The Task 27 client SDK proves the stable typed wrapper over the protocol with scope-first trusted access, host-bound actor plus authorization, engine-verbatim ceilings plus digests plus receipts plus provenance, and no consumer-repo changes.
 
 ## Why Data is separate from Memory
 
@@ -664,7 +675,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, and read-only doctor plus status are implemented. Task 25 adds the installation-order coexistence suite.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, read-only doctor plus status, installation-order coexistence, the Phase 3 acceptance gate, and the Phase 4.1 typed client SDK are implemented. Task 28 adds the Multiple Bots Data adapter.
 
 ## Technology direction
 
@@ -732,4 +743,4 @@ Programmatic materialization/registration is implemented with hardened shared-re
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 27 / 41, Phase 4.1 - Typed Data client SDK.**
+**Next: Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter.**

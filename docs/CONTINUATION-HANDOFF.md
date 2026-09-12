@@ -12,15 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
+Phase 4  Ecosystem Adapters            IN PROGRESS  1 / 9
 
-Overall implementation: 26 / 41 tasks complete
+Overall implementation: 27 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 26 / 41 - Phase 3.8: Phase 3 gate**
+**Task 27 / 41 - Phase 4.1: Typed Data client SDK**
 
-Implemented through Task 26:
+Implemented through Task 27:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -76,7 +77,12 @@ Implemented through Task 26:
 - seeded databases byte-identical across lifecycle plus reinstall;
 - complete Phase 3 native installation acceptance gate with all 20 checklist items;
 - CRM story with receipts, OCC, query, aggregates, transactions, events, reopen, and isolation;
-- negative branches fail closed without mutation.
+- negative branches fail closed without mutation;
+- stable typed Data client SDK over the protocol with no new engine;
+- scope-first trusted access with no raw paths or SQL;
+- host-bound actor and authorization on every operation;
+- engine-verbatim ceilings, digests, receipts, and provenance;
+- no consumer-repository changes.
 
 Detailed Task 21 contract:
 
@@ -102,33 +108,34 @@ Detailed Task 26 contract:
 
 `docs/PHASE-3-ACCEPTANCE.md`
 
-Behavioral implementation verification:
+Detailed Task 27 contract:
+
+`docs/CLIENT-SDK-V0.1.md`
+
+Behavioral implementation verification (Task 27 local; exact-head CI cited on push):
 
 ```text
-Behavioral commit:   1e88ba758dcc1151b4de6f60e8c3b2a9822afad7
-GitHub Actions run:  34606467549
-Node 22:             PASS
-Node 24:             PASS
-Tests:               229 / 229 PASS
+Node 22:             PASS (local)
+Tests:               295 / 295 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Task 19 final merged-main verification:
+Prior Task 26 merged-main verification:
 
 ```text
-Main head:           e810a664847b39d4eae211b4da6bbf5d1baca46e
-GitHub Actions run:  34605503828
+Main head:           78d8fbb
+GitHub Actions run:  34680605380
 Node 22:             PASS
 Node 24:             PASS
-Tests:               216 / 216 PASS
+Tests:               288 / 288 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 26:
+Implemented through Task 27:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -175,30 +182,17 @@ Detailed Task 21 contract:
 
 Phase status:
 
-`docs/PHASE-3-STATUS.md`
+`docs/PHASE-3-STATUS.md` (Phase 3 COMPLETE) and `docs/PHASE-4-STATUS.md` (Phase 4 IN PROGRESS)
 
-Documentation closeout candidate verification:
-
-```text
-Closeout head:       6aa470d536369b23ca5887714da16ffd1ed89fca
-GitHub Actions run:  34607179121
-Node 22:             PASS
-Node 24:             PASS
-Tests:               229 / 229 PASS
-Failures:            0
-Skipped:             0
-Cancelled:           0
-```
-
-The Task 20 behavioral implementation and documentation closeout candidate are verified. The final Task 20 report must still verify the resulting exact branch head and then the exact merged `main` head before declaring Task 20 fully closed.
+Task 27 local verification: 295 / 295 PASS on Node 22; exact-head CI cited on push.
 
 ## NEXT
 
-**Task 27 / 41 - Phase 4.1: Typed Data client SDK**
+**Task 28 / 41 - Phase 4.2: Multiple Bots Data adapter**
 
-Stable typed client over the protocol.
+Capability-lease-scoped access, Bot/Worker provenance, Task/Artifact-linked receipts, no privilege laundering.
 
-Phase 3 is COMPLETE. Do not start Phase 4 until it is explicitly tasked.
+Do not start Task 29 until Task 28 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -299,20 +293,33 @@ Task 26 must preserve:
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.
 
-## Canonical documents to read before Task 27
+## Task 27 architectural laws
+
+Task 27 must preserve:
+
+1. No new engine or storage; the client composes existing engines verbatim.
+2. Scope-first trusted access with no raw paths or SQL.
+3. Host-bound actor and authorization on every operation.
+4. Engine-verbatim ceilings, digests, receipts, and provenance.
+5. Stable protocol envelopes and error codes.
+6. No Dashboard `systemId` identity and no Memory auto-write.
+7. No consumer-repository changes and no registry or OS mutation.
+8. No cross-workspace transactions and no purge automation.
+9. Task 27 must not implement Task 28-34 adapters early.
+10. No sibling repository modifications are permitted.
+
+## Canonical documents to read before Task 28
 
 1. `docs/CONTINUATION-HANDOFF.md`
 2. `docs/BUILD-MAP.md`
-3. `docs/PHASE-3-STATUS.md`
-4. `docs/INSTALLATION-AND-LIFECYCLE.md`
-5. `docs/NATIVE-CLI-LIFECYCLE-V0.1.md`
-6. `docs/NATIVE-DOCTOR-STATUS-V0.1.md`
-7. `docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`
-8. `docs/WORKSPACE-RESOLVER-INITIALIZATION-V0.1.md`
-9. `docs/EXTENSION-INSTRUCTIONS-DISCOVERY-V0.1.md`
-10. `docs/CORRUPTION-AND-RECOVERY-V0.1.md`
-11. `docs/SECURITY-AND-AUTHORITY.md`
-12. `docs/TESTING-AND-ACCEPTANCE.md`
+3. `docs/PHASE-4-STATUS.md`
+4. `docs/CLIENT-SDK-V0.1.md`
+5. `docs/PROTOCOL-V0.1.md`
+6. `docs/SECURITY-AND-AUTHORITY.md`
+7. `docs/INSTALLATION-AND-LIFECYCLE.md`
+8. `docs/ECOSYSTEM-INTEGRATION.md`
+9. `docs/DATA-MEMORY-BOUNDARY.md`
+10. `docs/TESTING-AND-ACCEPTANCE.md`
 
 Before implementation, inspect the current AI-Verse OS workspace schema/template read-only to confirm the host contract has not changed. Do not modify the OS repository.
 

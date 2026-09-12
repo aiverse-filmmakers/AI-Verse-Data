@@ -349,7 +349,7 @@ Core guarantees:
 
 Detailed contract: `docs/PHASE-3-ACCEPTANCE.md`.
 
-Task 27 / 41 is next.
+Phase 3 is COMPLETE. Task 27 / 41 (Phase 4.1 typed client SDK) is tracked in `docs/PHASE-4-STATUS.md`.
 
 ### Task 3.8 gate
 

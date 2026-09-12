@@ -13,11 +13,12 @@ export * from "./bulk/index.js";
 export * from "./backup/index.js";
 export * from "./schema-migrations/index.js";
 export * from "./recovery/index.js";
+export * from "./client/index.js";
 export * from "./native/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.0" as const;
-export const AI_VERSE_DATA_FOUNDATION_PHASE = "3.6" as const;
+export const AI_VERSE_DATA_FOUNDATION_PHASE = "4.1" as const;
 
 export interface FoundationStatus {
   readonly packageName: typeof AI_VERSE_DATA_PACKAGE;
@@ -57,12 +58,13 @@ export interface FoundationStatus {
   readonly nativeInstructionDiscoveryAvailable: true;
   readonly nativeLifecycleAvailable: true;
   readonly nativeDoctorAvailable: true;
+  readonly typedClientAvailable: true;
 }
 
 /**
  * Returns a machine-readable statement of the current implementation boundary.
  * Protocol validation, SQLite storage, trusted scoping, Data Spaces, entity
- * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations, corruption quarantine, recovery diagnosis, and verified staged recovery are integrated and acceptance-gated through Phase 2.9. Phase 3.1 adds read-only AI-Verse OS v2 compatibility detection. Phase 3.2 adds hardened Data-owned extension materialization and local registry registration without workspace initialization. Phase 3.3 adds ID-only native workspace resolution, active-only explicit Data initialization, and seven-state existing-database discovery. Phase 3.4 adds read-only task-relevant extension instruction/runtime discovery. Phase 3.5 adds native CLI install/update/disable/uninstall composing existing primitives while preserving canonical workspace databases. Phase 3.6 adds read-only native doctor plus status composing existing primitives without mutation.
+ * schemas, record CRUD, safe queries, aggregates, declared relations, bounded atomic transactions, race-safe optimistic concurrency, durable idempotent mutations, immutable mutation events, durable receipts, provenance queries, bounded bulk preview, atomic bulk execution, consistent SQLite backup, verified portable export/import, explicit internal database-format migrations, and bounded review-before-commit user-schema migrations, corruption quarantine, recovery diagnosis, and verified staged recovery are integrated and acceptance-gated through Phase 2.9. Phase 3.1 adds read-only AI-Verse OS v2 compatibility detection. Phase 3.2 adds hardened Data-owned extension materialization and local registry registration without workspace initialization. Phase 3.3 adds ID-only native workspace resolution, active-only explicit Data initialization, and seven-state existing-database discovery. Phase 3.4 adds read-only task-relevant extension instruction/runtime discovery. Phase 3.5 adds native CLI install/update/disable/uninstall composing existing primitives while preserving canonical workspace databases. Phase 3.6 adds read-only native doctor plus status composing existing primitives without mutation. Phase 4.1 adds a stable typed Data client SDK over the protocol with no new engine.
  */
 export function getFoundationStatus(): FoundationStatus {
   return {
@@ -103,5 +105,6 @@ export function getFoundationStatus(): FoundationStatus {
     nativeInstructionDiscoveryAvailable: true,
     nativeLifecycleAvailable: true,
     nativeDoctorAvailable: true,
+    typedClientAvailable: true,
   };
 }

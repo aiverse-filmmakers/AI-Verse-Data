@@ -2,7 +2,7 @@
 
 **Status:** Canonical architecture direction for v0.1  
 **Date:** 2026-09-10  
-**Implementation:** Phase 1 and Phase 2 complete; Phase 3 native integration complete (8/8): compatibility detection, hardened installation, workspace resolver plus init, instruction discovery, CLI lifecycle, doctor plus status, coexistence proof, and acceptance gate
+**Implementation:** Phase 1 and Phase 2 complete; Phase 3 native integration complete (8/8): compatibility detection, hardened installation, workspace resolver plus init, instruction discovery, CLI lifecycle, doctor plus status, coexistence proof, and acceptance gate; Phase 4.1 typed client SDK implemented
 
 ## 1. Architectural position
 
