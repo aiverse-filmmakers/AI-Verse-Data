@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { fork, type ChildProcess } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -49,7 +49,7 @@ function createRaceDatabase(): {
   readonly databasePath: string;
   readonly recordId: string;
 } {
-  const directory = mkdtempSync(join(tmpdir(), "ai-verse-data-concurrency-"));
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), "ai-verse-data-concurrency-")));
   const databasePath = join(directory, "data.sqlite");
   const database = new SqliteStorageDriver().open({ location: databasePath });
 
@@ -170,7 +170,42 @@ async function releaseRace(
   for (const worker of workers) {
     worker.child.send({ type: "go" });
   }
-  return Promise.all(workers.map((worker) => worker.result));
+  // Wait for results first, then for child exit so the OS releases file
+  // handles before the caller deletes the temp folder (Windows locks files).
+  const results = await Promise.all(workers.map((worker) => worker.result));
+  await Promise.all(
+    workers.map(
+      (worker) =>
+        new Promise<void>((resolve) => {
+          if (worker.child.exitCode !== null || worker.child.signalCode !== null) {
+            resolve();
+            return;
+          }
+          const done = (): void => resolve();
+          worker.child.once("exit", done);
+          setTimeout(done, 15_000).unref?.();
+        }),
+    ),
+  );
+  return results;
+}
+
+function removeTempDirectory(directory: string): void {
+  // Windows keeps file locks briefly after child exit; retry a few times.
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      rmSync(directory, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+      return;
+    } catch (error) {
+      lastError = error;
+      const end = Date.now() + 200;
+      while (Date.now() < end) {
+        // Busy wait: keeps the fix dependency-free on all platforms.
+      }
+    }
+  }
+  throw lastError;
 }
 
 function candidate(
@@ -263,7 +298,7 @@ test("separate processes racing with one expectedVersion produce exactly one com
       database.close();
     }
   } finally {
-    rmSync(directory, { recursive: true, force: true });
+    removeTempDirectory(directory);
   }
 });
 
@@ -302,7 +337,7 @@ test("separate transaction writers also permit only one stale-version commit", a
       database.close();
     }
   } finally {
-    rmSync(directory, { recursive: true, force: true });
+    removeTempDirectory(directory);
   }
 });
 
