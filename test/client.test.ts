@@ -258,6 +258,13 @@ test("client query, aggregate, transactions, and provenance envelopes", () => {
 
     const events = client.provenance.listEvents({ spaceId: "crm" });
     assert.equal(events.ok, true);
+    assert.ok(events.result.items.length > 0);
+    const exactEvent = client.provenance.getEvent(events.result.items[0]!.eventId);
+    assert.equal(exactEvent.ok, true);
+    assert.equal(
+      exactEvent.result.eventId,
+      events.result.items[0]!.eventId,
+    );
     assert.ok(events.result.items.length >= 4);
     assert.equal(events.operation, "data.events.list");
 
