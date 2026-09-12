@@ -44,6 +44,7 @@ test("package metadata exposes all implemented Phase 3.2 public subpaths", () =>
   assert.ok("./schema-migrations" in packageJson.exports);
   assert.ok("./recovery" in packageJson.exports);
   assert.ok("./client" in packageJson.exports);
+  assert.ok("./bots" in packageJson.exports);
   assert.ok("./native" in packageJson.exports);
   assert.equal(packageJson.dependencies["better-sqlite3"], "13.0.3");
 });
@@ -90,5 +91,6 @@ test("foundation surface reports Phase 4.1 typed client SDK", () => {
     nativeLifecycleAvailable: true,
     nativeDoctorAvailable: true,
     typedClientAvailable: true,
+    botsDataAdapterAvailable: true,
   });
 });

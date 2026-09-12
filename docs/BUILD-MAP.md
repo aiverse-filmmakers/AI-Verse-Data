@@ -1,9 +1,9 @@
 # AI-Verse Data Build Map
 
-**Updated:** 2026-09-11  
-**Status:** Phase 3 COMPLETE, Phase 4 IN PROGRESS  
-**Implementation progress:** 27 / 41 tasks complete  
-**Next:** Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter
+**Updated:** 2026-09-12  
+**Status:** Phase 4 IN PROGRESS  
+**Implementation progress:** 28 / 41 tasks complete  
+**Next:** Task 29 / 41, Phase 4.3 - Brain structured-data adapter contract
 
 This is the canonical implementation ledger for AI-Verse Data. Update it whenever a meaningful implementation task lands so the repository itself always shows what is complete, what is next, and which gate proves completion.
 
@@ -20,11 +20,11 @@ Phase 0  Product + Architecture        [COMPLETE]      100%
 Phase 1  Core Data Engine              [COMPLETE]      100%  (9/9)
 Phase 2  Reliability + Agent Safety    [COMPLETE]      100%  (9/9)
 Phase 3  Native AI-Verse Integration   [COMPLETE]      100%  (8/8)
-Phase 4  Ecosystem Adapters            [IN PROGRESS]    11%  (1/9)
+Phase 4  Ecosystem Adapters            [IN PROGRESS]    22%  (2/9)
 Phase 5  Release Hardening             [NOT STARTED]     0%
 ```
 
-Overall implementation: **27 / 41 tasks complete**.
+Overall implementation: **28 / 41 tasks complete**.
 
 ---
 
@@ -1082,7 +1082,25 @@ Phase status: `docs/PHASE-4-STATUS.md`.
 **Task 4.1 gate: PASSED.**
 
 ## Task 28 / 41 - Phase 4.2 Multiple Bots Data adapter
-Capability-lease-scoped access, Bot/Worker provenance, Task/Artifact-linked receipts, no privilege laundering.
+
+**Status:** COMPLETE
+
+Implemented:
+
+- leased Bot/Worker access over the Task 27 client under
+  `@ai-verse/data/bots`;
+- capability strings like `data:crm:deals:read` checked against the
+  host-granted `authorization.capabilityRefs`;
+- model-written strings never grant access; delegation only reduces
+  authority;
+- Bot/Worker and task IDs in actor plus provenance with receipts
+  referenceable in Artifacts;
+- no privilege boost, no Task 29+ adapters early, no sibling edits.
+
+Detailed contract: `docs/BOTS-DATA-ADAPTER-V0.1.md`.
+Phase status: `docs/PHASE-4-STATUS.md`.
+
+**Task 4.2 gate: PASSED.**
 
 ## Task 29 / 41 - Phase 4.3 Brain structured-data adapter contract
 Bounded structured Data retrieval suitable for Brain host adapters without copying Data into Brain state.
@@ -1157,6 +1175,6 @@ Hosted multi-user backend, Postgres/remote driver, operator/shared cross-workspa
 
 # Next task
 
-**Task 28 / 41: Phase 4.2 - Multiple Bots Data adapter.**
+**Task 29 / 41: Phase 4.3 - Brain structured-data adapter contract.**
 
-Do not begin Task 29 / 41 until Task 28 is implemented, verified, committed, logged in the continuation handoff, and reported complete.
+Do not begin Task 30 / 41 until Task 29 is implemented, verified, committed, logged in the continuation handoff, and reported complete.

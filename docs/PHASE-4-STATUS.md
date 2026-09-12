@@ -2,9 +2,9 @@
 
 **Phase:** 4 - Ecosystem Adapters
 **Phase status:** IN PROGRESS
-**Implementation tasks completed:** 1 / 9
-**Overall implementation tasks completed:** 27 / 41
-**Next:** Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter
+**Implementation tasks completed:** 2 / 9
+**Overall implementation tasks completed:** 28 / 41
+**Next:** Task 29 / 41, Phase 4.3 - Brain structured-data adapter contract
 
 This document records implementation evidence for Phase 4. `docs/BUILD-MAP.md` remains the canonical project-wide task order.
 
@@ -63,9 +63,55 @@ Task 4.1 does not implement:
 - consumer-side adoption in any sibling repository;
 - new storage drivers or authority models.
 
-Task 28 / 41 is next.
+Task 28 / 41 was next at that boundary (now COMPLETE).
 
 ### Task 4.1 gate
+
+**PASSED.**
+
+---
+
+## Task 28 / 41 - Phase 4.2 Multiple Bots Data adapter
+
+**Implementation status:** COMPLETE
+
+Phase 4.2 adds leased Bot/Worker access over the Task 27 client with
+no new engine and no new storage.
+
+Core guarantees:
+
+- `createBotsDataAdapter(client, lease)` under `@ai-verse/data/bots`;
+- host-passed trusted lease with workspace, Bot/Worker principal,
+  task ID, `data:<space>:<entity>:<action>` capabilities, optional
+  expiry and artifact ref;
+- every call re-checks lease workspace, principal, capability cover,
+  and expiry, failing closed;
+- every lease capability must also be present in the host-granted
+  client `authorization.capabilityRefs`, so model-written strings
+  never grant access;
+- delegation reduces authority and never increases it;
+- Bot/Worker provenance through reused engines with task-linked
+  receipts referenceable in Artifacts;
+- no lease issuance or Bots-signature verification inside Data, no
+  approval/Room/Team-Run writes, no Memory auto-write, no systemId
+  identity, no raw SQL/paths, no registry/OS mutation, no
+  cross-workspace access, no purge automation.
+
+Detailed contract: `docs/BOTS-DATA-ADAPTER-V0.1.md`.
+
+### Deliberately not implemented
+
+Task 4.2 does not implement:
+
+- Brain, Memory, Dashboard, Apps, Connections, or automation
+  adapters;
+- lease issuance or Bots-side approval/Room/Team-Run behavior;
+- consumer-side adoption in any sibling repository;
+- new storage drivers or authority models.
+
+Task 29 / 41 is next.
+
+### Task 4.2 gate
 
 **PASSED.**
 
@@ -76,8 +122,8 @@ Task 28 / 41 is next.
 | Overall task | Phase task | Status | Purpose |
 |---|---|---|---|
 | 27 / 41 | 4.1 | COMPLETE | Typed Data client SDK |
-| 28 / 41 | 4.2 | NEXT | Multiple Bots Data adapter |
-| 29 / 41 | 4.3 | NOT STARTED | Brain structured-data adapter contract |
+| 28 / 41 | 4.2 | COMPLETE | Multiple Bots Data adapter |
+| 29 / 41 | 4.3 | NEXT | Brain structured-data adapter contract |
 | 30 / 41 | 4.4 | NOT STARTED | Memory provenance/candidate bridge |
 | 31 / 41 | 4.5 | NOT STARTED | Dashboard projection adapter |
 | 32 / 41 | 4.6 | NOT STARTED | Apps Data contract |
@@ -87,6 +133,6 @@ Task 28 / 41 is next.
 
 ## Current boundary
 
-Task 28 / 41 is next.
+Task 29 / 41 is next.
 
-Do not begin Task 29 until Task 28 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.
+Do not begin Task 30 until Task 29 is implemented, verified, committed, logged in `docs/CONTINUATION-HANDOFF.md`, and reported complete.

@@ -68,6 +68,10 @@
       "types": "./dist/src/client/index.d.ts",
       "import": "./dist/src/client/index.js"
     },
+    "./bots": {
+      "types": "./dist/src/bots/index.d.ts",
+      "import": "./dist/src/bots/index.js"
+    },
     "./native": {
       "types": "./dist/src/native/index.d.ts",
       "import": "./dist/src/native/index.js"

@@ -14,6 +14,7 @@ export * from "./backup/index.js";
 export * from "./schema-migrations/index.js";
 export * from "./recovery/index.js";
 export * from "./client/index.js";
+export * from "./bots/index.js";
 export * from "./native/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
@@ -59,6 +60,7 @@ export interface FoundationStatus {
   readonly nativeLifecycleAvailable: true;
   readonly nativeDoctorAvailable: true;
   readonly typedClientAvailable: true;
+  readonly botsDataAdapterAvailable: true;
 }
 
 /**
@@ -106,5 +108,6 @@ export function getFoundationStatus(): FoundationStatus {
     nativeLifecycleAvailable: true,
     nativeDoctorAvailable: true,
     typedClientAvailable: true,
+    botsDataAdapterAvailable: true,
   };
 }

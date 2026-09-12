@@ -1,6 +1,6 @@
 # AI-Verse Data Continuation Handoff
 
-**Updated:** 2026-09-11  
+**Updated:** 2026-09-12  
 **Repository:** `aiverse-filmmakers/AI-Verse-Data`  
 **Branch:** `main`  
 **Purpose:** Fast, canonical resume point for a new chat or coding session.
@@ -12,16 +12,16 @@ Phase 0  Product + Architecture        COMPLETE
 Phase 1  Core Data Engine              COMPLETE  9 / 9
 Phase 2  Reliability + Agent Safety    COMPLETE  9 / 9
 Phase 3  Native AI-Verse Integration   COMPLETE  8 / 8
-Phase 4  Ecosystem Adapters            IN PROGRESS  1 / 9
+Phase 4  Ecosystem Adapters            IN PROGRESS  2 / 9
 
-Overall implementation: 27 / 41 tasks complete
+Overall implementation: 28 / 41 tasks complete
 ```
 
 ## Latest completed task
 
-**Task 27 / 41 - Phase 4.1: Typed Data client SDK**
+**Task 28 / 41 - Phase 4.2: Multiple Bots Data adapter**
 
-Implemented through Task 27:
+Implemented through Task 28:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -83,6 +83,16 @@ Implemented through Task 27:
 - host-bound actor and authorization on every operation;
 - engine-verbatim ceilings, digests, receipts, and provenance;
 - no consumer-repository changes.
+- leased Bot/Worker access over the Task 27 client with no new engine;
+- host-passed trusted lease with workspace, principal, task,
+  capabilities, expiry, and artifact ref;
+- every call re-checks workspace, principal, capability cover, and
+  expiry, failing closed;
+- lease capabilities must also be host-granted refs, so model-written
+  strings never grant access;
+- delegation only reduces authority, with Bot/Worker provenance and
+  task-linked receipts referenceable in Artifacts;
+- no lease issuance, no Bots-side writes, no sibling edits.
 
 Detailed Task 21 contract:
 
@@ -112,11 +122,15 @@ Detailed Task 27 contract:
 
 `docs/CLIENT-SDK-V0.1.md`
 
-Behavioral implementation verification (Task 27 local; exact-head CI cited on push):
+Detailed Task 28 contract:
+
+`docs/BOTS-DATA-ADAPTER-V0.1.md`
+
+Behavioral implementation verification (Task 28 local; exact-head CI cited on push):
 
 ```text
 Node 22:             PASS (local)
-Tests:               295 / 295 PASS
+Tests:               301 / 301 PASS
 Failures:            0
 Skipped:             0
 Cancelled:           0
@@ -135,7 +149,7 @@ Skipped:             0
 Cancelled:           0
 ```
 
-Implemented through Task 27:
+Implemented through Task 28:
 
 - complete host-neutral Data engine and Phase 2 reliability surface;
 - read-only AI-Verse OS v2 compatibility detection;
@@ -186,13 +200,15 @@ Phase status:
 
 Task 27 local verification: 295 / 295 PASS on Node 22; exact-head CI cited on push.
 
+Task 28 local verification: 301 / 301 PASS on Node 22; exact-head CI cited on push.
+
 ## NEXT
 
-**Task 28 / 41 - Phase 4.2: Multiple Bots Data adapter**
+**Task 29 / 41 - Phase 4.3: Brain structured-data adapter contract**
 
-Capability-lease-scoped access, Bot/Worker provenance, Task/Artifact-linked receipts, no privilege laundering.
+Bounded structured Data retrieval suitable for Brain host adapters without copying Data into Brain state.
 
-Do not start Task 29 until Task 28 is explicitly tasked.
+Do not start Task 30 until Task 29 is explicitly tasked.
 
 ## Task 21 architectural laws
 
@@ -290,6 +306,21 @@ Task 26 must preserve:
 6. Isolated negative branches fail closed without mutation.
 7. Lock contention fails closed; no purge; no Phase 4 SDK.
 8. Full suite green with inherited Phase 1 plus Phase 2 gates.
+9. Exact-head CI cited before declaring complete.
+10. No sibling repository modifications are permitted.
+
+## Task 28 architectural laws
+
+Task 28 must preserve:
+
+1. Leased access composes the Task 27 client verbatim with no new engine or storage.
+2. The lease is a host-passed trusted object; Data never issues leases or verifies Bots signatures.
+3. Every call re-checks lease workspace, principal, capability cover, and expiry, failing closed.
+4. Every lease capability must also be present in the host-granted client `authorization.capabilityRefs`; model-written strings never grant access.
+5. Delegation reduces authority and never increases it; reads stay reads, writes need write cover, no cross-workspace access.
+6. Bot/Worker and task IDs appear in actor plus provenance; mutation receipts are referenceable in Artifacts without duplicating records.
+7. No approval/Room/Team-Run writes, no Memory auto-write, no systemId identity, no raw SQL/paths, no registry/OS mutation, no purge.
+8. Full suite green with inherited Phase 1 plus Phase 2 plus Phase 3 gates.
 9. Exact-head CI cited before declaring complete.
 10. No sibling repository modifications are permitted.
 

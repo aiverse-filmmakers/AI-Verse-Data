@@ -3,9 +3,9 @@
 **The canonical structured-data layer for AI-Verse OS.**
 
 **Status:** Phase 3 COMPLETE, Phase 4 IN PROGRESS  
-**Completed implementation tasks:** 27 / 41  
-**Latest completed:** Task 27 / 41, Phase 4.1 - Typed Data client SDK  
-**Next task:** Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter  
+**Completed implementation tasks:** 28 / 41  
+**Latest completed:** Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter  
+**Next task:** Task 29 / 41, Phase 4.3 - Brain structured-data adapter contract  
 **Architecture baseline:** 2026-09-10
 
 AI-Verse Data gives AI-Verse a first-class way to store, query, relate, update, and react to structured operational records such as customers, deals, invoices, productions, content items, assets, inventory, metrics, and application data.
@@ -341,9 +341,18 @@ Typed Data client SDK
   -> no consumer-repo changes, no cross-workspace txn, no purge
   -> no Task 28-34 adapters early
   -> no sibling edits
+
+Task 28 / 41 - COMPLETE
+Multiple Bots Data adapter
+  -> leased Bot/Worker access over the Task 27 client under @ai-verse/data/bots
+  -> capability strings like data:crm:deals:read checked against host-granted refs
+  -> model-written strings never grant access, delegation only reduces authority
+  -> Bot/Worker/task IDs in actor plus provenance, receipts referenceable in Artifacts
+  -> no privilege boost, no Task 29+ adapters early
+  -> no sibling edits
 ```
 
-Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine.
+Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS compatibility detection plus hardened local extension materialization/registration with lock, re-read, lost-update protection, atomic replacement, state preservation, and no tracked OS edits. Native workspace resolution plus active-only explicit Data initialization with seven-state discovery are implemented. Read-only task-relevant extension instruction/runtime discovery is implemented. Native CLI install/update/disable/uninstall composing existing primitives while preserving canonical databases is implemented. Read-only native doctor plus status composing existing primitives without mutation is implemented. The installation-order and registry coexistence proof across representative sibling orders is implemented. The complete Phase 3 native installation acceptance gate is implemented and passed. Phase 4 begins with the stable typed Data client SDK over the protocol with no new engine, plus the leased Multiple Bots Data adapter over that client with capability-lease scoping and no privilege boost.
 
 ## Public package surfaces
 
@@ -363,6 +372,7 @@ Phase 1 and Phase 2 are complete. Phase 3 now includes read-only AI-Verse OS com
 @ai-verse/data/schema-migrations
 @ai-verse/data/recovery
 @ai-verse/data/client
+@ai-verse/data/bots
 @ai-verse/data/native
 ```
 
@@ -675,7 +685,7 @@ AI-Verse Data v0.1 is workspace-first. When a workspace actually needs structure
 workspaces/<workspace-id>/data/ai-verse-data.sqlite
 ```
 
-There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, read-only doctor plus status, installation-order coexistence, the Phase 3 acceptance gate, and the Phase 4.1 typed client SDK are implemented. Task 28 adds the Multiple Bots Data adapter.
+There will be one physical SQLite database per workspace with multiple logical Data Spaces inside it. Trusted workspace/database binding, AI-Verse OS compatibility detection, local extension installation, native workspace manifest resolution, explicit Data initialization, read-only extension instruction discovery, native CLI lifecycle, read-only doctor plus status, installation-order coexistence, the Phase 3 acceptance gate, the Phase 4.1 typed client SDK, and the Phase 4.2 Multiple Bots Data adapter are implemented. Task 29 adds the Brain structured-data adapter contract.
 
 ## Technology direction
 
@@ -738,9 +748,12 @@ Programmatic materialization/registration is implemented with hardened shared-re
 - [`docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md`](docs/INSTALLATION-ORDER-COEXISTENCE-V0.1.md) - implemented installation-order/registry coexistence contract
 - [`docs/PHASE-3-ACCEPTANCE.md`](docs/PHASE-3-ACCEPTANCE.md) - final Phase 3 native installation acceptance gate and evidence
 - [`docs/PHASE-3-STATUS.md`](docs/PHASE-3-STATUS.md) - Phase 3 implementation evidence
+- [`docs/CLIENT-SDK-V0.1.md`](docs/CLIENT-SDK-V0.1.md) - implemented typed Data client SDK contract
+- [`docs/BOTS-DATA-ADAPTER-V0.1.md`](docs/BOTS-DATA-ADAPTER-V0.1.md) - implemented Multiple Bots Data adapter contract
+- [`docs/PHASE-4-STATUS.md`](docs/PHASE-4-STATUS.md) - Phase 4 implementation evidence
 
 ## Build rule
 
 Implementation follows `docs/BUILD-MAP.md` one task at a time. A task is not marked complete until its acceptance checks pass and the repository records the result.
 
-**Next: Task 28 / 41, Phase 4.2 - Multiple Bots Data adapter.**
+**Next: Task 29 / 41, Phase 4.3 - Brain structured-data adapter contract.**
