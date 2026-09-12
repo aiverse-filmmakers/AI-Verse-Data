@@ -361,8 +361,63 @@ export function createBotsDataAdapter(
     }
   }
 
+  function canRead(space: string, entity: string): boolean {
+    return matches(parsed, space, entity, "read");
+  }
+
+  function canReadSpace(space: string): boolean {
+    return parsed.some(
+      (cap) =>
+        cap.action === "read" &&
+        (cap.space === "*" || cap.space === space),
+    );
+  }
+
   function requireRead(space: string, entity = "*"): void {
     requireCap(space, entity, "read");
+  }
+
+  function transactionReceiptsReadable(transactionId: string): boolean {
+    const receipts =
+      client.provenance.listTransactionReceipts(transactionId).result;
+    const targeted = receipts.filter(
+      (receipt) => receipt.spaceId !== null && receipt.entity !== null,
+    );
+    return (
+      targeted.length > 0 &&
+      targeted.every((receipt) =>
+        canRead(receipt.spaceId as string, receipt.entity as string),
+      )
+    );
+  }
+
+  function receiptReadable(receipt: DataMutationReceipt): boolean {
+    if (receipt.spaceId !== null && receipt.entity !== null) {
+      return canRead(receipt.spaceId, receipt.entity);
+    }
+    return (
+      receipt.transactionId !== null &&
+      transactionReceiptsReadable(receipt.transactionId)
+    );
+  }
+
+  function eventReadable(event: import("../provenance/index.js").DataEvent): boolean {
+    if (event.spaceId !== null && event.entity !== null) {
+      return canRead(event.spaceId, event.entity);
+    }
+    return (
+      event.transactionId !== null &&
+      transactionReceiptsReadable(event.transactionId)
+    );
+  }
+
+  function requireReadableReceipt(receipt: DataMutationReceipt): void {
+    if (!receiptReadable(receipt)) {
+      fail(
+        "CAPABILITY_DENIED",
+        `Lease denies provenance outside the Data entities granted to task '${lease.taskId}'.`,
+      );
+    }
   }
 
   function link(receipt: DataMutationReceipt): BotsTaskLinkedReceipt {
@@ -418,7 +473,11 @@ export function createBotsDataAdapter(
       },
       list() {
         requireAnyRead();
-        return client.spaces.list();
+        const out = client.spaces.list();
+        return {
+          ...out,
+          result: out.result.filter((space) => canReadSpace(space.spaceId)),
+        };
       },
     },
     schemas: {
@@ -427,8 +486,20 @@ export function createBotsDataAdapter(
         return client.schemas.get(input);
       },
       list(input: SchemaListPayload) {
-        requireRead(input.spaceId);
-        return client.schemas.list(input);
+        assertUsable();
+        if (!canReadSpace(input.spaceId)) {
+          fail(
+            "CAPABILITY_DENIED",
+            `Lease carries no read capability in Data Space '${input.spaceId}'.`,
+          );
+        }
+        const out = client.schemas.list(input);
+        return {
+          ...out,
+          result: out.result.filter((schema) =>
+            canRead(input.spaceId, schema.entity),
+          ),
+        };
       },
     },
     records: {
@@ -510,24 +581,67 @@ export function createBotsDataAdapter(
     },
     provenance: {
       listEvents(input?: EventsListPayload) {
-        if (input?.spaceId !== undefined) {
-          requireRead(input.spaceId, input.entity ?? "*");
-        } else {
+        assertUsable();
+        if (input?.spaceId !== undefined && input.entity !== undefined) {
+          requireRead(input.spaceId, input.entity);
+        } else if (
+          input?.spaceId !== undefined &&
+          !canReadSpace(input.spaceId)
+        ) {
+          fail(
+            "CAPABILITY_DENIED",
+            `Lease carries no read capability in Data Space '${input.spaceId}'.`,
+          );
+        } else if (input?.spaceId === undefined) {
           requireAnyRead();
         }
-        return client.provenance.listEvents(input);
+        const out = client.provenance.listEvents(input);
+        return {
+          ...out,
+          result: {
+            ...out.result,
+            items: out.result.items.filter(eventReadable),
+          },
+        };
       },
       getReceipt(receiptId: string) {
-        requireAnyRead();
-        return client.provenance.getReceipt(receiptId);
+        assertUsable();
+        const out = client.provenance.getReceipt(receiptId);
+        requireReadableReceipt(out.result);
+        return out;
       },
       getReceiptByIdempotencyKey(idempotencyKey: string) {
-        requireAnyRead();
-        return client.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+        assertUsable();
+        const out =
+          client.provenance.getReceiptByIdempotencyKey(idempotencyKey);
+        requireReadableReceipt(out.result);
+        return out;
       },
       listTransactionReceipts(transactionId: string) {
-        requireAnyRead();
-        return client.provenance.listTransactionReceipts(transactionId);
+        assertUsable();
+        const out = client.provenance.listTransactionReceipts(transactionId);
+        if (
+          out.result.some(
+            (receipt) =>
+              receipt.spaceId !== null &&
+              receipt.entity !== null &&
+              !canRead(receipt.spaceId, receipt.entity),
+          )
+        ) {
+          fail(
+            "CAPABILITY_DENIED",
+            `Lease denies one or more receipts in transaction '${transactionId}'.`,
+          );
+        }
+        return {
+          ...out,
+          result: out.result.filter(
+            (receipt) =>
+              receipt.spaceId === null ||
+              receipt.entity === null ||
+              canRead(receipt.spaceId, receipt.entity),
+          ),
+        };
       },
     },
     health: {
