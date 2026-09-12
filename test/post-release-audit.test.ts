@@ -212,7 +212,7 @@ test("Apps and Bots cannot read provenance outside granted entity scope", () => 
   }
 });
 
-test("Memory resolves real old events beyond the first 200 and never fabricates evidence", () => {
+test("Memory resolves a real event beyond the first 200 and never fabricates evidence", () => {
   const fix = fixture();
   const client = createDataClient({
     scope: fix.scope,
@@ -221,12 +221,6 @@ test("Memory resolves real old events beyond the first 200 and never fabricates 
   });
   try {
     createSpaceAndSchema(client, "memory", "items");
-    const target = client.records.createWithReceipt({
-      spaceId: "memory",
-      entity: "items",
-      idempotencyKey: "memory:target",
-      data: { title: "target" },
-    }).result;
     for (let index = 0; index < 205; index += 1) {
       client.records.create({
         spaceId: "memory",
@@ -235,6 +229,12 @@ test("Memory resolves real old events beyond the first 200 and never fabricates 
         data: { title: `filler ${index}` },
       });
     }
+    const target = client.records.createWithReceipt({
+      spaceId: "memory",
+      entity: "items",
+      idempotencyKey: "memory:target",
+      data: { title: "target" },
+    }).result;
     const memory = createMemoryBridge(client);
     const found = memory.evidence.lookupEvent({ eventId: target.receipt.eventId });
     assert.equal(found.result.event.eventId, target.receipt.eventId);
