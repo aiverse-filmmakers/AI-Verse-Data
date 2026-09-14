@@ -5,6 +5,8 @@ import { join } from "node:path";
 import test from "node:test";
 
 import { DataClientError, createDataClient } from "../src/client/index.js";
+import { DataCatalogError } from "../src/catalog/index.js";
+import { DataIdempotencyError } from "../src/idempotency/index.js";
 import type { BulkMutationOperation } from "../src/protocol/index.js";
 import {
   TrustedDataRoot,
@@ -655,4 +657,231 @@ test("client rejects raw paths and unknown protocol extras stay out", () => {
       }),
     (error: unknown) => error instanceof DataClientError,
   );
+});
+
+
+test("safe structure ensure is additive, retry-safe, actor-attributed, and restart-persistent", () => {
+  const tmp = tempRoot("ai-verse-data-structure-ensure-");
+  const workspaceId = "alpha";
+  mkdirSync(join(tmp.rootPath, "workspaces", workspaceId, "data"), {
+    recursive: true,
+  });
+  const root = TrustedDataRoot.fromExistingDirectory(tmp.rootPath);
+  const scope = createWorkspaceDataScope(root, workspaceId);
+  const botActor = { kind: "bot", id: "gateway-runtime" } as const;
+  const hostAuthorization = {
+    mode: "host-bound",
+    capabilityRefs: ["data-write"],
+  } as const;
+  let client = createDataClient({
+    scope,
+    actor: botActor,
+    authorization: hostAuthorization,
+  });
+
+  const initial = {
+    idempotencyKey: "auto:data:contacts:v1",
+    space: {
+      spaceId: "crm",
+      name: "CRM",
+      authority: "local_canonical" as const,
+      description: "Current customer operations",
+    },
+    schema: {
+      spaceId: "crm",
+      entity: "contacts",
+      name: "Contacts",
+      fields: {
+        name: { type: "string" as const, required: true },
+        email: { type: "string" as const },
+      },
+    },
+    reason: "Repeated structured contact facts need canonical current storage.",
+  };
+
+  try {
+    const created = client.schemas.ensure(initial);
+    assert.equal(created.ok, true);
+    assert.equal(created.operation, "data.transaction.execute");
+    assert.equal(created.result.result.state, "created");
+    assert.equal(created.result.result.changed, true);
+    assert.equal(created.result.result.spaceState, "created");
+    assert.equal(created.result.result.schemaState, "created");
+    assert.equal(created.result.result.schema.schemaVersion, 1);
+    assert.deepEqual(created.result.result.addedFields, []);
+    assert.deepEqual(created.result.receipt.actor, botActor);
+    assert.equal(created.result.receipt.workspaceId, workspaceId);
+    assert.equal(created.result.receipt.idempotencyKey, initial.idempotencyKey);
+
+    const replay = client.schemas.ensure(initial);
+    assert.equal(replay.requestId, created.requestId);
+    assert.deepEqual(replay.result, created.result);
+
+    assert.throws(
+      () =>
+        client.schemas.ensure({
+          ...initial,
+          schema: {
+            ...initial.schema,
+            name: "Different request bound to same idempotency key",
+          },
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof DataIdempotencyError);
+        assert.equal(error.code, "IDEMPOTENCY_CONFLICT");
+        return true;
+      },
+    );
+
+    const existing = client.schemas.ensure({
+      ...initial,
+      idempotencyKey: "auto:data:contacts:existing",
+      space: { ...initial.space, name: "CRM display rename is not forced" },
+      schema: { ...initial.schema, name: "Contacts display rename is not forced" },
+    });
+    assert.equal(existing.result.result.state, "existing");
+    assert.equal(existing.result.result.changed, false);
+    assert.equal(existing.result.result.schema.schemaVersion, 1);
+
+    const evolved = client.schemas.ensure({
+      ...initial,
+      idempotencyKey: "auto:data:contacts:add-status",
+      schema: {
+        ...initial.schema,
+        fields: {
+          ...initial.schema.fields,
+          status: {
+            type: "enum" as const,
+            values: ["lead", "active", "inactive"] as const,
+            default: "lead",
+          },
+        },
+      },
+    });
+    assert.equal(evolved.result.result.state, "evolved");
+    assert.equal(evolved.result.result.schemaState, "evolved");
+    assert.deepEqual(evolved.result.result.addedFields, ["status"]);
+    assert.equal(evolved.result.result.schema.schemaVersion, 2);
+
+    assert.throws(
+      () =>
+        client.schemas.ensure({
+          ...initial,
+          idempotencyKey: "auto:data:contacts:semantic-mismatch",
+          schema: {
+            ...initial.schema,
+            fields: {
+              ...initial.schema.fields,
+              status: {
+                type: "enum" as const,
+                values: ["active"] as const,
+                default: "active",
+              },
+            },
+          },
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof DataCatalogError);
+        assert.equal(error.code, "SCHEMA_MIGRATION_REQUIRED");
+        return true;
+      },
+    );
+
+    const migrationKey = "auto:data:contacts:required-owner";
+    assert.throws(
+      () =>
+        client.schemas.ensure({
+          ...initial,
+          idempotencyKey: migrationKey,
+          schema: {
+            ...initial.schema,
+            fields: {
+              ...initial.schema.fields,
+              status: {
+                type: "enum" as const,
+                values: ["lead", "active", "inactive"] as const,
+                default: "lead",
+              },
+              owner: { type: "string" as const, required: true },
+            },
+          },
+        }),
+      (error: unknown) => {
+        assert.ok(error instanceof DataCatalogError);
+        assert.equal(error.code, "SCHEMA_MIGRATION_REQUIRED");
+        return true;
+      },
+    );
+
+    assert.throws(
+      () => client.provenance.getReceiptByIdempotencyKey(migrationKey),
+      /receipt|exist/i,
+    );
+
+    const recovered = client.schemas.ensure({
+      ...initial,
+      idempotencyKey: migrationKey,
+      schema: {
+        ...initial.schema,
+        fields: {
+          ...initial.schema.fields,
+          status: {
+            type: "enum" as const,
+            values: ["lead", "active", "inactive"] as const,
+            default: "lead",
+          },
+          owner: {
+            type: "string" as const,
+            required: true,
+            default: "unassigned",
+          },
+        },
+      },
+    });
+    assert.equal(recovered.result.result.state, "evolved");
+    assert.deepEqual(recovered.result.result.addedFields, ["owner"]);
+    assert.equal(recovered.result.result.schema.schemaVersion, 3);
+
+    client.close();
+    client = createDataClient({
+      scope,
+      actor: botActor,
+      authorization: hostAuthorization,
+    });
+    const afterRestart = client.schemas.ensure({
+      ...initial,
+      idempotencyKey: "auto:data:contacts:restart",
+      schema: {
+        ...initial.schema,
+        fields: {
+          ...initial.schema.fields,
+          status: {
+            type: "enum" as const,
+            values: ["lead", "active", "inactive"] as const,
+            default: "lead",
+          },
+          owner: {
+            type: "string" as const,
+            required: true,
+            default: "unassigned",
+          },
+        },
+      },
+    });
+    assert.equal(afterRestart.result.result.state, "existing");
+    assert.equal(afterRestart.result.result.changed, false);
+    assert.equal(afterRestart.result.result.schema.schemaVersion, 3);
+
+    const events = client.provenance.listEvents();
+    const ensures = events.result.items.filter(
+      (event) =>
+        event.eventType === "transaction.committed" &&
+        event.details.requestedOperation === "data.structure.ensure",
+    );
+    assert.ok(ensures.length >= 5);
+    assert.ok(ensures.every((event) => event.actor.kind === "bot"));
+  } finally {
+    client.close();
+    tmp.cleanup();
+  }
 });
