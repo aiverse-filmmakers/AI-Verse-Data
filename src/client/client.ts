@@ -1,6 +1,7 @@
 import { DataBackup } from "../backup/index.js";
 import { DataBulk } from "../bulk/index.js";
-import { DataCatalog } from "../catalog/index.js";
+import { DataCatalog, DataCatalogError } from "../catalog/index.js";
+import { DataIdempotency, canonicalResultJson } from "../idempotency/index.js";
 import type {
   ACTOR_KINDS,
   AUTHORIZATION_MODES,
@@ -30,7 +31,8 @@ import type {
   TransactionExecutePayload,
 } from "../protocol/index.js";
 import { DataProvenance } from "../provenance/index.js";
-import { createRequestId } from "../provenance/identifiers.js";
+import { DataProvenanceWriter } from "../provenance/writer.js";
+import { createRequestId, createTransactionId } from "../provenance/identifiers.js";
 import { DataQuery } from "../query/index.js";
 import { DataRecords } from "../records/index.js";
 import { DataSchemaMigrations } from "../schema-migrations/index.js";
@@ -49,6 +51,8 @@ import type {
   DataClient,
   DataClientRecordCreateInput,
   DataClientStorageFacts,
+  DataStructureEnsureInput,
+  DataStructureEnsureResult,
   DataSuccessResult,
 } from "./types.js";
 
@@ -390,6 +394,8 @@ interface ClientState {
   transactions: DataTransactions;
   bulk: DataBulk;
   provenance: DataProvenance;
+  provenanceWriter: DataProvenanceWriter;
+  idempotency: DataIdempotency;
   migrations: DataSchemaMigrations;
   backup: DataBackup;
   databasePath: string;
@@ -423,6 +429,196 @@ function assertOpen(state: ClientState): void {
       "Data client is closed and cannot serve further operations.",
     );
   }
+}
+
+function validateStructureEnsureInput(input: DataStructureEnsureInput): {
+  readonly idempotencyKey: string;
+  readonly space: ReturnType<typeof validateSpaceDefinition>;
+  readonly schema: EntitySchemaDefinition;
+  readonly reason?: string;
+} {
+  if (typeof input !== "object" || input === null) {
+    failInvalid("Structure ensure input must be an object.");
+  }
+  const idempotencyKey = validateIdempotencyKey(input.idempotencyKey);
+  const space = validateSpaceDefinition(input.space);
+  validateSchemaDefinition(input.schema);
+  if (input.schema.spaceId !== space.spaceId) {
+    failInvalid("Structure ensure schema.spaceId must match the requested Data Space.");
+  }
+  if (
+    input.reason !== undefined &&
+    (typeof input.reason !== "string" ||
+      input.reason.length < 1 ||
+      input.reason.length > DATA_PROTOCOL_LIMITS.maxDescriptionLength)
+  ) {
+    failInvalid("Structure ensure reason must be a non-empty bounded string.");
+  }
+  return {
+    idempotencyKey,
+    space,
+    schema: input.schema,
+    ...(input.reason === undefined ? {} : { reason: input.reason }),
+  };
+}
+
+function sameJson(left: unknown, right: unknown): boolean {
+  return canonicalResultJson(left) === canonicalResultJson(right);
+}
+
+function ensureStructure(
+  state: ClientState,
+  actor: DataActor,
+  input: DataStructureEnsureInput,
+): { readonly result: DataStructureEnsureResult; readonly requestId: string } {
+  const valid = validateStructureEnsureInput(input);
+  let requestId = createRequestId();
+
+  const result = state.database.transaction(() => {
+    const idempotencyRequest = {
+      kind: "structure_ensure",
+      requestedOperation: "data.structure.ensure",
+      space: valid.space,
+      schema: valid.schema,
+      ...(valid.reason === undefined ? {} : { reason: valid.reason }),
+    };
+    const prepared = state.idempotency.prepare<DataStructureEnsureResult>(
+      valid.idempotencyKey,
+      "data.transaction.execute",
+      actor,
+      idempotencyRequest,
+    );
+    if (prepared.kind === "replay") {
+      return prepared.value;
+    }
+
+    let spaceState: "created" | "existing" = "existing";
+    let space;
+    try {
+      space = state.catalog.getSpace(valid.space.spaceId);
+    } catch (error) {
+      if (!(error instanceof DataCatalogError) || error.code !== "DATA_SPACE_NOT_FOUND") {
+        throw error;
+      }
+      space = state.catalog.createSpace(valid.space);
+      spaceState = "created";
+    }
+
+    if (space.authority !== valid.space.authority) {
+      throw new DataCatalogError(
+        "SCHEMA_MIGRATION_REQUIRED",
+        `Data Space '${valid.space.spaceId}' exists with different authority and cannot be changed by automatic ensure.`,
+      );
+    }
+
+    let schemaState: "created" | "evolved" | "existing" = "existing";
+    let schema;
+    let addedFields: string[] = [];
+    try {
+      schema = state.catalog.getSchema(valid.schema.spaceId, valid.schema.entity);
+    } catch (error) {
+      if (!(error instanceof DataCatalogError) || error.code !== "ENTITY_NOT_FOUND") {
+        throw error;
+      }
+      schema = state.catalog.createSchema(valid.schema);
+      schemaState = "created";
+    }
+
+    if (schemaState !== "created") {
+      const currentAllowUnknown = schema.allowUnknownFields ?? false;
+      const requestedAllowUnknown = valid.schema.allowUnknownFields ?? false;
+      if (currentAllowUnknown !== requestedAllowUnknown) {
+        throw new DataCatalogError(
+          "SCHEMA_MIGRATION_REQUIRED",
+          "Automatic structure ensure cannot change allowUnknownFields semantics.",
+          { spaceId: valid.schema.spaceId, entity: valid.schema.entity },
+        );
+      }
+
+      const changes = [];
+      for (const [field, definition] of Object.entries(valid.schema.fields)) {
+        const current = schema.fields[field];
+        if (current === undefined) {
+          addedFields.push(field);
+          changes.push({ op: "add_field" as const, field, definition });
+          continue;
+        }
+        if (!sameJson(current, definition)) {
+          throw new DataCatalogError(
+            "SCHEMA_MIGRATION_REQUIRED",
+            `Existing field '${field}' differs from the requested definition; automatic structure ensure never replaces or narrows existing fields.`,
+            { spaceId: valid.schema.spaceId, entity: valid.schema.entity, field },
+          );
+        }
+      }
+
+      if (changes.length > 0) {
+        schema = state.catalog.updateSchema({
+          spaceId: valid.schema.spaceId,
+          entity: valid.schema.entity,
+          expectedSchemaVersion: schema.schemaVersion,
+          changes,
+        });
+        schemaState = "evolved";
+      }
+    }
+
+    const changed = spaceState === "created" || schemaState !== "existing";
+    const structureState: DataStructureEnsureResult["state"] =
+      schemaState === "evolved"
+        ? "evolved"
+        : changed
+          ? "created"
+          : "existing";
+    const ensured: DataStructureEnsureResult = {
+      state: structureState,
+      changed,
+      spaceState,
+      schemaState,
+      addedFields,
+      space,
+      schema,
+    };
+
+    const transactionId = createTransactionId();
+    const committedAt = new Date().toISOString();
+    state.provenanceWriter.transactionCommitted({
+      requestId,
+      transactionId,
+      idempotencyKey: valid.idempotencyKey,
+      actor,
+      committedAt,
+      childEventIds: [],
+      childReceiptIds: [],
+      operationCount:
+        (spaceState === "created" ? 1 : 0) +
+        (schemaState === "created" || schemaState === "evolved" ? 1 : 0),
+      details: {
+        kind: "structure_ensure",
+        requestedOperation: "data.structure.ensure",
+        spaceId: valid.schema.spaceId,
+        entity: valid.schema.entity,
+        structureState,
+        spaceState,
+        schemaState,
+        addedFields,
+        ...(valid.reason === undefined ? {} : { reason: valid.reason }),
+      },
+    });
+
+    return state.idempotency.complete(
+      valid.idempotencyKey,
+      "data.transaction.execute",
+      prepared.requestFingerprint,
+      ensured,
+    );
+  }, "immediate");
+
+  const receipt = state.provenance.getReceiptByIdempotencyKey({
+    idempotencyKey: valid.idempotencyKey,
+  });
+  requestId = receipt.requestId;
+  return { result, requestId };
 }
 
 export function createDataClient(options: CreateDataClientOptions): DataClient {
@@ -462,6 +658,8 @@ export function createDataClient(options: CreateDataClientOptions): DataClient {
     transactions: new DataTransactions(database),
     bulk: new DataBulk(database),
     provenance: new DataProvenance(database),
+    provenanceWriter: new DataProvenanceWriter(database),
+    idempotency: new DataIdempotency(database),
     migrations: new DataSchemaMigrations(database),
     backup: new DataBackup(driver),
     databasePath,
@@ -499,6 +697,19 @@ export function createDataClient(options: CreateDataClientOptions): DataClient {
       },
     },
     schemas: {
+      ensure(input: DataStructureEnsureInput) {
+        assertOpen(state);
+        const ensured = ensureStructure(state, actor as DataActor, input);
+        const receipt = state.provenance.getReceiptByIdempotencyKey({
+          idempotencyKey: input.idempotencyKey,
+        });
+        return success(
+          state,
+          "data.transaction.execute",
+          { result: ensured.result, receipt },
+          ensured.requestId,
+        );
+      },
       create(definition: EntitySchemaDefinition) {
         assertOpen(state);
         validateSchemaDefinition(definition);
