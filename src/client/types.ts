@@ -6,6 +6,7 @@ import type {
   DataOperation,
   DataProtocolError,
   DataScope,
+  DataSpaceDefinition,
   EntitySchemaDefinition,
   EventsListPayload,
   JsonObject,
@@ -102,6 +103,28 @@ export type MigrationWithReceipt = {
   readonly receipt: DataMutationReceipt;
 };
 
+export interface DataStructureEnsureInput {
+  readonly idempotencyKey: string;
+  readonly space: DataSpaceDefinition;
+  readonly schema: EntitySchemaDefinition;
+  readonly reason?: string;
+}
+
+export interface DataStructureEnsureResult {
+  readonly state: "created" | "evolved" | "existing";
+  readonly changed: boolean;
+  readonly spaceState: "created" | "existing";
+  readonly schemaState: "created" | "evolved" | "existing";
+  readonly addedFields: readonly string[];
+  readonly space: DataSpaceSnapshot;
+  readonly schema: EntitySchemaSnapshot;
+}
+
+export interface DataStructureEnsureWithReceipt {
+  readonly result: DataStructureEnsureResult;
+  readonly receipt: DataMutationReceipt;
+}
+
 export interface DataClientSpaces {
   create(definition: {
     readonly spaceId: string;
@@ -114,6 +137,9 @@ export interface DataClientSpaces {
 }
 
 export interface DataClientSchemas {
+  ensure(
+    input: DataStructureEnsureInput,
+  ): DataSuccessResult<DataStructureEnsureWithReceipt>;
   create(
     definition: EntitySchemaDefinition,
   ): DataSuccessResult<EntitySchemaSnapshot>;

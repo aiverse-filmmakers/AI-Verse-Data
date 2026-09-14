@@ -1,6 +1,7 @@
 import { doctorData, statusData } from "./doctor.js";
 import { discoverWorkspaceData } from "./workspace-discovery.js";
 import { initWorkspaceData } from "./workspace-init.js";
+import type { DataActor, DataAuthorization } from "../protocol/index.js";
 import { openAiVerseDataHostSession } from "./host-adapter.js";
 
 export const AI_VERSE_DATA_HOST_PROTOCOL = "ai-verse-data-host/1.0" as const;
@@ -11,6 +12,7 @@ export interface AiVerseDataHostEngineDescription {
   readonly actorBinding: "human:local-operator";
   readonly authorizationBinding: "local-operator";
   readonly workspaceInitialization: "explicit";
+  readonly hostBoundActorRequests: true;
 }
 
 export type AiVerseDataHostEngineRequest =
@@ -35,6 +37,18 @@ export type AiVerseDataHostEngineRequest =
         readonly operation: string;
         readonly payload: Record<string, unknown>;
       };
+    }
+  | {
+      readonly protocol: typeof AI_VERSE_DATA_HOST_PROTOCOL;
+      readonly operation: "data.host_bound_request";
+      readonly rootPath: string;
+      readonly workspaceId: string;
+      readonly actor: DataActor;
+      readonly authorization: DataAuthorization;
+      readonly data: {
+        readonly operation: string;
+        readonly payload: Record<string, unknown>;
+      };
     };
 
 export function describeAiVerseDataHostEngine(): AiVerseDataHostEngineDescription {
@@ -44,6 +58,7 @@ export function describeAiVerseDataHostEngine(): AiVerseDataHostEngineDescriptio
     actorBinding: "human:local-operator",
     authorizationBinding: "local-operator",
     workspaceInitialization: "explicit",
+    hostBoundActorRequests: true,
   };
 }
 
@@ -78,15 +93,25 @@ export async function handleAiVerseDataHostRequest(
     return statusData({ rootPath: input.rootPath, workspaceId: input.workspaceId });
   }
 
+  const hostBound = input.operation === "data.host_bound_request";
   const session = await openAiVerseDataHostSession({
     rootPath: input.rootPath,
     workspaceId: input.workspaceId,
-    actor: { kind: "human", id: "local-operator" },
-    authorization: { mode: "local-operator" },
+    actor: hostBound ? input.actor : { kind: "human", id: "local-operator" },
+    authorization: hostBound
+      ? input.authorization
+      : { mode: "local-operator" },
+    initializeIfMissing:
+      hostBound && input.data.operation === "data.structure.ensure",
   });
   const payload = input.data.payload as never;
   try {
     switch (input.data.operation) {
+      case "data.structure.ensure":
+        if (!hostBound) {
+          throw new Error("data.structure.ensure requires the trusted host-bound actor path.");
+        }
+        return session.client.schemas.ensure(payload);
       case "data.space.list":
         return session.client.spaces.list();
       case "data.space.get":
