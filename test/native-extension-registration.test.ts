@@ -890,6 +890,8 @@ test("materialized file constants expose the executable host engine without impl
 
   assert.match(instructions ?? "", /does not initialize any workspace database/);
   assert.match(engine ?? "", /registrationOnly: false/);
+  assert.match(engine ?? "", /hostBoundActorRequests: true/);
+  assert.match(instructions ?? "", /trusted OS host-bound requests/);
   const parsed = JSON.parse(manifest ?? "{}") as Record<string, unknown>;
   assert.equal(parsed.id, AI_VERSE_DATA_EXTENSION_ID);
   assert.equal(parsed.package_version, AI_VERSE_DATA_EXTENSION_VERSION);
