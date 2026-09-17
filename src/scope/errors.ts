@@ -5,7 +5,8 @@ export type DataScopeErrorCode =
   | "WORKSPACE_ID_UNSAFE"
   | "PATH_COMPONENT_INVALID"
   | "PATH_ESCAPE"
-  | "PATH_SYMLINK_UNSAFE";
+  | "PATH_SYMLINK_UNSAFE"
+  | "SCOPE_UNTRUSTED";
 
 export class DataScopeError extends Error {
   readonly code: DataScopeErrorCode;
