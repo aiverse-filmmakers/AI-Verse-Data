@@ -31,6 +31,18 @@ const WINDOWS_RESERVED_NAME =
   /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
 const WINDOWS_UNSAFE_CHARACTERS = /[<>:"|?*]/;
 
+const TRUSTED_ROOT_PATHS = new WeakMap<object, string>();
+
+interface TrustedScopeFacts {
+  readonly kind: "standalone" | "workspace";
+  readonly workspaceId: string;
+  readonly root: TrustedDataRoot;
+  readonly relativeDatabasePath: readonly string[];
+  readonly binding: StorageDatabaseBinding;
+}
+
+const TRUSTED_SCOPE_FACTS = new WeakMap<object, TrustedScopeFacts>();
+
 function validateWorkspaceFilesystemId(workspaceId: string): void {
   if (
     workspaceId.length < 1 ||
@@ -72,11 +84,46 @@ function isContained(root: string, target: string): boolean {
   return child === "" || (!child.startsWith("..") && !isAbsolute(child));
 }
 
-export class TrustedDataRoot implements TrustedRootView {
-  readonly canonicalPath: string;
+function trustedRootPath(root: TrustedDataRoot): string {
+  const canonicalPath = TRUSTED_ROOT_PATHS.get(root as object);
+  if (canonicalPath === undefined) {
+    throw new DataScopeError(
+      "SCOPE_UNTRUSTED",
+      "Data scope root was not created by TrustedDataRoot.",
+    );
+  }
+  return canonicalPath;
+}
 
+function trustedScopeFacts(scope: DataDatabaseScope): TrustedScopeFacts {
+  if (typeof scope !== "object" || scope === null) {
+    throw new DataScopeError(
+      "SCOPE_UNTRUSTED",
+      "Data database scope must be created by the trusted scope constructors.",
+    );
+  }
+  const facts = TRUSTED_SCOPE_FACTS.get(scope as object);
+  if (facts === undefined) {
+    throw new DataScopeError(
+      "SCOPE_UNTRUSTED",
+      "Data database scope provenance is not trusted. Use createStandaloneDataScope or createWorkspaceDataScope with a TrustedDataRoot.",
+    );
+  }
+  return facts;
+}
+
+function authoritativeScopePath(facts: TrustedScopeFacts): string {
+  return facts.root.resolve(...facts.relativeDatabasePath);
+}
+
+export class TrustedDataRoot implements TrustedRootView {
   private constructor(canonicalPath: string) {
-    this.canonicalPath = canonicalPath;
+    TRUSTED_ROOT_PATHS.set(this, canonicalPath);
+    Object.freeze(this);
+  }
+
+  get canonicalPath(): string {
+    return trustedRootPath(this);
   }
 
   static fromExistingDirectory(rootPath: string): TrustedDataRoot {
@@ -117,18 +164,19 @@ export class TrustedDataRoot implements TrustedRootView {
   }
 
   resolve(...segments: readonly string[]): string {
-    this.assertStillTrusted();
+    const canonicalPath = trustedRootPath(this);
+    this.assertStillTrusted(canonicalPath);
     for (const segment of segments) validatePathSegment(segment);
 
-    const target = resolve(this.canonicalPath, ...segments);
-    if (!isContained(this.canonicalPath, target)) {
+    const target = resolve(canonicalPath, ...segments);
+    if (!isContained(canonicalPath, target)) {
       throw new DataScopeError(
         "PATH_ESCAPE",
         "Resolved Data path escapes the trusted root.",
       );
     }
 
-    let current = this.canonicalPath;
+    let current = canonicalPath;
     for (let index = 0; index < segments.length; index += 1) {
       const segment = segments[index];
       if (segment === undefined) continue;
@@ -155,15 +203,15 @@ export class TrustedDataRoot implements TrustedRootView {
     return target;
   }
 
-  private assertStillTrusted(): void {
-    if (!existsSync(this.canonicalPath)) {
+  private assertStillTrusted(canonicalPath: string): void {
+    if (!existsSync(canonicalPath)) {
       throw new DataScopeError(
         "ROOT_NOT_FOUND",
         "Trusted Data root no longer exists.",
       );
     }
 
-    const info = lstatSync(this.canonicalPath);
+    const info = lstatSync(canonicalPath);
     if (info.isSymbolicLink() || !info.isDirectory()) {
       throw new DataScopeError(
         "ROOT_INVALID",
@@ -171,7 +219,7 @@ export class TrustedDataRoot implements TrustedRootView {
       );
     }
 
-    if (realpathSync(this.canonicalPath) !== this.canonicalPath) {
+    if (realpathSync(canonicalPath) !== canonicalPath) {
       throw new DataScopeError(
         "ROOT_INVALID",
         "Trusted Data root no longer resolves to its original canonical path.",
@@ -187,18 +235,31 @@ class ConcreteDataDatabaseScope implements DataDatabaseScope {
     readonly kind: "standalone" | "workspace",
     readonly workspaceId: string,
     readonly root: TrustedDataRoot,
-    private readonly relativeDatabasePath: readonly string[],
+    relativeDatabasePath: readonly string[],
   ) {
     validateWorkspaceFilesystemId(workspaceId);
-    this.binding = Object.freeze({
+    trustedRootPath(root);
+
+    const binding = Object.freeze({
       bindingVersion: AI_VERSE_DATA_SCOPE_BINDING_VERSION,
       kind,
       workspaceId,
     });
+    const frozenPath = Object.freeze([...relativeDatabasePath]);
+
+    this.binding = binding;
+    TRUSTED_SCOPE_FACTS.set(this, {
+      kind,
+      workspaceId,
+      root,
+      relativeDatabasePath: frozenPath,
+      binding,
+    });
+    Object.freeze(this);
   }
 
   databasePath(): string {
-    return this.root.resolve(...this.relativeDatabasePath);
+    return authoritativeScopePath(trustedScopeFacts(this));
   }
 }
 
@@ -231,11 +292,12 @@ export function openScopedDataDatabase(
   scope: DataDatabaseScope,
   options: ScopedDatabaseOpenOptions = {},
 ): ScopedDatabaseHandle {
-  const databasePath = scope.databasePath();
+  const facts = trustedScopeFacts(scope);
+  const databasePath = authoritativeScopePath(facts);
   const database: DataStorageDatabase = driver.open({
     location: databasePath,
     mode: options.mode ?? "create-or-open",
-    expectedBinding: scope.binding,
+    expectedBinding: facts.binding,
   });
 
   return {
