@@ -212,11 +212,12 @@ test("different candidate IDs racing on one natural key commit exactly one canon
     await new Promise((resolve) => setTimeout(resolve, 150));
     closeSync(openSync(gatePath, "w"));
     const outcomes = await Promise.all([left, right]);
+    const diagnostic = JSON.stringify(outcomes);
 
     const successes = outcomes.filter((item) => item.ok);
     const conflicts = outcomes.filter((item) => !item.ok);
-    assert.equal(successes.length, 1, outcomes);
-    assert.equal(conflicts.length, 1, outcomes);
+    assert.equal(successes.length, 1, diagnostic);
+    assert.equal(conflicts.length, 1, diagnostic);
     assert.equal(conflicts[0]?.name, "DataNaturalKeyError");
     assert.equal(conflicts[0]?.code, "NATURAL_KEY_CONFLICT");
 
