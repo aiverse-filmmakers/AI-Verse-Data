@@ -15,6 +15,7 @@ import test from "node:test";
 
 import {
   AI_VERSE_DATA_HOST_PROTOCOL,
+  AI_VERSE_OS_EXTENSION_REGISTRY_PATH,
   handleAiVerseDataHostRequest,
 } from "../src/native/index.js";
 
@@ -28,6 +29,11 @@ function fixture() {
   writeFileSync(join(rootPath, "AGENTS.md"), "# Runtime\n", "utf8");
   mkdirSync(join(rootPath, "operator"), { recursive: true });
   mkdirSync(join(rootPath, "system", "extensions"), { recursive: true });
+  writeFileSync(
+    join(rootPath, "system", "extensions", "README.md"),
+    `# Local extensions\nRegistry: ${AI_VERSE_OS_EXTENSION_REGISTRY_PATH}\n`,
+    "utf8",
+  );
   const workspacePath = join(rootPath, "workspaces", "alpha");
   mkdirSync(workspacePath, { recursive: true });
   writeFileSync(
