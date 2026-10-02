@@ -3,6 +3,10 @@ import { discoverWorkspaceData } from "./workspace-discovery.js";
 import { initWorkspaceData } from "./workspace-init.js";
 import type { DataActor, DataAuthorization } from "../protocol/index.js";
 import { openAiVerseDataHostSession } from "./host-adapter.js";
+import {
+  createRecordByNaturalKey,
+  type NaturalKeyCreatePayload,
+} from "./natural-key-create.js";
 
 export const AI_VERSE_DATA_HOST_PROTOCOL = "ai-verse-data-host/1.0" as const;
 
@@ -134,8 +138,35 @@ export async function handleAiVerseDataHostRequest(
         return session.client.records.get(payload);
       case "data.record.list":
         return session.client.records.list(payload);
-      case "data.record.create":
+      case "data.record.create": {
+        const raw = input.data.payload as Record<string, unknown>;
+        if (Object.prototype.hasOwnProperty.call(raw, "naturalKey")) {
+          if (!hostBound) {
+            throw new Error(
+              "Natural-key data.record.create requires the trusted host-bound actor path.",
+            );
+          }
+          const natural = createRecordByNaturalKey({
+            rootPath: input.rootPath,
+            workspaceId: input.workspaceId,
+            actor: input.actor,
+            authorization: input.authorization,
+            payload: raw as unknown as NaturalKeyCreatePayload,
+          });
+          return {
+            protocol: "ai-verse-data/0.1",
+            requestId: natural.requestId,
+            operation: "data.record.create",
+            scope: { workspaceId: input.workspaceId },
+            actor: input.actor,
+            authorization: input.authorization,
+            ok: true,
+            result: natural.record,
+            warnings: [],
+          };
+        }
         return session.client.records.create(payload);
+      }
       case "data.record.update":
         return session.client.records.update(payload);
       case "data.record.delete":
