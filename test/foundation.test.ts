@@ -28,7 +28,7 @@ test("package metadata exposes all implemented Phase 5.6 public subpaths", () =>
   assert.equal(packageJson.type, "module");
   assert.equal(packageJson.bin["ai-verse-data"], "dist/src/cli.js");
   assert.equal(packageJson.engines.node, ">=22.0.0");
-  assert.match(packageJson.version, /^0\.1\.0-alpha\.0$/);
+  assert.match(packageJson.version, /^0\.1\.0-alpha\.1\.dev0$/);
   assert.equal(AI_VERSE_DATA_EXTENSION_VERSION, packageJson.version);
   assert.ok("./protocol" in packageJson.exports);
   assert.ok("./storage" in packageJson.exports);
