@@ -1375,7 +1375,7 @@ Implemented:
   `dist/src/cli.js`, `dist/src/index.js`, plus every surface
   `index.js` present;
 - CLI proof: `--help` stable usage tokens, `--version`
-  `0.1.0-alpha.0`;
+  `0.1.0-alpha.1.dev0`;
 - no new engine, no publication, no sibling edits, no deletions.
 
 Local proof (this host, Node 22):

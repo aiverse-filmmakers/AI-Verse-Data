@@ -118,7 +118,7 @@ Canonical fields are:
   "supported": true,
   "installed": true,
   "enabled": true,
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1.dev0",
   "source": "AI-Verse-Data",
   "instructions": ".aiverse/extensions/ai-verse-data/INSTRUCTIONS.md",
   "engine": ".aiverse/extensions/ai-verse-data/engine.mjs",

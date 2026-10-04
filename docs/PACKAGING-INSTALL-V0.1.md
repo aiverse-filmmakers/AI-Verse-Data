@@ -10,7 +10,7 @@ acceptance suite (Task 41) passes.
 ## Stable distribution metadata
 
 - name: `@ai-verse/data`;
-- version: `0.1.0-alpha.0` (pre-release; public API is not yet frozen);
+- version: `0.1.0-alpha.1.dev0` (post-alpha development; public API is not yet frozen);
 - license: `UNLICENSED` (private pre-release; no public license granted);
 - `type: module`, `engines: node >=22.0.0`;
 - `bin.ai-verse-data`: `dist/src/cli.js` with `--help`, `--version`,
