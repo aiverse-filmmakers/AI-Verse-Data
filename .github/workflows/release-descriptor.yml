@@ -37,10 +37,14 @@ jobs:
           if (d.semantics?.release_metadata_only !== true || d.semantics?.live_health_truth !== false) throw new Error("descriptor must remain release metadata only");
           for (const key of ["preserve_on_update","preserve_on_uninstall","preserve_unknown_user_files"]) if (d.state?.[key] !== true) throw new Error(key+" must be true");
           for (const key of ["grants_permissions","changes_direction_owner","changes_scope","enables_disabled_component","exposes_remote_listener"]) if (d.authority?.[key] !== false) throw new Error(key+" must be false");
-          for (const group of ["ci","acceptance"]) {
-            if (!Array.isArray(d.evidence?.[group]) || !d.evidence[group].length) throw new Error("missing "+group+" evidence");
-            for (const e of d.evidence[group]) if (e.status !== "pass" || e.revision !== d.revision) throw new Error(group+" evidence must pass and bind exact revision");
-          }
+          if (d.release_status === "accepted") {
+            for (const group of ["ci","acceptance"]) {
+              if (!Array.isArray(d.evidence?.[group]) || !d.evidence[group].length) throw new Error("missing "+group+" evidence");
+              for (const e of d.evidence[group]) if (e.status !== "pass" || e.revision !== d.revision) throw new Error(group+" evidence must pass and bind exact revision");
+            }
+          } else if (d.release_status === "development") {
+            if (JSON.stringify(d.evidence) !== JSON.stringify({ci: [], acceptance: []})) throw new Error("development descriptor cannot claim release evidence");
+          } else throw new Error("unknown release status");
           console.log("descriptor structure OK", d.component_id, d.version, d.revision);
           NODE
           REVISION="$(node -p 'require("./release/component-release.json").revision')"

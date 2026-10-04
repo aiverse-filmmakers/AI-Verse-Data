@@ -220,7 +220,7 @@ test("update preserves enabled:false plus unknown fields and files", () => {
               supported: true,
               installed: true,
               enabled: false,
-              version: "0.1.0-alpha.0",
+              version: "0.1.0-alpha.1.dev0",
               source: "AI-Verse-Data",
               instructions: AI_VERSE_DATA_EXTENSION_INSTRUCTIONS_PATH,
               engine: ".aiverse/extensions/ai-verse-data/engine.mjs",

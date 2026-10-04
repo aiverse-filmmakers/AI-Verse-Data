@@ -4,7 +4,7 @@ export const AI_VERSE_OS_EXTENSION_REGISTRY_LOCK_PATH =
 
 export const AI_VERSE_DATA_EXTENSION_ID = "ai-verse-data" as const;
 export const AI_VERSE_DATA_EXTENSION_SOURCE = "AI-Verse-Data" as const;
-export const AI_VERSE_DATA_EXTENSION_VERSION = "0.1.0-alpha.0" as const;
+export const AI_VERSE_DATA_EXTENSION_VERSION = "0.1.0-alpha.1.dev0" as const;
 export const AI_VERSE_DATA_EXTENSION_ROOT =
   ".aiverse/extensions/ai-verse-data" as const;
 export const AI_VERSE_DATA_EXTENSION_INSTRUCTIONS_PATH =

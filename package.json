@@ -1,6 +1,6 @@
 {
   "name": "@ai-verse/data",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1.dev0",
   "description": "Local-first structured-data layer for AI-Verse OS and compatible agent systems.",
   "type": "module",
   "bin": {
