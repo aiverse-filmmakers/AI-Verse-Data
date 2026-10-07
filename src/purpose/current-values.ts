@@ -30,8 +30,14 @@ export interface PurposeCurrentValueProvenance {
   readonly recordVersion: number;
 }
 
+export interface PurposeCurrentValueFreshness {
+  /** Canonical Data record update time. Never inferred from query execution time. */
+  readonly sourceUpdatedAt: string;
+}
+
 export interface PurposeCurrentValueWithProvenance extends PurposeCurrentValue {
   readonly provenance: PurposeCurrentValueProvenance;
+  readonly freshness: PurposeCurrentValueFreshness;
 }
 
 export interface PurposeCurrentValueReadResult {
@@ -219,6 +225,9 @@ export function createPurposeCurrentValueReader(
           authorization: copyAuthorization(out.authorization),
           schemaVersion: record.schemaVersion,
           recordVersion: record.version,
+        },
+        freshness: {
+          sourceUpdatedAt: record.updatedAt,
         },
       });
     }
