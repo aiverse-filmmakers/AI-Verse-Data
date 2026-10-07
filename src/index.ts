@@ -22,6 +22,7 @@ export * from "./apps/index.js";
 export * from "./connections/index.js";
 export * from "./automation/index.js";
 export * from "./native/index.js";
+export * from "./purpose/index.js";
 
 export const AI_VERSE_DATA_PACKAGE = "@ai-verse/data" as const;
 export const AI_VERSE_DATA_PACKAGE_VERSION = "0.1.0-alpha.1.dev0" as const;
