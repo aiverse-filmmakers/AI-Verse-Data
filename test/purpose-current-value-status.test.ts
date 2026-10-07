@@ -59,8 +59,15 @@ test("Purpose status distinguishes missing, stale, zero, false, and null", () =>
       idempotencyKey: "purpose:status:create",
       data: { count: 0, enabled: false, note: null },
     });
+    const staleCreated = client.records.create({
+      spaceId: "metrics",
+      entity: "snapshots",
+      idempotencyKey: "purpose:status:stale",
+      data: { count: 7, enabled: true, note: "old" },
+    });
     const recordId = created.result.recordId;
-    const sourceMs = Date.parse(created.result.updatedAt);
+    const staleRecordId = staleCreated.result.recordId;
+    const sourceMs = Date.parse(staleCreated.result.updatedAt);
     assert.ok(Number.isFinite(sourceMs));
 
     const reader = createPurposeCurrentValueStatusReader(client, {
@@ -72,12 +79,8 @@ test("Purpose status distinguishes missing, stale, zero, false, and null", () =>
       { ref: ref(recordId, "note"), staleAfterMs: 10_000 },
       { ref: ref(recordId, "optional"), staleAfterMs: 10_000 },
       { ref: ref("missing-record", "count"), staleAfterMs: 10_000 },
-      { ref: ref(recordId, "count-stale-proxy"), staleAfterMs: 1_000 },
-    ].map((request, index) =>
-      index === 5
-        ? { ref: ref(recordId, "count"), staleAfterMs: 1_000 }
-        : request,
-    ));
+      { ref: ref(staleRecordId, "count"), staleAfterMs: 1_000 },
+    ]);
 
     assert.equal(out.values[0]?.state, "value");
     assert.equal(out.values[0]?.value, 0);
@@ -96,9 +99,9 @@ test("Purpose status distinguishes missing, stale, zero, false, and null", () =>
       missing: "record",
     });
     assert.equal(out.values[5]?.state, "stale");
-    assert.equal(out.values[5]?.value, 0);
+    assert.equal(out.values[5]?.value, 7);
     if (out.values[5]?.state === "stale") {
-      assert.equal(out.values[5].sourceUpdatedAt, created.result.updatedAt);
+      assert.equal(out.values[5].sourceUpdatedAt, staleCreated.result.updatedAt);
     }
 
     const strict = createPurposeCurrentValueReader(client);
