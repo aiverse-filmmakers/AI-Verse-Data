@@ -2,8 +2,8 @@
   "schema_version": "ai-verse.component-release/v1",
   "component_id": "ai-verse-data",
   "version": "0.1.0-alpha.1.dev0",
-  "revision": "5cbf9908440ca7e11506991ba1dd7d3344f2b1fd",
-  "release_status": "development",
+  "revision": "f8978f8f7a1bc94edecddc2662112233289159a3",
+  "release_status": "accepted",
   "package": {
     "repository": "aiverse-filmmakers/AI-Verse-Data",
     "source_type": "git",
@@ -38,6 +38,7 @@
     "state_format": "ai-verse-data-format-v2"
   },
   "migration": {
+    "change_classification": "non-breaking",
     "compatibility": "none-required",
     "from_versions": [],
     "requires_explicit_migration": false,
@@ -52,8 +53,24 @@
     "exposes_remote_listener": false
   },
   "evidence": {
-    "ci": [],
-    "acceptance": []
+    "ci": [
+      {
+        "kind": "owner-native-ci",
+        "status": "pass",
+        "revision": "f8978f8f7a1bc94edecddc2662112233289159a3",
+        "run_id": "37645269881",
+        "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"
+      }
+    ],
+    "acceptance": [
+      {
+        "kind": "owner-local-native-workflow-acceptance",
+        "status": "pass",
+        "revision": "f8978f8f7a1bc94edecddc2662112233289159a3",
+        "run_id": "37645269881",
+        "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"
+      }
+    ]
   },
   "semantics": {
     "release_metadata_only": true,
