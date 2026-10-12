@@ -10,71 +10,15 @@
     "package_name": "@ai-verse/data",
     "integrity": null
   },
-  "supported_platforms": [
-    "linux",
-    "macos",
-    "windows"
-  ],
-  "runtime_requirements": {
-    "python": null,
-    "node": ">=22.0.0",
-    "other": []
-  },
-  "lifecycle": {
-    "install": true,
-    "setup": false,
-    "status": true,
-    "doctor": true,
-    "enable": true,
-    "disable": true,
-    "update": true,
-    "uninstall": true
-  },
-  "state": {
-    "canonical_state_owned": true,
-    "preserve_on_update": true,
-    "preserve_on_uninstall": true,
-    "preserve_unknown_user_files": true,
-    "state_format": "ai-verse-data-format-v2"
-  },
-  "migration": {
-    "change_classification": "non-breaking",
-    "compatibility": "none-required",
-    "from_versions": [],
-    "requires_explicit_migration": false,
-    "owner_controlled": true,
-    "checkpoint_policy": "not-required"
-  },
-  "authority": {
-    "grants_permissions": false,
-    "changes_direction_owner": false,
-    "changes_scope": false,
-    "enables_disabled_component": false,
-    "exposes_remote_listener": false
-  },
+  "supported_platforms": ["linux", "macos", "windows"],
+  "runtime_requirements": {"python": null, "node": ">=22.0.0", "other": []},
+  "lifecycle": {"install": true, "setup": false, "status": true, "doctor": true, "enable": true, "disable": true, "update": true, "uninstall": true},
+  "state": {"canonical_state_owned": true, "preserve_on_update": true, "preserve_on_uninstall": true, "preserve_unknown_user_files": true, "state_format": "ai-verse-data-format-v2"},
+  "migration": {"change_classification": "breaking", "compatibility": "none-required", "from_versions": [], "requires_explicit_migration": false, "owner_controlled": true, "checkpoint_policy": "not-required"},
+  "authority": {"grants_permissions": false, "changes_direction_owner": false, "changes_scope": false, "enables_disabled_component": false, "exposes_remote_listener": false},
   "evidence": {
-    "ci": [
-      {
-        "kind": "owner-native-ci",
-        "status": "pass",
-        "revision": "f8978f8f7a1bc94edecddc2662112233289159a3",
-        "run_id": "37645269881",
-        "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"
-      }
-    ],
-    "acceptance": [
-      {
-        "kind": "owner-local-native-workflow-acceptance",
-        "status": "pass",
-        "revision": "f8978f8f7a1bc94edecddc2662112233289159a3",
-        "run_id": "37645269881",
-        "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"
-      }
-    ]
+    "ci": [{"kind": "owner-native-ci", "status": "pass", "revision": "f8978f8f7a1bc94edecddc2662112233289159a3", "run_id": "37645269881", "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"}],
+    "acceptance": [{"kind": "owner-local-native-workflow-acceptance", "status": "pass", "revision": "f8978f8f7a1bc94edecddc2662112233289159a3", "run_id": "37645269881", "url": "https://github.com/aiverse-filmmakers/AI-Verse-Data/actions/runs/37645269881"}]
   },
-  "semantics": {
-    "release_metadata_only": true,
-    "live_health_truth": false
-  }
+  "semantics": {"release_metadata_only": true, "live_health_truth": false}
 }
-
