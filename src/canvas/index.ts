@@ -362,6 +362,26 @@ export class CanvasDocuments{
     return this.patch(input,{title:title(input.title)});
   }
   edit(input:{id:string;edit:CanvasEdit;expectedVersion:number;actor:DataActor;idempotencyKey:string}):CanvasDocument{
+    validId(input.id);validId(input.idempotencyKey);
+    if(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
+      fail("CANVAS_VERSION_INVALID");
+    return this.db.transaction(()=>{
+      // Whole-edit replay MUST precede board mutation validation. Otherwise
+      // replaying a committed group.create would report GROUP_CONFLICT even
+      // though Data's record was already successfully written.
+      const fingerprint={id:input.id,expectedVersion:input.expectedVersion,
+        edit:input.edit as unknown as JsonObject};
+      const intentKey=createHash("sha256").update("canvas.edit.intent:"+
+        input.idempotencyKey).digest("hex");
+      const replay=this.idempotency.prepare<CanvasDocument>(intentKey,
+        "canvas.edit",input.actor,fingerprint);
+      if(replay.kind==="replay")return replay.value;
+      const result=this.editOnce(input);
+      return this.idempotency.complete(intentKey,"canvas.edit",
+        replay.requestFingerprint,result);
+    },"immediate");
+  }
+  private editOnce(input:{id:string;edit:CanvasEdit;expectedVersion:number;actor:DataActor;idempotencyKey:string}):CanvasDocument{
     const before=this.get(input.id);
     const board=boardValue(before.board);
     const op=input.edit;
