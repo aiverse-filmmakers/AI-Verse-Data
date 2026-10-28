@@ -378,7 +378,7 @@ export class CanvasDocuments{
       const updated=view(this.records.update({spaceId:SPACE,entity:ENTITY,
         recordId:input.id,expectedVersion:input.expectedVersion,
         idempotencyKey:input.idempotencyKey,actor:input.actor,patch}));
-      this.archive(updated,input.actor);
+      this.archive(updated);
       return updated;
     },"immediate");
   }
