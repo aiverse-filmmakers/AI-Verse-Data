@@ -166,3 +166,67 @@ test("Canvas duplicate is one atomic record, retains node graph, is idempotent a
   }finally{handle.database.close()}
  });
 });
+
+test("Canvas true historical undo creates a new canonical version and survives SQLite restart",()=>{
+  fixture((_root,open)=>{
+    const firstHandle=open("filmmaking");
+    const owner=new CanvasDocuments(firstHandle.database);
+    const created=owner.create({title:"Opening",actor,idempotencyKey:key()});
+    const added=owner.edit({id:created.id,expectedVersion:1,actor,idempotencyKey:key(),
+      edit:{type:"note.add",id:"start",text:"Start",x:10,y:10}});
+    const renamed=owner.rename({id:created.id,expectedVersion:2,actor,
+      idempotencyKey:key(),title:"New heading"});
+    const history=owner.history(created.id,10);
+    assert.deepEqual(history.map(x=>x.version),[3,2,1]);
+    assert.equal(history[1].board.nodes[0]?.text,"Start");
+    assert.equal(history[2].board.nodes.length,0);
+    assert.equal(history[0].title,"New heading");
+    const undoKey=key();
+    const undone=owner.revert({id:created.id,toVersion:1,expectedVersion:3,
+      actor,idempotencyKey:undoKey});
+    assert.equal(undone.version,4);
+    assert.equal(undone.title,"Opening");
+    assert.equal(undone.board.nodes.length,0);
+    assert.deepEqual(owner.revert({id:created.id,toVersion:1,expectedVersion:3,
+      actor,idempotencyKey:undoKey}),undone,
+      "same operation retries after current version advances");
+    assert.throws(()=>owner.revert({id:created.id,toVersion:1,expectedVersion:3,
+      actor,idempotencyKey:key()}),e=>(e as {code?:string}).code==="RECORD_VERSION_CONFLICT");
+    assert.throws(()=>owner.revert({id:created.id,toVersion:5,expectedVersion:4,
+      actor,idempotencyKey:key()}),e=>(e as {code?:string}).code==="CANVAS_VERSION_INVALID");
+    assert.throws(()=>owner.revert({id:created.id,toVersion:1,expectedVersion:3,
+      actor,idempotencyKey:undoKey+"-other"}),e=>(e as {code?:string}).code==="RECORD_VERSION_CONFLICT");
+    firstHandle.database.close();
+    const reopened=open("filmmaking");
+    try{
+      const after=new CanvasDocuments(reopened.database);
+      assert.deepEqual(after.history(created.id,10).map(x=>x.version),[4,3,2,1]);
+      assert.deepEqual(after.get(created.id),undone);
+      assert.equal(after.history(created.id,1)[0]?.version,4);
+      assert.equal(added.version,2);assert.equal(renamed.version,3);
+    }finally{reopened.database.close()}
+  });
+});
+test("Canvas history is scoped, refuses nonexistent historical versions and deleted documents",()=>{
+  fixture((_root,open)=>{
+    const a=open("filmmaking"),b=open("other");
+    try{
+      const first=new CanvasDocuments(a.database),other=new CanvasDocuments(b.database);
+      const x=first.create({title:"Original",actor,idempotencyKey:key()});
+      assert.deepEqual(other.list(),[]);
+      assert.throws(()=>other.history(x.id),e=>(e as {code?:string}).code==="RECORD_NOT_FOUND");
+      assert.throws(()=>other.revert({id:x.id,toVersion:1,expectedVersion:2,
+        actor,idempotencyKey:key()}),e=>(e as {code?:string}).code==="RECORD_NOT_FOUND");
+      const edited=first.rename({id:x.id,expectedVersion:1,actor,
+        idempotencyKey:key(),title:"New"});
+      assert.throws(()=>first.revert({id:x.id,toVersion:99,expectedVersion:2,
+        actor,idempotencyKey:key()}),e=>(e as {code?:string}).code==="CANVAS_VERSION_INVALID");
+      assert.throws(()=>first.history(x.id,31),
+        e=>(e as {code?:string}).code==="CANVAS_PAGE_INVALID");
+      first.delete({id:x.id,expectedVersion:edited.version,actor,idempotencyKey:key()});
+      assert.throws(()=>first.history(x.id),e=>(e as {code?:string}).code==="RECORD_NOT_FOUND");
+      assert.throws(()=>first.revert({id:x.id,toVersion:1,expectedVersion:3,
+        actor,idempotencyKey:key()}),e=>(e as {code?:string}).code==="RECORD_NOT_FOUND");
+    }finally{a.database.close();b.database.close()}
+  });
+});
