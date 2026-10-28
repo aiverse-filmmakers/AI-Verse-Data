@@ -109,3 +109,53 @@ actor grants and evaluate OS permission before invoking these methods.
 The human UI uses two-stage confirmation; agents may read authorized
 history but cannot invoke revert absent independently reviewed human
 approval receipts. Data PR #22 remains unmerged and draft.
+
+
+## Tasks 25–28: scalable, intact Canvas history (28 October 2026)
+
+**25. Indexed per-document archive.** The existing Data
+`_records` table has a partial SQLite JSON-expression index scoped
+to `creative-canvas.revisions`, with exact document ID and
+descending integer version. The index is initialized through the
+existing Data SQLite storage adapter. There is **no second database,
+revision service, new files or schema-format bump**. The former
+workspace-wide 5,000-record scan is removed from the authoritative
+Canvas history read path.
+
+**26. Stable keyset pagination.** The existing
+`CanvasDocuments.history(id,limit=20,beforeVersion?)` accepts a
+positive exclusive older-version cursor (2 or greater) and returns
+up to 30 verified immutable revisions. The owner always checks
+the *live scoped document* first, so a deleted document or foreign
+workspace cannot reveal archived snapshots. New pages cannot
+contain versions from another document, and versions are strictly
+descending with no repeated entries in a page. No total-history
+count is fabricated.
+
+**27. Exact deep-version revert.** The prior revert scanned all
+archive records before searching for a target. `revert()` now uses
+the same indexed Data adapter to find the exact requested document
+ID and version with a 2-row corruption guard. It can restore a
+previously retained early version even if thousands of unrelated
+revisions exist, while preserving existing optimistic version and
+idempotency contracts. No historical archive is pruned merely for
+being old, and the old 5,000-record failure floor is gone.
+
+**28. Integrity & retention qualification.** Each archive row is
+checked as a first-generation Data revision record with unchanged
+creator/updater attribution, a valid board schema, matching full
+snapshot consistency digest, correct scoped document ID, and
+strict integer version order. A duplicate version found by the
+exact lookup fails closed. Tests cover interleaved long histories,
+3-page keyset traversal, deep undo, stale/foreign scope,
+an altered revision and a duplicate archive version; these
+operations must not change the current document on failure.
+Retention remains **non-destructive**: automatic pruning is
+deliberately *not introduced* because signed retention/backup,
+user recovery policy and owner approvals have not been
+independently reviewed. Backups remain the existing Data
+owner's responsibility. A SHA-256 consistency digest is
+not an adversarial signature or tamper-proof audit log.
+
+**Source:** Data PR #22 (still draft and unmerged).
+Check the exact current-head CI before calling a release green.
