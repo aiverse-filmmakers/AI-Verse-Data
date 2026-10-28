@@ -133,8 +133,10 @@ test("Canvas duplicate is one atomic record, retains node graph, is idempotent a
    const original=owner.create({title:"Storyboard",actor,idempotencyKey:key()});
    const withNote=owner.edit({id:original.id,expectedVersion:1,actor,idempotencyKey:key(),
      edit:{type:"note.add",id:"shot-1",text:"Camera A",x:50,y:90}});
+   assert.equal(withNote.version,2);
    const withSecond=owner.edit({id:original.id,expectedVersion:2,actor,idempotencyKey:key(),
      edit:{type:"note.add",id:"shot-2",text:"Camera B",x:240,y:130}});
+   assert.equal(withSecond.version,3);
    const linked=owner.edit({id:original.id,expectedVersion:3,actor,idempotencyKey:key(),
      edit:{type:"edge.add",id:"link-1",from:"shot-1",to:"shot-2"}});
    const cloneKey=key();
