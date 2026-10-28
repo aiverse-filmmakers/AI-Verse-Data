@@ -123,3 +123,44 @@ test("Canvas document input bounds, conflict controls and Data idempotency",()=>
     }finally{handle.database.close()}
   });
 });
+
+
+test("Canvas duplicate is one atomic record, retains node graph, is idempotent and rejects stale sources",()=>{
+ fixture((_root,open)=>{
+  const handle=open("film");
+  try{
+   const owner=new CanvasDocuments(handle.database);
+   const original=owner.create({title:"Storyboard",actor,idempotencyKey:key()});
+   const withNote=owner.edit({id:original.id,expectedVersion:1,actor,idempotencyKey:key(),
+     edit:{type:"note.add",id:"shot-1",text:"Camera A",x:50,y:90}});
+   const withSecond=owner.edit({id:original.id,expectedVersion:2,actor,idempotencyKey:key(),
+     edit:{type:"note.add",id:"shot-2",text:"Camera B",x:240,y:130}});
+   const linked=owner.edit({id:original.id,expectedVersion:3,actor,idempotencyKey:key(),
+     edit:{type:"edge.add",id:"link-1",from:"shot-1",to:"shot-2"}});
+   const cloneKey=key();
+   const duplicate=owner.duplicate({id:original.id,expectedVersion:linked.version,
+     title:"Storyboard copy",actor,idempotencyKey:cloneKey});
+   assert.notEqual(duplicate.id,original.id);
+   assert.equal(duplicate.version,1,"atomic copy is a single Data record create");
+   assert.deepEqual(duplicate.board,linked.board);
+   assert.equal(duplicate.title,"Storyboard copy");
+   assert.deepEqual(owner.duplicate({id:original.id,expectedVersion:linked.version,
+     title:"Storyboard copy",actor,idempotencyKey:cloneKey}),duplicate);
+   assert.equal(owner.list().length,2,"no partial or repeated copies");
+   assert.throws(()=>owner.duplicate({id:original.id,expectedVersion:linked.version,
+     title:"Changed retry",actor,idempotencyKey:cloneKey}),
+     e=>(e as {code?:string}).code==="IDEMPOTENCY_CONFLICT");
+   const after=owner.rename({id:original.id,expectedVersion:linked.version,
+     title:"Original changed",actor,idempotencyKey:key()});
+   assert.equal(after.version,linked.version+1);
+   assert.deepEqual(owner.duplicate({id:original.id,expectedVersion:linked.version,
+     title:"Storyboard copy",actor,idempotencyKey:cloneKey}),duplicate,
+     "committed clone replay is stable even when source advances");
+   assert.throws(()=>owner.duplicate({id:original.id,expectedVersion:linked.version,
+     actor,idempotencyKey:key()}),
+     e=>(e as {code?:string}).code==="RECORD_VERSION_CONFLICT");
+   assert.equal(owner.list().length,2);
+   assert.equal(owner.get(duplicate.id).board.edges.length,1);
+  }finally{handle.database.close()}
+ });
+});
