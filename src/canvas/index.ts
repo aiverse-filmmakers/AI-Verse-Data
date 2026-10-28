@@ -365,6 +365,13 @@ export class CanvasDocuments{
     validId(input.id);validId(input.idempotencyKey);
     if(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
       fail("CANVAS_VERSION_INVALID");
+    // Preserve original Canvas validation errors for non-finite numeric
+    // inputs before the Data idempotency fingerprint parser runs.
+    if(input.edit.type==="note.add"||input.edit.type==="note.move"){
+      point(input.edit.x);point(input.edit.y);
+    }else if(input.edit.type==="group.move"){
+      point(input.edit.dx);point(input.edit.dy);
+    }
     return this.db.transaction(()=>{
       // Whole-edit replay MUST precede board mutation validation. Otherwise
       // replaying a committed group.create would report GROUP_CONFLICT even
