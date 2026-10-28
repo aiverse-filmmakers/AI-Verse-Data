@@ -255,3 +255,71 @@ test("Canvas revision idempotency keeps original actor across human and bot edit
   }finally{handle.database.close()}
  });
 });
+
+test("Canvas indexed history pagination isolates interleaved documents and supports deep revert",()=>{
+ fixture((_root,open)=>{
+  const handle=open("film");
+  try{
+   const docs=new CanvasDocuments(handle.database);
+   const first=docs.create({title:"Camera A",actor,idempotencyKey:key()});
+   const second=docs.create({title:"Camera B",actor,idempotencyKey:key()});
+   let a=first,b=second;
+   for(let i=0;i<73;i++){
+     a=docs.rename({id:first.id,title:"Camera A edit "+i,
+       expectedVersion:a.version,actor,idempotencyKey:key()});
+     if(i%2===0)b=docs.rename({id:second.id,title:"Camera B edit "+i,
+       expectedVersion:b.version,actor,idempotencyKey:key()});
+   }
+   assert.equal(a.version,74);
+   assert.equal(b.version,38);
+   const p1=docs.history(first.id,30);
+   assert.equal(p1.length,30);
+   assert.deepEqual(p1.map(x=>x.version),
+     Array.from({length:30},(_,i)=>74-i));
+   const p2=docs.history(first.id,30,p1.at(-1)!.version);
+   assert.deepEqual(p2.map(x=>x.version),Array.from({length:30},(_,i)=>44-i));
+   const p3=docs.history(first.id,30,p2.at(-1)!.version);
+   assert.deepEqual(p3.map(x=>x.version),Array.from({length:14},(_,i)=>14-i));
+   assert.deepEqual(docs.history(first.id,30,1+1).map(x=>x.version),[1]);
+   assert.deepEqual(docs.history(first.id,30,2).map(x=>x.version),[1]);
+   assert.deepEqual(docs.history(second.id,30).map(x=>x.version),
+     Array.from({length:30},(_,i)=>38-i));
+   const restored=docs.revert({id:first.id,toVersion:2,expectedVersion:74,
+     actor,idempotencyKey:key()});
+   assert.equal(restored.title,"Camera A edit 0");
+   assert.equal(restored.version,75);
+   assert.deepEqual(docs.history(first.id,2).map(x=>x.version),[75,74]);
+   assert.equal(docs.history(second.id,2)[0]!.version,38);
+   assert.throws(()=>docs.history(first.id,31),
+     e=>(e as {code?:string}).code==="CANVAS_PAGE_INVALID");
+   assert.throws(()=>docs.history(first.id,2,-10),
+     e=>(e as {code?:string}).code==="CANVAS_PAGE_INVALID");
+  }finally{handle.database.close()}
+ });
+});
+test("Canvas archived revision edits are rejected as corruption, without mutating live board",()=>{
+ fixture((_root,open)=>{
+  const handle=open("film");
+  try{
+   const docs=new CanvasDocuments(handle.database);
+   const first=docs.create({title:"Immutable A",actor,idempotencyKey:key()});
+   const second=docs.rename({id:first.id,title:"Immutable B",
+     expectedVersion:1,actor,idempotencyKey:key()});
+   const store=handle.database.recordStorage();
+   const revision=store.getCanvasRevisionRecords(first.id,1)[0]!;
+   assert.ok(revision);
+   const corrupted={...revision,
+     dataJson:JSON.stringify({...JSON.parse(revision.dataJson),
+       title:"Forged revision without matching digest"}),
+     version:revision.version+1};
+   assert.equal(store.updateRecord(corrupted,revision.version),true);
+   assert.throws(()=>docs.history(first.id),
+     e=>(e as {code?:string}).code==="CANVAS_HISTORY_INVALID");
+   assert.throws(()=>docs.revert({id:first.id,toVersion:1,expectedVersion:2,
+     actor,idempotencyKey:key()}),
+     e=>(e as {code?:string}).code==="CANVAS_HISTORY_INVALID");
+   assert.deepEqual(docs.get(first.id),second);
+   assert.equal(docs.get(second.id).title,"Immutable B");
+  }finally{handle.database.close()}
+ });
+});
