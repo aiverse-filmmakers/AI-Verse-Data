@@ -159,3 +159,36 @@ not an adversarial signature or tamper-proof audit log.
 
 **Source:** Data PR #22 (still draft and unmerged).
 Check the exact current-head CI before calling a release green.
+
+
+## Tasks 33–35: Data scope readonly preflight (28 October 2026)
+
+The OS source `scripts/action-permission.mjs` at pinned
+`0dc744057199970a34a60c11dff192e407ad64ed` supplies an
+**action-permission floor**. It does not mint a Canvas operator
+identity or bot lease. A separate trusted native host or OS
+actor-grant authority is still required. Neither a Dashboard
+cookie nor a Gateway run proves actor authorization.
+
+Data now exports `inspectScopedDataDatabase(driver,scope)` from
+`src/scope/index.ts`. It requires a **WeakMap-issued** real Data
+scope, revalidates the trusted root path, then delegates to
+`SqliteStorageDriver.inspectMigration` under the original scope
+binding. That native inspector opens SQLite **readonly** and
+returns the real migration state and binding. Missing database,
+quarantine, symlink escape, fake structural scope or mismatched
+scope binding fail with the existing Data errors. It does **not**
+initialize, create directories, create a SQLite file, bind an
+unbound file, migrate existing data or issue approvals. The
+pre-existing `openScopedDataDatabase(...,{mode:"create-or-open"})`
+remains the only mechanism used in disposable CI to provision
+a scope explicitly under the trusted owner.
+
+`test/scope.test.ts` covers absent scope with no side effects,
+real scoped creation and subsequent readonly inspection, original
+file mtime unchanged, foreign binding, forged scope object, and
+symlinked path denial. Native Data release smoke, six-platform
+CI and five-component acceptance qualify this implementation.
+No browser-accessible provision endpoint was created. Production
+owner approval, actor admission, backup/retention policy and
+actual private Mac installation remain gated.
