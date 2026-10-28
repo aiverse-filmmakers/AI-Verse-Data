@@ -62,3 +62,50 @@ historical undo or restore a browser-provided prior board as canonical.
 A future Data-owned revision archive/reversal operation must guarantee
 authentic before-state, version fencing, idempotency, bounded retention,
 scope and permission policy before an Undo control can be exposed.
+
+
+## Tasks 19-20: authoritative Canvas revision archive and revert
+
+`CanvasDocuments` now initializes a second **canonical Data entity** under
+the same trusted `creative-canvas` Space: `revisions`. No new database,
+filesystem path, Dashboard document store or format migration is introduced.
+
+The owner archives full bounded board, title, original document ID,
+version, original timestamps and a deterministic SHA-256 consistency digest
+as a separate Data record in the **same SQLite transaction** as the source
+create/edit/rename/clone/revert. An existing pre-history document is
+first archived at its next authorized write; previous versions before
+this feature became active are **not reconstructed or invented**. History
+reads verify the consistency digest, strict board shape and duplicate
+version prohibition. The archived actor is taken from the version's
+canonical Data provenance, not the *next* human/bot writer. This matters
+for cross-actor edits and stable idempotency.
+
+`history(id, limit=20)` returns up to 30 latest verified snapshots for an
+existing, nondeleted scoped document. The bounded scan currently refuses
+scopes with 5,000 or more total revision records rather than returning
+misleading incomplete history. This bound is a future pagination/index
+qualification item, not an unlimited lifetime guarantee. A digest
+detects accidental/internal inconsistency but is not a digital signature
+or authorization grant; only trusted Data access can write the archive.
+
+`revert({id,toVersion,expectedVersion,actor,idempotencyKey})` looks up
+an *existing* verified Data revision under the same immediate SQLite
+transaction. It rejects absent revisions, stale versions, foreign scope,
+future/current target versions and deleted documents. The effect
+creates a **new version** via Data's original optimistic record engine
+and provenance. It never modifies an old revision, hard-deletes
+content or accepts browser-supplied snapshot contents. Identical
+idempotency retries return one committed version, even after the live
+document advances. A changed retry conflicts. The former version
+remains available so undo itself is reversible through a new version.
+
+**Limits and release gates:** this is an owner-authorized reversible
+mutation, **not** a complete recovery system for deleted documents,
+cross-workspace migration, history retention policy, tamper-proof
+signed archive, unlimited revision listing or real installed Mac
+operation. Only the trusted host is entitled to open the scope, check
+actor grants and evaluate OS permission before invoking these methods.
+The human UI uses two-stage confirmation; agents may read authorized
+history but cannot invoke revert absent independently reviewed human
+approval receipts. Data PR #22 remains unmerged and draft.
