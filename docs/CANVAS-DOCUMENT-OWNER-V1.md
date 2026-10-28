@@ -26,3 +26,39 @@ The stored document is a canonical Data record with a title and a JSON board (`n
 Uncertain non-create edit retries remain **conflict-aware**, not silently replayed into a newer document revision: if a UI loses its receipt, it should reread the canonical record, reconcile and require explicit retry/undo handling. A UI-facing authenticated host action interface, approved actor provenance, automatic workspace creation/reuse, Canvas library with duplicate/undo and agent/manual action parity are **separate future gates**. Do not claim any of those are available merely because this storage owner is in place.
 
 **Next Dashboard integration:** inspect OS host authorization and Data owner attachment/permission contracts; add a narrow authenticated Canvas document projection and explicit action facade that binds system/workspace/document/version and idempotency to the trusted principal. Then build the clean Personal Canvas library and node editor against that facade, preserving the separate disconnected design preview.
+
+
+## Task 16: atomic Canvas duplicate
+
+`CanvasDocuments.duplicate({id,expectedVersion,title?,actor,idempotencyKey})`
+is an actual Data-owned, **single SQLite transaction** over the existing
+`creative-canvas.documents` Data record engine. The owner loads the
+source board and expected source version under an immediate transaction,
+validates its complete graph, and creates one new Data document containing
+all notes and edges. The clone starts at Data version 1, with independent
+Data actor provenance. No UI or Dashboard record cache is authoritative.
+
+The public idempotency key has its own `canvas.duplicate` request
+fingerprint binding source ID, expected source version, actor and optional
+title. A deterministic internal Data create key ensures the one-record
+effect and outer operation idempotency receipt commit together.
+An identical retry returns the same saved clone **even if the source
+subsequently changes**. A changed payload with the same key is rejected;
+a new key against an outdated version is rejected with
+`RECORD_VERSION_CONFLICT`. SQLite rollback prevents empty or partially
+populated clones after failures.
+
+`test/canvas.test.ts` tests actual scoped SQLite, two notes, connection
+integrity, one-record version, retry after source mutation, stale rejection
+and idempotency conflict. Data CI uses Node 22/24 on Linux, macOS and
+Windows. Source revision `5caa5d08151f85e503e8ceace494458736b76886`
+passed release smoke and all six CI matrix jobs. This does not imply
+owner acceptance/merge or a production local installation.
+
+**Undo remains a separately qualified blocker.** Current Data
+provenance stores version IDs, actor/time and event/receipt metadata but
+not immutable before-state board snapshots. It is unsafe to advertise
+historical undo or restore a browser-provided prior board as canonical.
+A future Data-owned revision archive/reversal operation must guarantee
+authentic before-state, version fencing, idempotency, bounded retention,
+scope and permission policy before an Undo control can be exposed.
