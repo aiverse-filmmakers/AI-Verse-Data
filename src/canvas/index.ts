@@ -8,6 +8,7 @@
  * This package does not grant actor authority or expose an HTTP endpoint.
  */
 import {DataCatalog} from "../catalog/index.js";
+import {canonicalSchemaJson} from "../catalog/canonical.js";
 import {DataRecords} from "../records/index.js";
 import type {DataActor,JsonObject} from "../protocol/index.js";
 import type {DataRecordSnapshot} from "../records/index.js";
@@ -123,7 +124,7 @@ export class CanvasDocuments{
     else{
       const existing=this.catalog.getSchema(SPACE,ENTITY);
       if(existing.allowUnknownFields===true
-        ||JSON.stringify(existing.fields)!==JSON.stringify(schema().fields))
+        ||canonicalSchemaJson({...schema(),fields:existing.fields})!==canonicalSchemaJson(schema()))
         fail("CANVAS_SCHEMA_CONFLICT");
     }
   }
