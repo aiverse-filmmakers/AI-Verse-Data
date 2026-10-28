@@ -36,7 +36,7 @@ export class CanvasDocumentError extends Error{
     super(code);this.name="CanvasDocumentError";
   }
 }
-const fail=(code:string):never=>{throw new CanvasDocumentError(code)};
+function fail(code:string):never{throw new CanvasDocumentError(code)}
 function validId(x:unknown):asserts x is string{
   if(typeof x!=="string"||!ID.test(x))fail("CANVAS_ID_INVALID");
 }
