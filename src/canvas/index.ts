@@ -16,7 +16,8 @@ import type {DataActor,JsonObject} from "../protocol/index.js";
 import type {DataRecordSnapshot} from "../records/index.js";
 import type {DataStorageDatabase} from "../storage/index.js";
 
-const SPACE="creative-canvas",ENTITY="documents";
+const SPACE="creative-canvas",ENTITY="documents",REVISIONS="revisions";
+const MAX_JOURNAL_SCAN=5000;
 const ID=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const TITLE_LIMIT=140,MAX_NODES=150,MAX_EDGES=300;
 type Node={id:string;kind:"note";text:string;x:number;y:number};
@@ -94,6 +95,40 @@ function view(r:DataRecordSnapshot):CanvasDocument{
   return {id:r.recordId,title:title(r.data.title),board:boardValue(r.data.board),
     version:r.version,createdAt:r.createdAt,updatedAt:r.updatedAt};
 }
+function revisionSchema(){
+  return {
+    spaceId:SPACE,entity:REVISIONS,name:"Canvas Revision Snapshots",
+    fields:{
+      documentId:{type:"string" as const,required:true,minLength:1,maxLength:128},
+      documentVersion:{type:"integer" as const,required:true,min:1},
+      title:{type:"string" as const,required:true,minLength:1,maxLength:TITLE_LIMIT},
+      board:{type:"json" as const,required:true},
+      createdAt:{type:"string" as const,required:true,minLength:1,maxLength:40},
+      updatedAt:{type:"string" as const,required:true,minLength:1,maxLength:40},
+      digest:{type:"string" as const,required:true,minLength:64,maxLength:64},
+    },
+  };
+}
+function digestOf(s:CanvasDocument):string{
+  return createHash("sha256").update(JSON.stringify({
+    id:s.id,version:s.version,title:s.title,board:boardValue(s.board),
+    createdAt:s.createdAt,updatedAt:s.updatedAt,
+  })).digest("hex");
+}
+function archivalKey(id:string,version:number):string{
+  return createHash("sha256").update("canvas.revision:"+id+":"+version).digest("hex");
+}
+function revisionOf(raw:JsonObject):CanvasDocument{
+  const id=raw.documentId,version=raw.documentVersion;
+  validId(id);
+  if(!Number.isSafeInteger(version)||(version as number)<1
+    ||typeof raw.createdAt!=="string"||typeof raw.updatedAt!=="string")
+    fail("CANVAS_HISTORY_INVALID");
+  const value:CanvasDocument={id,title:title(raw.title),version:version as number,
+    board:boardValue(raw.board),createdAt:raw.createdAt,updatedAt:raw.updatedAt};
+  if(raw.digest!==digestOf(value))fail("CANVAS_HISTORY_INVALID");
+  return value;
+}
 function schema(){
   return {
     spaceId:SPACE,entity:ENTITY,name:"Canvas Documents",
@@ -131,13 +166,98 @@ export class CanvasDocuments{
         ||canonicalSchemaJson({...schema(),fields:existing.fields})!==canonicalSchemaJson(schema()))
         fail("CANVAS_SCHEMA_CONFLICT");
     }
+    const revision=this.catalog.listSchemas(SPACE).find(x=>x.entity===REVISIONS);
+    if(!revision)this.catalog.createSchema(revisionSchema());
+    else{
+      const existing=this.catalog.getSchema(SPACE,REVISIONS);
+      if(existing.allowUnknownFields===true
+        ||canonicalSchemaJson({...revisionSchema(),fields:existing.fields})!==canonicalSchemaJson(revisionSchema()))
+        fail("CANVAS_SCHEMA_CONFLICT");
+    }
+  }
+  /**
+   * Immutable-by-Canvas-API full version snapshot. Data's canonical record
+   * engine stores this in the SAME scoped SQLite transaction as mutation.
+   * Existing pre-history docs are captured at their next authorized write.
+   */
+  private archive(document:CanvasDocument,actor:DataActor):void{
+    const data:JsonObject={documentId:document.id,
+      documentVersion:document.version,title:document.title,
+      board:boardValue(document.board) as unknown as JsonObject,
+      createdAt:document.createdAt,updatedAt:document.updatedAt,
+      digest:digestOf(document)};
+    this.records.create({spaceId:SPACE,entity:REVISIONS,
+      actor,idempotencyKey:archivalKey(document.id,document.version),data});
+  }
+  private revisions(id:string):CanvasDocument[]{
+    validId(id);
+    const store=this.db.recordStorage();
+    const out:CanvasDocument[]=[];
+    for(let offset=0;offset<MAX_JOURNAL_SCAN;offset+=100){
+      const rows=store.listRecords(SPACE,REVISIONS,100,false,offset);
+      for(const row of rows){
+        let data:JsonObject;
+        try{data=JSON.parse(row.dataJson) as JsonObject;}
+        catch{fail("CANVAS_HISTORY_INVALID");}
+        if(data.documentId===id)out.push(revisionOf(data));
+      }
+      if(rows.length<100){
+        out.sort((a,b)=>b.version-a.version);
+        const seen=new Set<number>();
+        for(const snapshot of out){
+          if(seen.has(snapshot.version))fail("CANVAS_HISTORY_INVALID");
+          seen.add(snapshot.version);
+        }
+        return out;
+      }
+    }
+    fail("CANVAS_HISTORY_LIMIT");
+  }
+  /** Read previously committed authoritative Data snapshots, newest first. */
+  history(id:string,limit=20):CanvasDocument[]{
+    this.get(id); // Deleted or foreign scope records remain hidden.
+    if(!Number.isSafeInteger(limit)||limit<1||limit>30)fail("CANVAS_PAGE_INVALID");
+    return this.revisions(id).slice(0,limit);
+  }
+  /** Revert is a NEW version, never an edit to the immutable older snapshot. */
+  revert(input:{id:string;toVersion:number;expectedVersion:number;
+    actor:DataActor;idempotencyKey:string}):CanvasDocument{
+    validId(input.id);validId(input.idempotencyKey);
+    if(!Number.isSafeInteger(input.toVersion)||input.toVersion<1
+      ||!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
+      fail("CANVAS_VERSION_INVALID");
+    return this.db.transaction(()=>{
+      const request={id:input.id,toVersion:input.toVersion,
+        expectedVersion:input.expectedVersion};
+      const replay=this.idempotency.prepare<CanvasDocument>(input.idempotencyKey,
+        "canvas.revert",input.actor,request);
+      if(replay.kind==="replay")return replay.value;
+      const current=this.get(input.id);
+      if(current.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
+      if(input.toVersion>=current.version)fail("CANVAS_VERSION_INVALID");
+      const source=this.revisions(input.id).find(x=>x.version===input.toVersion);
+      if(!source)fail("CANVAS_HISTORY_UNAVAILABLE");
+      this.archive(current,input.actor);
+      const saved=view(this.records.update({spaceId:SPACE,entity:ENTITY,
+        recordId:input.id,expectedVersion:current.version,actor:input.actor,
+        idempotencyKey:createHash("sha256").update("canvas.revert.record:"+
+          input.idempotencyKey).digest("hex"),
+        patch:{title:source.title,board:boardValue(source.board) as unknown as JsonObject}}));
+      this.archive(saved,input.actor);
+      return this.idempotency.complete(input.idempotencyKey,"canvas.revert",
+        replay.requestFingerprint,saved);
+    },"immediate");
   }
   /** All actor identities and scope grants must come from a trusted caller. */
   create(input:{title:string;actor:DataActor;idempotencyKey:string}):CanvasDocument{
     validId(input.idempotencyKey);
-    return view(this.records.create({spaceId:SPACE,entity:ENTITY,
-      actor:input.actor,idempotencyKey:input.idempotencyKey,
-      data:{title:title(input.title),board:{nodes:[],edges:[]}}}));
+    return this.db.transaction(()=>{
+      const saved=view(this.records.create({spaceId:SPACE,entity:ENTITY,
+        actor:input.actor,idempotencyKey:input.idempotencyKey,
+        data:{title:title(input.title),board:{nodes:[],edges:[]}}}));
+      this.archive(saved,input.actor);
+      return saved;
+    },"immediate");
   }
   /**
    * One atomic Data-owned clone, including all notes and connections.
@@ -166,8 +286,10 @@ export class CanvasDocuments{
           input.idempotencyKey).digest("hex"),
         data:{title:copiedTitle,board:boardValue(source.board) as unknown as JsonObject},
       });
+      const saved=view(copied);
+      this.archive(saved,input.actor);
       return this.idempotency.complete(input.idempotencyKey,
-        "canvas.duplicate",replay.requestFingerprint,view(copied));
+        "canvas.duplicate",replay.requestFingerprint,saved);
     },"immediate");
   }
   list(limit=50):CanvasDocument[]{
@@ -226,19 +348,31 @@ export class CanvasDocuments{
     validId(input.id);validId(input.idempotencyKey);
     if(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
       fail("CANVAS_VERSION_INVALID");
-    const result=this.records.softDelete({spaceId:SPACE,entity:ENTITY,
-      recordId:input.id,expectedVersion:input.expectedVersion,
-      actor:input.actor,idempotencyKey:input.idempotencyKey,
-      reason:"user-deleted-canvas"});
-    return view(result);
+    return this.db.transaction(()=>{
+      const existing=this.get(input.id);
+      if(existing.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
+      this.archive(existing,input.actor);
+      const result=this.records.softDelete({spaceId:SPACE,entity:ENTITY,
+        recordId:input.id,expectedVersion:input.expectedVersion,
+        actor:input.actor,idempotencyKey:input.idempotencyKey,
+        reason:"user-deleted-canvas"});
+      return view(result);
+    },"immediate");
   }
   private patch(input:{id:string;expectedVersion:number;actor:DataActor;idempotencyKey:string},
     patch:JsonObject):CanvasDocument{
     validId(input.id);validId(input.idempotencyKey);
     if(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
       fail("CANVAS_VERSION_INVALID");
-    return view(this.records.update({spaceId:SPACE,entity:ENTITY,
-      recordId:input.id,expectedVersion:input.expectedVersion,
-      idempotencyKey:input.idempotencyKey,actor:input.actor,patch}));
+    return this.db.transaction(()=>{
+      const existing=this.get(input.id);
+      if(existing.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
+      this.archive(existing,input.actor);
+      const updated=view(this.records.update({spaceId:SPACE,entity:ENTITY,
+        recordId:input.id,expectedVersion:input.expectedVersion,
+        idempotencyKey:input.idempotencyKey,actor:input.actor,patch}));
+      this.archive(updated,input.actor);
+      return updated;
+    },"immediate");
   }
 }
