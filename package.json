@@ -84,6 +84,10 @@
       "types": "./dist/src/dashboard/index.d.ts",
       "import": "./dist/src/dashboard/index.js"
     },
+    "./canvas": {
+      "types": "./dist/src/canvas/index.d.ts",
+      "import": "./dist/src/canvas/index.js"
+    },
     "./apps": {
       "types": "./dist/src/apps/index.d.ts",
       "import": "./dist/src/apps/index.js"
