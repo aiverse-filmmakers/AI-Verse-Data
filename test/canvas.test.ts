@@ -230,3 +230,28 @@ test("Canvas history is scoped, refuses nonexistent historical versions and dele
     }finally{a.database.close();b.database.close()}
   });
 });
+
+test("Canvas revision idempotency keeps original actor across human and bot edits",()=>{
+ fixture((_root,open)=>{
+  const handle=open("film");
+  try{
+   const documents=new CanvasDocuments(handle.database);
+   const human={kind:"human" as const,id:"operator"};
+   const bot={kind:"bot" as const,id:"scene-agent"};
+   const created=documents.create({title:"Human draft",actor:human,idempotencyKey:key()});
+   const agentEdit=documents.edit({id:created.id,expectedVersion:1,
+     actor:bot,idempotencyKey:key(),
+     edit:{type:"note.add",id:"agent-note",text:"Tracking",x:12,y:35}});
+   assert.equal(agentEdit.version,2);
+   const operatorEdit=documents.rename({id:created.id,expectedVersion:2,
+     actor:human,idempotencyKey:key(),title:"Reviewed scene"});
+   assert.deepEqual(documents.history(created.id).map(x=>x.version),[3,2,1]);
+   const restored=documents.revert({id:created.id,toVersion:1,
+     expectedVersion:3,actor:human,idempotencyKey:key()});
+   assert.equal(restored.version,4);
+   assert.equal(restored.board.nodes.length,0);
+   assert.equal(documents.history(created.id).length,4);
+   assert.equal(operatorEdit.version,3);
+  }finally{handle.database.close()}
+ });
+});
