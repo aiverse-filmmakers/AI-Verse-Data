@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import {
   mkdirSync,
+  existsSync,
+  statSync,
   mkdtempSync,
   realpathSync,
   rmSync,
@@ -17,6 +19,7 @@ import {
   createStandaloneDataScope,
   createWorkspaceDataScope,
   openScopedDataDatabase,
+  inspectScopedDataDatabase,
 } from "../src/scope/index.js";
 import {
   AI_VERSE_DATA_SCOPE_BINDING_VERSION,
@@ -273,4 +276,59 @@ test("matching workspace IDs under different trusted roots remain physically iso
     rmSync(rootAPath, { recursive: true, force: true });
     rmSync(rootBPath, { recursive: true, force: true });
   }
+});
+
+test("readonly owner preflight never creates a missing scope or changes a healthy binding",()=>{
+ withTempRoot(rootPath=>{
+  const root=TrustedDataRoot.fromExistingDirectory(rootPath);
+  const scope=createStandaloneDataScope(root,"local");
+  const driver=new SqliteStorageDriver();
+  const databasePath=scope.databasePath();
+  assert.throws(()=>inspectScopedDataDatabase(driver,scope),
+   error=>assertStorageError(error,"DATABASE_NOT_FOUND"));
+  assert.equal(existsSync(databasePath),false);
+  mkdirSync(join(rootPath,".ai-verse-data"),{recursive:true});
+  const created=openScopedDataDatabase(driver,scope,{mode:"create-or-open"});
+  created.database.close();
+  const initial=statSync(databasePath);
+  const inspected=inspectScopedDataDatabase(driver,scope);
+  assert.equal(inspected.state,"current");
+  assert.deepEqual(inspected.binding,scope.binding);
+  assert.equal(statSync(databasePath).mtimeMs,initial.mtimeMs,
+    "readonly inspection must not change the sqlite file");
+  const reopened=openScopedDataDatabase(driver,scope,{mode:"open-existing"});
+  assert.deepEqual(reopened.database.metadata().binding,scope.binding);
+  reopened.database.close();
+ });
+});
+test("readonly preflight rejects forged structural scopes, bound-other identity and linked paths",()=>{
+ withTempRoot(rootPath=>{
+  const root=TrustedDataRoot.fromExistingDirectory(rootPath);
+  const driver=new SqliteStorageDriver();
+  const scope=createStandaloneDataScope(root,"local");
+  assert.throws(()=>inspectScopedDataDatabase(driver,{
+    ...scope,kind:"standalone",workspaceId:"local",databasePath:()=>scope.databasePath(),
+  }),error=>assertScopeError(error,"SCOPE_UNTRUSTED"));
+  mkdirSync(join(rootPath,".ai-verse-data"),{recursive:true});
+  const handle=openScopedDataDatabase(driver,scope);handle.database.close();
+  const different=createStandaloneDataScope(root,"other");
+  assert.throws(()=>inspectScopedDataDatabase(driver,different),
+   error=>assertStorageError(error,"DATABASE_SCOPE_CONFLICT"));
+ });
+});
+test("readonly preflight rejects unsafe scope symlinks before touching foreign files",{
+ skip:process.platform==="win32",
+},()=>{
+ withTempRoot(rootPath=>{
+  const outside=mkdtempSync(join(tmpdir(),"aiverse-preflight-foreign-"));
+  try{
+   mkdirSync(join(rootPath,"workspaces"),{recursive:true});
+   symlinkSync(outside,join(rootPath,"workspaces","unsafe"));
+   const root=TrustedDataRoot.fromExistingDirectory(rootPath);
+   const scope=createWorkspaceDataScope(root,"unsafe");
+   assert.throws(()=>inspectScopedDataDatabase(new SqliteStorageDriver(),scope),
+     error=>assertScopeError(error,"PATH_SYMLINK_UNSAFE"));
+   assert.equal(existsSync(join(outside,"data")),false);
+  }finally{rmSync(outside,{recursive:true,force:true})}
+ });
 });
