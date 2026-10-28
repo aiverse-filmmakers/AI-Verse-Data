@@ -37,7 +37,7 @@ const edit=(docs:CanvasDocuments,d:{id:string;version:number},change:any,actor=h
   idempotencyKey:key(),edit:change});
  d.version=result.version;return result;
 };
-const create=()=>({type:"group.create",id:"g1",label:"Opening angle",
+const create=()=>({type:"group.create" as const,id:"g1",label:"Opening angle",
  nodeIds:["n1","n2"]});
 const fail=(work:()=>unknown,code:string)=>assert.throws(work,
  e=>(e as {code?:string}).code===code);
