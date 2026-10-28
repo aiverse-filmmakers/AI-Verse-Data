@@ -1,0 +1,33 @@
+name: Canonical Canvas Groups
+on:
+  push:
+    branches:
+      - codex/canvas-canonical-groups-v1
+  pull_request:
+    paths:
+      - src/canvas/index.ts
+      - test/canvas-groups.test.ts
+      - .github/workflows/canvas-groups.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-canvas-groups:
+    name: Data owner grouped Canvas / Node 22 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install canonical Data dependencies
+        run: npm ci
+      - name: Build and test entire canonical Data owner
+        run: npm run check
