@@ -180,7 +180,14 @@ export class CanvasDocuments{
    * engine stores this in the SAME scoped SQLite transaction as mutation.
    * Existing pre-history docs are captured at their next authorized write.
    */
-  private archive(document:CanvasDocument,actor:DataActor):void{
+  private archive(document:CanvasDocument):void{
+    // The archival actor belongs to the version being archived, NOT the
+    // newly admitted writer. This allows a human-created revision to remain
+    // stable when an agent later edits the same document.
+    const canonical=this.records.get({spaceId:SPACE,entity:ENTITY,recordId:document.id});
+    if(digestOf(view(canonical))!==digestOf(document))
+      fail("CANVAS_HISTORY_INVALID");
+    const actor=canonical.updatedBy;
     const data:JsonObject={documentId:document.id,
       documentVersion:document.version,title:document.title,
       board:boardValue(document.board) as unknown as JsonObject,
@@ -237,13 +244,13 @@ export class CanvasDocuments{
       if(input.toVersion>=current.version)fail("CANVAS_VERSION_INVALID");
       const source=this.revisions(input.id).find(x=>x.version===input.toVersion);
       if(!source)fail("CANVAS_HISTORY_UNAVAILABLE");
-      this.archive(current,input.actor);
+      this.archive(current);
       const saved=view(this.records.update({spaceId:SPACE,entity:ENTITY,
         recordId:input.id,expectedVersion:current.version,actor:input.actor,
         idempotencyKey:createHash("sha256").update("canvas.revert.record:"+
           input.idempotencyKey).digest("hex"),
         patch:{title:source.title,board:boardValue(source.board) as unknown as JsonObject}}));
-      this.archive(saved,input.actor);
+      this.archive(saved);
       return this.idempotency.complete(input.idempotencyKey,"canvas.revert",
         replay.requestFingerprint,saved);
     },"immediate");
@@ -255,7 +262,7 @@ export class CanvasDocuments{
       const saved=view(this.records.create({spaceId:SPACE,entity:ENTITY,
         actor:input.actor,idempotencyKey:input.idempotencyKey,
         data:{title:title(input.title),board:{nodes:[],edges:[]}}}));
-      this.archive(saved,input.actor);
+      this.archive(saved);
       return saved;
     },"immediate");
   }
@@ -287,7 +294,7 @@ export class CanvasDocuments{
         data:{title:copiedTitle,board:boardValue(source.board) as unknown as JsonObject},
       });
       const saved=view(copied);
-      this.archive(saved,input.actor);
+      this.archive(saved);
       return this.idempotency.complete(input.idempotencyKey,
         "canvas.duplicate",replay.requestFingerprint,saved);
     },"immediate");
@@ -351,7 +358,7 @@ export class CanvasDocuments{
     return this.db.transaction(()=>{
       const existing=this.get(input.id);
       if(existing.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
-      this.archive(existing,input.actor);
+      this.archive(existing);
       const result=this.records.softDelete({spaceId:SPACE,entity:ENTITY,
         recordId:input.id,expectedVersion:input.expectedVersion,
         actor:input.actor,idempotencyKey:input.idempotencyKey,
@@ -367,7 +374,7 @@ export class CanvasDocuments{
     return this.db.transaction(()=>{
       const existing=this.get(input.id);
       if(existing.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
-      this.archive(existing,input.actor);
+      this.archive(existing);
       const updated=view(this.records.update({spaceId:SPACE,entity:ENTITY,
         recordId:input.id,expectedVersion:input.expectedVersion,
         idempotencyKey:input.idempotencyKey,actor:input.actor,patch}));
