@@ -37,9 +37,9 @@ export interface DataRecordStorage {
   listCanvasRevisionRecords(
     documentId: string, limit: number, beforeVersion?: number,
   ): readonly StoredRecord[];
-  getCanvasRevisionRecord(
+  getCanvasRevisionRecords(
     documentId: string, documentVersion: number,
-  ): StoredRecord | null;
+  ): readonly StoredRecord[];
   updateRecord(record: StoredRecord, expectedVersion: number): boolean;
   softDeleteRecord(record: StoredRecord, expectedVersion: number): boolean;
 }
