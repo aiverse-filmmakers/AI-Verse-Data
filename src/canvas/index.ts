@@ -10,6 +10,8 @@
 import {DataCatalog} from "../catalog/index.js";
 import {canonicalSchemaJson} from "../catalog/canonical.js";
 import {DataRecords} from "../records/index.js";
+import {DataIdempotency} from "../idempotency/index.js";
+import {createHash} from "node:crypto";
 import type {DataActor,JsonObject} from "../protocol/index.js";
 import type {DataRecordSnapshot} from "../records/index.js";
 import type {DataStorageDatabase} from "../storage/index.js";
@@ -104,8 +106,9 @@ function schema(){
 export class CanvasDocuments{
   private readonly catalog:DataCatalog;
   private readonly records:DataRecords;
+  private readonly idempotency:DataIdempotency;
   readonly scope:{kind:"workspace"|"standalone";workspaceId:string};
-  constructor(db:DataStorageDatabase){
+  constructor(private readonly db:DataStorageDatabase){
     const binding=db.metadata().binding;
     if(!binding || !["workspace","standalone"].includes(binding.kind)
       ||typeof binding.workspaceId!=="string"||!binding.workspaceId)
@@ -113,6 +116,7 @@ export class CanvasDocuments{
     this.scope={kind:binding.kind,workspaceId:binding.workspaceId};
     this.catalog=new DataCatalog(db);
     this.records=new DataRecords(db);
+    this.idempotency=new DataIdempotency(db);
     const existingSpace=this.catalog.listSpaces().find(x=>x.spaceId===SPACE);
     if(!existingSpace)this.catalog.createSpace({
       spaceId:SPACE,name:"Creative Canvas",authority:"local_canonical",
@@ -134,6 +138,37 @@ export class CanvasDocuments{
     return view(this.records.create({spaceId:SPACE,entity:ENTITY,
       actor:input.actor,idempotencyKey:input.idempotencyKey,
       data:{title:title(input.title),board:{nodes:[],edges:[]}}}));
+  }
+  /**
+   * One atomic Data-owned clone, including all notes and connections.
+   * Source version, full board and clone receipt are bound in one SQLite
+   * transaction, not a series of Dashboard note.add calls.
+   */
+  duplicate(input:{id:string;expectedVersion:number;title?:string;
+    actor:DataActor;idempotencyKey:string}):CanvasDocument{
+    validId(input.id);validId(input.idempotencyKey);
+    if(!Number.isSafeInteger(input.expectedVersion)||input.expectedVersion<1)
+      fail("CANVAS_VERSION_INVALID");
+    const requestedTitle=input.title===undefined?undefined:title(input.title);
+    return this.db.transaction(()=>{
+      const request={sourceId:input.id,expectedVersion:input.expectedVersion,
+        ...(requestedTitle===undefined?{}:{title:requestedTitle})};
+      const replay=this.idempotency.prepare<CanvasDocument>(input.idempotencyKey,
+        "canvas.duplicate",input.actor,request);
+      if(replay.kind==="replay")return replay.value;
+      const source=this.get(input.id);
+      if(source.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
+      const copiedTitle=requestedTitle??title(source.title.slice(0,135)+" copy");
+      const copied=this.records.create({spaceId:SPACE,entity:ENTITY,
+        actor:input.actor,
+        // Independent namespace. This is still one authoritative Data record.
+        idempotencyKey:createHash("sha256").update("canvas.duplicate.record:"+
+          input.idempotencyKey).digest("hex"),
+        data:{title:copiedTitle,board:boardValue(source.board) as unknown as JsonObject},
+      });
+      return this.idempotency.complete(input.idempotencyKey,
+        "canvas.duplicate",replay.requestFingerprint,view(copied));
+    },"immediate");
   }
   list(limit=50):CanvasDocument[]{
     if(!Number.isSafeInteger(limit)||limit<1||limit>200)
