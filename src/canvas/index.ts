@@ -17,7 +17,6 @@ import type {DataRecordSnapshot} from "../records/index.js";
 import type {DataStorageDatabase} from "../storage/index.js";
 
 const SPACE="creative-canvas",ENTITY="documents",REVISIONS="revisions";
-const MAX_JOURNAL_SCAN=5000;
 const ID=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const TITLE_LIMIT=140,MAX_NODES=150,MAX_EDGES=300;
 type Node={id:string;kind:"note";text:string;x:number;y:number};
@@ -196,35 +195,44 @@ export class CanvasDocuments{
     this.records.create({spaceId:SPACE,entity:REVISIONS,
       actor,idempotencyKey:archivalKey(document.id,document.version),data});
   }
-  private revisions(id:string):CanvasDocument[]{
-    validId(id);
-    const store=this.db.recordStorage();
-    const out:CanvasDocument[]=[];
-    for(let offset=0;offset<MAX_JOURNAL_SCAN;offset+=100){
-      const rows=store.listRecords(SPACE,REVISIONS,100,false,offset);
-      for(const row of rows){
-        let data:JsonObject;
-        try{data=JSON.parse(row.dataJson) as JsonObject;}
-        catch{fail("CANVAS_HISTORY_INVALID");}
-        if(data.documentId===id)out.push(revisionOf(data));
-      }
-      if(rows.length<100){
-        out.sort((a,b)=>b.version-a.version);
-        const seen=new Set<number>();
-        for(const snapshot of out){
-          if(seen.has(snapshot.version))fail("CANVAS_HISTORY_INVALID");
-          seen.add(snapshot.version);
-        }
-        return out;
-      }
-    }
-    fail("CANVAS_HISTORY_LIMIT");
+  private decodeRevision(record:{dataJson:string;version:number;
+    createdActorKind:string;createdActorId:string;
+    updatedActorKind:string;updatedActorId:string}):CanvasDocument{
+    // A historical snapshot must itself be a first-generation immutable
+    // Data record, not a later changed row or arbitrary JSON payload.
+    if(record.version!==1||record.createdActorKind!==record.updatedActorKind
+      ||record.createdActorId!==record.updatedActorId)
+      fail("CANVAS_HISTORY_INVALID");
+    let value:JsonObject;
+    try{value=JSON.parse(record.dataJson) as JsonObject;}
+    catch{fail("CANVAS_HISTORY_INVALID");}
+    return revisionOf(value);
   }
-  /** Read previously committed authoritative Data snapshots, newest first. */
-  history(id:string,limit=20):CanvasDocument[]{
-    this.get(id); // Deleted or foreign scope records remain hidden.
-    if(!Number.isSafeInteger(limit)||limit<1||limit>30)fail("CANVAS_PAGE_INVALID");
-    return this.revisions(id).slice(0,limit);
+  private revisions(id:string,limit:number,beforeVersion?:number):CanvasDocument[]{
+    validId(id);
+    const rows=this.db.recordStorage().listCanvasRevisionRecords(
+      id,limit,beforeVersion);
+    const out=rows.map(row=>this.decodeRevision(row));
+    const seen=new Set<number>();
+    for(const snapshot of out){
+      if(snapshot.id!==id||seen.has(snapshot.version)
+        ||(beforeVersion!==undefined&&snapshot.version>=beforeVersion))
+        fail("CANVAS_HISTORY_INVALID");
+      seen.add(snapshot.version);
+    }
+    for(let i=1;i<out.length;i++){
+      if(out[i]!.version>=out[i-1]!.version)fail("CANVAS_HISTORY_INVALID");
+    }
+    return out;
+  }
+  /** Bounded, indexed, descending keyset pages. No workspace-wide scans. */
+  history(id:string,limit=20,beforeVersion?:number):CanvasDocument[]{
+    this.get(id); // Deleted and foreign workspace records remain hidden.
+    if(!Number.isSafeInteger(limit)||limit<1||limit>30
+      ||(beforeVersion!==undefined&&
+        (!Number.isSafeInteger(beforeVersion)||beforeVersion<=1)))
+      fail("CANVAS_PAGE_INVALID");
+    return this.revisions(id,limit,beforeVersion);
   }
   /** Revert is a NEW version, never an edit to the immutable older snapshot. */
   revert(input:{id:string;toVersion:number;expectedVersion:number;
@@ -242,8 +250,13 @@ export class CanvasDocuments{
       const current=this.get(input.id);
       if(current.version!==input.expectedVersion)fail("RECORD_VERSION_CONFLICT");
       if(input.toVersion>=current.version)fail("CANVAS_VERSION_INVALID");
-      const source=this.revisions(input.id).find(x=>x.version===input.toVersion);
-      if(!source)fail("CANVAS_HISTORY_UNAVAILABLE");
+      const matched=this.db.recordStorage().getCanvasRevisionRecords(
+        input.id,input.toVersion);
+      if(matched.length>1)fail("CANVAS_HISTORY_INVALID");
+      if(matched.length===0)fail("CANVAS_HISTORY_UNAVAILABLE");
+      const source=this.decodeRevision(matched[0]!);
+      if(source.id!==input.id||source.version!==input.toVersion)
+        fail("CANVAS_HISTORY_INVALID");
       this.archive(current);
       const saved=view(this.records.update({spaceId:SPACE,entity:ENTITY,
         recordId:input.id,expectedVersion:current.version,actor:input.actor,
