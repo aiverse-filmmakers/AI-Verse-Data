@@ -178,9 +178,9 @@ test("Canvas true historical undo creates a new canonical version and survives S
       idempotencyKey:key(),title:"New heading"});
     const history=owner.history(created.id,10);
     assert.deepEqual(history.map(x=>x.version),[3,2,1]);
-    assert.equal(history[1].board.nodes[0]?.text,"Start");
-    assert.equal(history[2].board.nodes.length,0);
-    assert.equal(history[0].title,"New heading");
+    assert.equal(history[1]!.board.nodes[0]?.text,"Start");
+    assert.equal(history[2]!.board.nodes.length,0);
+    assert.equal(history[0]!.title,"New heading");
     const undoKey=key();
     const undone=owner.revert({id:created.id,toVersion:1,expectedVersion:3,
       actor,idempotencyKey:undoKey});
