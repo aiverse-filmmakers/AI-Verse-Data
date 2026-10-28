@@ -80,6 +80,7 @@ test("Canvas Data owner scopes isolate workspaces and standalone Personal",()=>{
   fixture((root,open)=>{
     const primary=open("filmmaking");
     const other=open("client-private");
+    mkdirSync(join(root,".ai-verse-data"),{recursive:true});
     const standalone=openScopedDataDatabase(new SqliteStorageDriver(),
       createStandaloneDataScope(TrustedDataRoot.fromExistingDirectory(root),"local"));
     try{
