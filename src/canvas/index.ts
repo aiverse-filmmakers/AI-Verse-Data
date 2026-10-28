@@ -18,10 +18,16 @@ import type {DataStorageDatabase} from "../storage/index.js";
 
 const SPACE="creative-canvas",ENTITY="documents",REVISIONS="revisions";
 const ID=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-const TITLE_LIMIT=140,MAX_NODES=150,MAX_EDGES=300;
+const TITLE_LIMIT=140,MAX_NODES=150,MAX_EDGES=300,MAX_GROUPS=50;
 type Node={id:string;kind:"note";text:string;x:number;y:number};
 type Edge={id:string;from:string;to:string};
-export type CanvasBoard={nodes:Node[];edges:Edge[]};
+type Group={id:string;label:string;nodeIds:string[]};
+/**
+ * Existing v1 boards remain a canonical two-field shape. New grouped boards
+ * use the optional third field; do not add empty groups to v1 revisions,
+ * since historical Canvas digests must remain bit-for-bit stable.
+ */
+export type CanvasBoard={nodes:Node[];edges:Edge[];groups?:Group[]};
 export type CanvasDocument={
   id:string;title:string;version:number;createdAt:string;updatedAt:string;
   board:CanvasBoard;
@@ -32,7 +38,12 @@ export type CanvasEdit=
   |{type:"note.text";id:string;text:string}
   |{type:"note.remove";id:string}
   |{type:"edge.add";id:string;from:string;to:string}
-  |{type:"edge.remove";id:string};
+  |{type:"edge.remove";id:string}
+  |{type:"group.create";id:string;label:string;nodeIds:string[]}
+  |{type:"group.rename";id:string;label:string}
+  |{type:"group.members";id:string;nodeIds:string[]}
+  |{type:"group.move";id:string;dx:number;dy:number}
+  |{type:"group.remove";id:string};
 
 export class CanvasDocumentError extends Error{
   constructor(readonly code:string){
@@ -61,9 +72,11 @@ function boardValue(value:unknown):CanvasBoard{
   if(!value||typeof value!=="object"||Array.isArray(value))
     fail("CANVAS_BOARD_INVALID");
   const b=value as Record<string,unknown>;
-  if(Object.keys(b).sort().join(",")!=="edges,nodes"
+  const fields=Object.keys(b).sort().join(",");
+  if(!["edges,nodes","edges,groups,nodes"].includes(fields)
     ||!Array.isArray(b.nodes)||!Array.isArray(b.edges)
-    ||b.nodes.length>MAX_NODES||b.edges.length>MAX_EDGES)
+    ||b.nodes.length>MAX_NODES||b.edges.length>MAX_EDGES
+    ||(b.groups!==undefined&&(!Array.isArray(b.groups)||b.groups.length>MAX_GROUPS)))
     fail("CANVAS_BOARD_INVALID");
   const ids=new Set<string>();
   const nodes:Node[]=b.nodes.map(value=>{
@@ -88,7 +101,31 @@ function boardValue(value:unknown):CanvasBoard{
       fail("CANVAS_BOARD_INVALID");
     edges.add(e.id);return {id:e.id,from:e.from,to:e.to};
   });
-  return {nodes,edges:links};
+  if(b.groups===undefined)return {nodes,edges:links};
+  const groupIds=new Set<string>(),assigned=new Set<string>();
+  const groups:Group[]=b.groups.map(value=>{
+    if(!value||typeof value!=="object"||Array.isArray(value))
+      fail("CANVAS_BOARD_INVALID");
+    const g=value as Record<string,unknown>;
+    if(Object.keys(g).sort().join(",")!=="id,label,nodeIds"
+      ||!Array.isArray(g.nodeIds)||g.nodeIds.length<2
+      ||g.nodeIds.length>MAX_NODES
+      ||typeof g.label!=="string"||g.label.trim().length<1||g.label.length>80)
+      fail("CANVAS_BOARD_INVALID");
+    validId(g.id);
+    if(groupIds.has(g.id)||ids.has(g.id)||edges.has(g.id))
+      fail("CANVAS_BOARD_INVALID");
+    groupIds.add(g.id);
+    const memberIds=new Set<string>();
+    for(const nodeId of g.nodeIds){
+      validId(nodeId);
+      if(!ids.has(nodeId)||memberIds.has(nodeId)||assigned.has(nodeId))
+        fail("CANVAS_BOARD_INVALID");
+      memberIds.add(nodeId);assigned.add(nodeId);
+    }
+    return {id:g.id,label:g.label.trim(),nodeIds:[...memberIds]};
+  });
+  return {nodes,edges:links,groups};
 }
 function view(r:DataRecordSnapshot):CanvasDocument{
   return {id:r.recordId,title:title(r.data.title),board:boardValue(r.data.board),
@@ -349,6 +386,11 @@ export class CanvasDocuments{
         if(!board.nodes.some(n=>n.id===op.id))fail("CANVAS_NODE_NOT_FOUND");
         board.nodes=board.nodes.filter(n=>n.id!==op.id);
         board.edges=board.edges.filter(e=>e.from!==op.id&&e.to!==op.id);
+        if(board.groups){
+          board.groups=board.groups.map(g=>({
+            ...g,nodeIds:g.nodeIds.filter(n=>n!==op.id),
+          })).filter(g=>g.nodeIds.length>=2);
+        }
         break;
       }
       case "edge.add":
@@ -360,9 +402,47 @@ export class CanvasDocuments{
       case "edge.remove":
         if(!board.edges.some(e=>e.id===op.id))fail("CANVAS_EDGE_NOT_FOUND");
         board.edges=board.edges.filter(e=>e.id!==op.id);break;
+      case "group.create": {
+        const groups=board.groups??[];
+        if(groups.length>=MAX_GROUPS||groups.some(g=>g.id===op.id)
+          ||board.nodes.some(n=>n.id===op.id)||board.edges.some(e=>e.id===op.id))
+          fail("CANVAS_GROUP_CONFLICT");
+        groups.push({id:op.id,label:op.label,nodeIds:op.nodeIds});
+        board.groups=groups;
+        break;
+      }
+      case "group.rename": {
+        const group=board.groups?.find(g=>g.id===op.id);
+        if(!group)fail("CANVAS_GROUP_NOT_FOUND");
+        group.label=op.label;break;
+      }
+      case "group.members": {
+        const group=board.groups?.find(g=>g.id===op.id);
+        if(!group)fail("CANVAS_GROUP_NOT_FOUND");
+        group.nodeIds=op.nodeIds;break;
+      }
+      case "group.move": {
+        const group=board.groups?.find(g=>g.id===op.id);
+        if(!group)fail("CANVAS_GROUP_NOT_FOUND");
+        const dx=point(op.dx),dy=point(op.dy);
+        for(const note of board.nodes){
+          if(group.nodeIds.includes(note.id)){
+            note.x=point(note.x+dx);
+            note.y=point(note.y+dy);
+          }
+        }
+        break;
+      }
+      case "group.remove":
+        if(!board.groups?.some(g=>g.id===op.id))fail("CANVAS_GROUP_NOT_FOUND");
+        board.groups=board.groups.filter(g=>g.id!==op.id);
+        break;
       default:fail("CANVAS_EDIT_UNSUPPORTED");
     }
-    return this.patch(input,{board:board as unknown as JsonObject});
+    // Re-validate the entire board before its canonical Data transaction;
+    // this covers cross-group membership conflicts and ensures no partial
+    // movement or malformed group escapes into SQLite.
+    return this.patch(input,{board:boardValue(board) as unknown as JsonObject});
   }
   delete(input:{id:string;expectedVersion:number;actor:DataActor;idempotencyKey:string}):CanvasDocument{
     validId(input.id);validId(input.idempotencyKey);
