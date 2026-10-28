@@ -323,3 +323,26 @@ test("Canvas archived revision edits are rejected as corruption, without mutatin
   }finally{handle.database.close()}
  });
 });
+
+test("Canvas refuses duplicate archive versions injected below trusted document API",()=>{
+ fixture((_root,open)=>{
+  const handle=open("film");
+  try{
+   const docs=new CanvasDocuments(handle.database);
+   const original=docs.create({title:"Original take",actor,idempotencyKey:key()});
+   const edited=docs.rename({id:original.id,title:"Second take",
+     expectedVersion:1,actor,idempotencyKey:key()});
+   const storage=handle.database.recordStorage();
+   const immutable=storage.getCanvasRevisionRecords(original.id,1)[0]!;
+   assert.ok(immutable);
+   assert.equal(storage.createRecord({...immutable,
+     recordId:"rec_corrupt_duplicate_history_001"}),true);
+   assert.throws(()=>docs.revert({id:original.id,toVersion:1,expectedVersion:2,
+     actor,idempotencyKey:key()}),
+     e=>(e as {code?:string}).code==="CANVAS_HISTORY_INVALID");
+   assert.throws(()=>docs.history(original.id,20),
+     e=>(e as {code?:string}).code==="CANVAS_HISTORY_INVALID");
+   assert.deepEqual(docs.get(original.id),edited);
+  }finally{handle.database.close()}
+ });
+});
