@@ -16,6 +16,7 @@ import {
   type DataStorageDatabase,
   type DataStorageDriver,
   type StorageDatabaseBinding,
+  type StorageMigrationStatus,
 } from "../storage/index.js";
 import { DataScopeError } from "./errors.js";
 import type {
@@ -304,4 +305,20 @@ export function openScopedDataDatabase(
     scope,
     database,
   };
+}
+
+/**
+ * Readonly trusted-scope database preflight. Never creates/binds/migrates a
+ * database; never accepts a caller-supplied path or structural fake scope.
+ * All errors remain from the canonical Data owner.
+ */
+export function inspectScopedDataDatabase(
+  driver: DataStorageDriver,
+  scope: DataDatabaseScope,
+): StorageMigrationStatus {
+  const facts=trustedScopeFacts(scope);
+  const location=authoritativeScopePath(facts);
+  return driver.inspectMigration({
+    location,expectedBinding:facts.binding,
+  });
 }

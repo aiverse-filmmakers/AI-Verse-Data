@@ -5,4 +5,5 @@ export {
   createStandaloneDataScope,
   createWorkspaceDataScope,
   openScopedDataDatabase,
+  inspectScopedDataDatabase,
 } from "./trusted-root.js";

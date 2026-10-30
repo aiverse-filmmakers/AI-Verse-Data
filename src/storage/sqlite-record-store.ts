@@ -117,6 +117,14 @@ export class SqliteRecordStorage implements DataRecordStorage {
 
       CREATE INDEX IF NOT EXISTS _records_entity_active_idx
         ON _records(space_id, entity_id, deleted_at, created_at, record_id);
+
+      CREATE INDEX IF NOT EXISTS _records_canvas_revisions_doc_version_idx
+        ON _records(
+          json_extract(data_json, '$.documentId'),
+          CAST(json_extract(data_json, '$.documentVersion') AS INTEGER) DESC
+        )
+        WHERE space_id = 'creative-canvas' AND entity_id = 'revisions'
+          AND deleted_at IS NULL;
     `);
   }
 
@@ -203,6 +211,40 @@ export class SqliteRecordStorage implements DataRecordStorage {
     return rows.map(mapRecord);
   }
 
+  /** Indexed document-specific keyset revision lookup, not a global scan. */
+  listCanvasRevisionRecords(
+    documentId: string, limit: number, beforeVersion?: number,
+  ): readonly StoredRecord[] {
+    const rows=this.database.prepare(
+      `${SELECT_RECORD}
+       WHERE space_id = 'creative-canvas'
+         AND entity_id = 'revisions'
+         AND deleted_at IS NULL
+         AND json_extract(data_json, '$.documentId') = ?
+         ${beforeVersion===undefined?"":"AND CAST(json_extract(data_json, '$.documentVersion') AS INTEGER) < ?"}
+       ORDER BY CAST(json_extract(data_json, '$.documentVersion') AS INTEGER) DESC,
+         record_id ASC
+       LIMIT ?`
+    ).all(documentId,...(beforeVersion===undefined?[]:[beforeVersion]),limit) as RecordRow[];
+    return rows.map(mapRecord);
+  }
+
+  /** Return two rows if a corrupted duplicate document version exists. */
+  getCanvasRevisionRecords(
+    documentId: string, documentVersion: number,
+  ): readonly StoredRecord[] {
+    const rows=this.database.prepare(
+      `${SELECT_RECORD}
+       WHERE space_id = 'creative-canvas'
+         AND entity_id = 'revisions'
+         AND deleted_at IS NULL
+         AND json_extract(data_json, '$.documentId') = ?
+         AND CAST(json_extract(data_json, '$.documentVersion') AS INTEGER) = ?
+       ORDER BY record_id ASC
+       LIMIT 2`
+    ).all(documentId,documentVersion) as RecordRow[];
+    return rows.map(mapRecord);
+  }
   updateRecord(record: StoredRecord, expectedVersion: number): boolean {
     this.assertWritable();
     const result = this.database

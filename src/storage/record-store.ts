@@ -33,6 +33,13 @@ export interface DataRecordStorage {
     includeDeleted?: boolean,
     offset?: number,
   ): readonly StoredRecord[];
+  /** Indexed, scope-bound immutable Canvas revision lookup. No full-space scan. */
+  listCanvasRevisionRecords(
+    documentId: string, limit: number, beforeVersion?: number,
+  ): readonly StoredRecord[];
+  getCanvasRevisionRecords(
+    documentId: string, documentVersion: number,
+  ): readonly StoredRecord[];
   updateRecord(record: StoredRecord, expectedVersion: number): boolean;
   softDeleteRecord(record: StoredRecord, expectedVersion: number): boolean;
 }
