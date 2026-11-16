@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { compareCodeUnits } from "../protocol/code-unit-order.js";
 import type { DataActor } from "../protocol/index.js";
 import {
   AI_VERSE_DATA_IDEMPOTENCY_FINGERPRINT_VERSION,
@@ -30,7 +31,7 @@ function canonicalJson(value: unknown): string {
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>)
       .filter(([, item]) => item !== undefined)
-      .sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0));
+      .sort(([left], [right]) => compareCodeUnits(left, right));
 
     return `{${entries
       .map(([key, item]) => `${JSON.stringify(key)}:${canonicalJson(item)}`)
