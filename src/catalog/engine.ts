@@ -17,7 +17,12 @@ import type {
   StoredDataSpace,
   StoredEntitySchemaVersion,
 } from "../storage/index.js";
-import { canonicalSchemaJson, cloneSchemaDefinition, schemaDigest } from "./canonical.js";
+import {
+  canonicalSchemaJson,
+  cloneSchemaDefinition,
+  schemaDigest,
+  schemaDigestMatches,
+} from "./canonical.js";
 import { DataCatalogError } from "./errors.js";
 import type {
   DataCatalogApi,
@@ -64,8 +69,7 @@ function parseStoredDefinition(
   try {
     const definition = validateEntitySchemaDefinition(parsed, "$storedSchema");
     const normalized = cloneSchemaDefinition(definition);
-    const digest = schemaDigest(normalized);
-    if (digest !== stored.schemaDigest) {
+    if (!schemaDigestMatches(normalized, stored.schemaDigest)) {
       throw new DataCatalogError(
         "DATABASE_CORRUPT",
         "Stored entity schema digest does not match its definition.",

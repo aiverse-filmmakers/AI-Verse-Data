@@ -4,7 +4,9 @@ import {
   canonicalSchemaJson,
   cloneSchemaDefinition,
   schemaDigest,
+  schemaDigestMatches,
 } from "../catalog/canonical.js";
+import { compareCodeUnits } from "../protocol/code-unit-order.js";
 import { DataCatalog, DataCatalogError } from "../catalog/index.js";
 import { DataIdempotency, canonicalResultJson } from "../idempotency/index.js";
 import {
@@ -357,7 +359,7 @@ function relationDigest(
   relations: readonly StoredRecordRelation[],
 ): string {
   const ordered = [...relations].sort((left, right) =>
-    canonicalResultJson(left).localeCompare(canonicalResultJson(right)),
+    compareCodeUnits(canonicalResultJson(left), canonicalResultJson(right)),
   );
   return sha256(canonicalResultJson(ordered));
 }
@@ -706,7 +708,7 @@ export class DataSchemaMigrations implements DataSchemaMigrationsApi {
     validateBackfillTargets(proposedDefinition, backfills);
 
     const proposedDigest = schemaDigest(proposedDefinition);
-    if (proposedDigest === current.schemaDigest) {
+    if (schemaDigestMatches(proposedDefinition, current.schemaDigest)) {
       migrationInvalid("Schema migration would not change the canonical schema.");
     }
 

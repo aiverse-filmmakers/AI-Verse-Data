@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { compareCodeUnits } from "../protocol/code-unit-order.js";
 import { DataCatalog } from "../catalog/index.js";
 import {
   canonicalResultJson,
@@ -275,14 +276,30 @@ function assertSourceRelations(
   );
 
   const left = [...relations].sort((a, b) =>
-    relationKey(a).localeCompare(relationKey(b)),
+    compareCodeUnits(relationKey(a), relationKey(b)),
   );
   const right = [...expected].sort((a, b) =>
-    relationKey(a).localeCompare(relationKey(b)),
+    compareCodeUnits(relationKey(a), relationKey(b)),
   );
   if (canonicalResultJson(left) !== canonicalResultJson(right)) {
     corrupt("Stored relation index does not match canonical record references.");
   }
+}
+
+function inCodeUnitOrder(state: DataPortableState): DataPortableState {
+  return {
+    ...state,
+    spaces: [...state.spaces].sort((a, b) => compareCodeUnits(a.spaceId, b.spaceId)),
+    schemas: [...state.schemas].sort((a, b) =>
+      compareCodeUnits(schemaKey(a), schemaKey(b)),
+    ),
+    records: [...state.records].sort((a, b) =>
+      compareCodeUnits(recordKey(a), recordKey(b)),
+    ),
+    relations: [...state.relations].sort((a, b) =>
+      compareCodeUnits(relationKey(a), relationKey(b)),
+    ),
+  };
 }
 
 function summarize(state: DataPortableState): DataStateSummary {
@@ -505,11 +522,11 @@ export function collectPortableState(
   const state: DataPortableState = {
     version: AI_VERSE_DATA_PORTABLE_STATE_VERSION,
     binding: { ...metadata.binding },
-    spaces: spaces.sort((a, b) => a.spaceId.localeCompare(b.spaceId)),
-    schemas: schemas.sort((a, b) => schemaKey(a).localeCompare(schemaKey(b))),
-    records: records.sort((a, b) => recordKey(a).localeCompare(recordKey(b))),
+    spaces: spaces.sort((a, b) => compareCodeUnits(a.spaceId, b.spaceId)),
+    schemas: schemas.sort((a, b) => compareCodeUnits(schemaKey(a), schemaKey(b))),
+    records: records.sort((a, b) => compareCodeUnits(recordKey(a), recordKey(b))),
     relations: relations.sort((a, b) =>
-      relationKey(a).localeCompare(relationKey(b)),
+      compareCodeUnits(relationKey(a), relationKey(b)),
     ),
     idempotency,
     provenance,
@@ -695,7 +712,11 @@ export function materializePortableState(
   }
 
   const imported = collectPortableState(database);
-  if (portableStateDigest(imported) !== portableStateDigest(state)) {
+  // Older artifacts list entries in the old locale order; compare in one order.
+  if (
+    portableStateDigest(imported) !==
+    portableStateDigest(inCodeUnitOrder(state))
+  ) {
     throw new DataBackupError(
       "ARTIFACT_DIGEST_MISMATCH",
       "Imported portable state does not match the exported state digest.",
