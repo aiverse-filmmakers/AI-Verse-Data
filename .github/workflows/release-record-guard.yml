@@ -1,0 +1,36 @@
+name: Release Record Guard
+
+# Reports when release/component-release.json and the code at its accepted commit
+# disagree, when HEAD is more than 50 commits past it, and when a partner pin in
+# five-component-acceptance.yml is more than 50 commits behind its default branch.
+# Warn only: never blocks.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-record-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test the guard
+        continue-on-error: true
+        run: node --test scripts/check-release-record.test.mjs
+      - name: Check the release record and the partner pins
+        # Warn only for now. When switching to strict (RELEASE_GUARD_STRICT "1"),
+        # remove the continue-on-error line below so a mismatch fails the job.
+        continue-on-error: true
+        env:
+          RELEASE_GUARD_STRICT: "0"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-release-record.mjs .
